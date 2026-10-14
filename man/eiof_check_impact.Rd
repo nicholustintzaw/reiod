@@ -40,7 +40,7 @@ with the very small values biodiversity loss takes:
 
 \examples{
 data(eiof_demo)
-eiof_check_impact(eiof_demo$biodiv, name = "biodiv")
+eiof_check_impact(eiof_demo$biodiv_pdf, name = "biodiv_pdf")
 
 # a factor column, the worst of the three import failures
 eiof_check_impact(factor(c("3.7e-13", "5.2e-13")), name = "biodiv")

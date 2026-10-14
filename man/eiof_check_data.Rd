@@ -84,7 +84,7 @@ data(eiof_demo)
 
 report <- eiof_check_data(
   eiof_demo,
-  impacts = c(biodiv = "biodiv", ghg = "ghg"),
+  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
   age = "age", sex = "sex", gdqs = "gdqs"
 )
 report

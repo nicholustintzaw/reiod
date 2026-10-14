@@ -10,11 +10,12 @@ A data frame with 600 rows and 11 columns:
   \item{id}{Row identifier}
   \item{age}{Age in years, 0.5 to 65}
   \item{sex}{Factor with levels `"male"` and `"female"`}
-  \item{landtotal, landarable, landpasture}{Land use, m2*year}
-  \item{ghg}{Greenhouse gas emissions, kg CO2eq}
-  \item{eutroph}{Eutrophication potential, kg PO4(3-)eq}
-  \item{water}{Water use, litres}
-  \item{biodiv}{Biodiversity loss, PDF*year}
+  \item{land_total_m2yr, land_arable_m2yr, land_pasture_m2yr}{Land use,
+    m2*year}
+  \item{ghg_kgco2e}{Greenhouse gas emissions, kg CO2eq}
+  \item{eutroph_kgpo4e}{Eutrophication potential, kg PO4(3-)eq}
+  \item{water_litres}{Water use, litres}
+  \item{biodiv_pdf}{Biodiversity loss, PDF*year}
   \item{gdqs}{Global Diet Quality Score}
 }
 }
@@ -30,15 +31,30 @@ and a GDQS score, for use in examples, vignettes and tests.
 distributions chosen to be roughly plausible. No prevalence computed from
 this dataset carries any substantive meaning.
 
-A small amount of missingness is included in `biodiv` and `gdqs` so examples
-show how it propagates.
+A small amount of missingness is included in `biodiv_pdf` and `gdqs` so
+examples show how it propagates.
 }
+\section{The column names are deliberately not the indicator keys}{
+
+Until October 2026 the impact columns were called `landtotal`, `ghg`,
+`biodiv` and so on - the same strings the `indicator` argument takes. That
+made the examples tidy and taught something false: a loop over
+`eiof_demo[[ind]]` works only because the columns happen to be named after
+the keys, and readers concluded that reiof required those names.
+
+It never did. reiof takes vectors, so any column name has always worked. The
+columns now carry survey-realistic names with their units, which forces every
+example to state the indicator-to-column mapping explicitly. See
+[eiof_demo_map] and [eiof_absolute_all()].
+}
+
 \examples{
 data(eiof_demo)
 head(eiof_demo)
 }
 \seealso{
-A deliberately broken copy ships as
+[eiof_demo_map] for the indicator-to-column mapping. A deliberately
+  broken copy ships as
   `system.file("extdata", "eiof_broken.csv", package = "reiof")` and is used
   in `vignette("troubleshooting")`.
 }

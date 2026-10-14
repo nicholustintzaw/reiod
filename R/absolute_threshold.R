@@ -24,6 +24,18 @@
 #' coerced can turn missing data into an apparent threshold breach. Here the
 #' guard is explicit.
 #'
+#' @section Storage type is checked here, not only in the check suite:
+#' An integer `value` is refused with an error. `is.numeric(1L)` is `TRUE`, so
+#' an integer column would otherwise pass every guard and be compared against
+#' the threshold with its fractional part already truncated away. Measured on
+#' 200,000 simulated respondent-days in the companion Stata implementation, that
+#' biased mean greenhouse gas emissions down by 13%. Convert with `as.double()`.
+#'
+#' This is the only data-quality test on the default path. The fuller suite -
+#' sign, zeros, unit magnitude, retained significant digits, cut-off proximity -
+#' is in [eiof_check_data()] and [eiof_check_precision()], and is **not** run for
+#' you. Run it first; see `vignette("precision")`.
+#'
 #' @param value Numeric vector of per capita daily impact, already summed
 #'   across everything the respondent consumed that day, in the unit shown by
 #'   [eiof_list_indicators()].
@@ -31,32 +43,47 @@
 #'   [eiof_age_sex_group()].
 #' @param indicator One of `"landtotal"`, `"landarable"`, `"landpasture"`,
 #'   `"ghg"`, `"eutroph"`, `"water"`, `"biodiv"`.
+#' @param details If `TRUE`, return a data frame that also reports the threshold
+#'   each observation was actually compared against, rather than just the
+#'   result. Default `FALSE`.
 #'
 #' @return An integer vector: `1` below the threshold, `0` at or above it, `NA`
 #'   where the impact or the group is missing.
 #'
-#' @seealso [eiof_relative_band()], [eiof_lookup_cutoff()],
-#'   [eiof_check_data()]
+#'   If `details = TRUE`, a data frame with one row per observation and the
+#'   columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
+#'   threshold applied to that row, so a reader can audit the comparison without
+#'   opening the reference table. (Equivalent to `threshvar()` in the companion
+#'   Stata command.)
+#'
+#' @seealso [eiof_relative_band()], [eiof_absolute_all()],
+#'   [eiof_lookup_cutoff()], [eiof_check_data()]
 #'
 #' @examples
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 #'
-#' ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg, grp, "ghg")
+#' # the column is called ghg_kgco2e; the indicator key is "ghg".
+#' # They are different things, and your data will not use the keys.
+#' ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
 #' table(ghg_ok, useNA = "ifany")
 #'
-#' # all seven indicators
-#' for (ind in eiof_indicators$indicator) {
-#'   x <- eiof_absolute_threshold(eiof_demo[[ind]], grp, ind)
-#'   cat(sprintf("%-12s %5.1f%% below threshold\n", ind, 100 * mean(x, na.rm = TRUE)))
-#' }
+#' # which number each respondent was compared against
+#' head(eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg",
+#'                              details = TRUE))
+#'
+#' # all seven indicators: state the mapping from indicator key to column
+#' eiof_absolute_all(eiof_demo, grp, eiof_demo_map)[1:3, ]
 #'
 #' @export
-eiof_absolute_threshold <- function(value, group, indicator) {
+eiof_absolute_threshold <- function(value, group, indicator, details = FALSE) {
 
   .eiof_check_indicator(indicator)
   .eiof_check_value(value)
   .eiof_check_group(group, n = length(value))
+  if (!is.logical(details) || length(details) != 1L || is.na(details)) {
+    stop("`details` must be TRUE or FALSE.", call. = FALSE)
+  }
 
   thr <- .eiof_abs_thresholds(indicator)
   out <- rep(NA_integer_, length(value))
@@ -67,5 +94,13 @@ eiof_absolute_threshold <- function(value, group, indicator) {
       out[idx] <- as.integer(value[idx] < thr[g])
     }
   }
-  out
+
+  if (!details) return(out)
+
+  cutoff <- rep(NA_real_, length(value))
+  ok <- !is.na(group)
+  cutoff[ok] <- thr[group[ok]]
+
+  data.frame(value = as.numeric(value), group = as.integer(group),
+             cutoff = cutoff, below = out)
 }

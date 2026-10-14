@@ -4,7 +4,7 @@
 \alias{eiof_relative_band}
 \title{Relative benchmark metric (Tables 4a-4g)}
 \usage{
-eiof_relative_band(value, group, indicator, midpoint = FALSE)
+eiof_relative_band(value, group, indicator, midpoint = FALSE, details = FALSE)
 }
 \arguments{
 \item{value}{Numeric vector of per capita daily impact.}
@@ -17,10 +17,20 @@ eiof_relative_band(value, group, indicator, midpoint = FALSE)
 
 \item{midpoint}{If `TRUE`, return the band midpoint percentile (5, 15, ...
 95) instead of the band number. Default `FALSE`.}
+
+\item{details}{If `TRUE`, return a data frame that also reports the band
+boundaries each observation was placed between. Default `FALSE`.}
 }
 \value{
 An integer vector of bands 1-10, or of midpoints if
   `midpoint = TRUE`. `NA` where the impact or the group is missing.
+
+  If `details = TRUE`, a data frame with one row per observation and the
+  columns `value`, `group`, `band`, `cut_lower` and `cut_upper`. `cut_lower`
+  is the highest published percentile the value cleared, and is `NA` in
+  band 1 - correctly, because nothing is published below P10. `cut_upper` is
+  `NA` in band 10 for the same reason. (Equivalent to `cutvar()` in the
+  companion Stata command.)
 }
 \description{
 Places a one-day diet in one of ten decile bands of a global reference
@@ -81,18 +91,32 @@ m2*year while the P80-P90 gap is 1.5 m2*year. A mean band is a summary of
 a mean impact, average the impact variable itself.
 }
 
+\section{Storage type is checked here, not only in the check suite}{
+
+As for [eiof_absolute_threshold()], an integer `value` is refused. See that
+function for why `is.numeric()` alone is not enough. The rest of the data
+quality suite remains opt-in; run `vignette("precision")` first.
+}
+
 \examples{
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-band <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv")
+# the column is biodiv_pdf; the indicator key is "biodiv"
+band <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
 table(band, useNA = "ifany")
 
 # mean position in the global reference distribution
-mid <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv", midpoint = TRUE)
+mid <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+                          midpoint = TRUE)
 mean(mid, na.rm = TRUE)
+
+# the decile boundaries each diet was judged against
+head(eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+                        details = TRUE))
 
 }
 \seealso{
-[eiof_absolute_threshold()], [eiof_low_impact()]
+[eiof_absolute_threshold()], [eiof_relative_all()],
+  [eiof_low_impact()]
 }

@@ -34,9 +34,9 @@ which every diet exceeds every threshold.
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-eiof_check_magnitude(eiof_demo$ghg, "ghg", grp, name = "ghg")
+eiof_check_magnitude(eiof_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
 
 # the same data in grams
-eiof_check_magnitude(eiof_demo$ghg * 1000, "ghg", grp, name = "ghg_grams")
+eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
 
 }

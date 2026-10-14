@@ -12,12 +12,15 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(reiof)
 ```
 
-This vignette works through a dataset with four real faults in it — the kinds
+This vignette works through a dataset with five real faults in it — the kinds
 that arrive from a spreadsheet, a database export or another statistical
 package. We run the checks, read the errors, fix each one, and re-run.
 
-The point is not the fixes themselves. It is that **all four faults produce
+The point is not the fixes themselves. It is that **all five faults produce
 plausible-looking numbers rather than obvious failures** if you skip the checks.
+
+For the precision question on its own — the one most people ask about first, and
+the one with the most counter-intuitive answer — see `vignette("precision")`.
 
 ## The data
 
@@ -26,25 +29,28 @@ A copy of `eiof_demo` ships with the package, broken on purpose:
 ```{r}
 path <- system.file("extdata", "eiof_broken.csv", package = "reiof")
 broken <- read.csv(path, stringsAsFactors = FALSE)
-str(broken[, c("age", "sex", "ghg", "water", "biodiv", "gdqs")])
+str(broken[, c("age", "sex", "ghg_kgco2e", "land_arable_m2yr",
+               "water_litres", "biodiv_pdf", "gdqs")])
 ```
 
-Nothing there looks alarming. `biodiv` is a character column, but that is easy
-to miss in a `str()` dump of eleven variables, and `head()` would show values
-that read like numbers.
+Nothing there looks alarming. `biodiv_pdf` is a character column and
+`land_arable_m2yr` an integer one, but both are easy to miss in a `str()` dump
+of eleven variables, and `head()` would show values that read like numbers in
+either case.
 
 ## Run the checks first
 
 ```{r}
 report <- eiof_check_data(
   broken,
-  impacts = c(biodiv = "biodiv", ghg = "ghg", water = "water"),
+  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e",
+              water = "water_litres", landarable = "land_arable_m2yr"),
   age = "age", sex = "sex", gdqs = "gdqs"
 )
 report
 ```
 
-Four problems, found in one pass. Taking them in turn.
+Five problems, found in one pass. Taking them in turn.
 
 ## Fault 1 — biodiversity imported as text
 
@@ -83,20 +89,20 @@ so.
 
 ```{r}
 fixed <- broken
-censored <- grepl("<", fixed$biodiv, fixed = TRUE)
+censored <- grepl("<", fixed$biodiv_pdf, fixed = TRUE)
 sum(censored)
-fixed$biodiv[censored] <- NA
-fixed$biodiv <- as.numeric(fixed$biodiv)
+fixed$biodiv_pdf[censored] <- NA
+fixed$biodiv_pdf <- as.numeric(fixed$biodiv_pdf)
 ```
 
 ```{r}
-eiof_check_impact(fixed$biodiv, name = "biodiv", indicator = "biodiv")
+eiof_check_impact(fixed$biodiv_pdf, name = "biodiv_pdf", indicator = "biodiv")
 ```
 
 ## Fault 2 — greenhouse gases in the wrong unit
 
 ```{r}
-subset(report, variable == "ghg" & check == "magnitude")$message
+subset(report, variable == "ghg_kgco2e" & check == "magnitude")$message
 ```
 
 The check compares the median of your data against the published global 50th
@@ -116,7 +122,7 @@ looks like a finding:
 
 ```{r}
 grp_tmp <- eiof_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
-table(eiof_absolute_threshold(broken$ghg, grp_tmp, "ghg"), useNA = "ifany")
+table(eiof_absolute_threshold(broken$ghg_kgco2e, grp_tmp, "ghg"), useNA = "ifany")
 ```
 
 Zero diets below the threshold. Nothing errored. You could put that in a report.
@@ -124,8 +130,8 @@ Zero diets below the threshold. Nothing errored. You could put that in a report.
 **The fix:**
 
 ```{r}
-fixed$ghg <- fixed$ghg / 1000
-eiof_check_magnitude(fixed$ghg, "ghg", grp_tmp, name = "ghg")
+fixed$ghg_kgco2e <- fixed$ghg_kgco2e / 1000
+eiof_check_magnitude(fixed$ghg_kgco2e, "ghg", grp_tmp, name = "ghg_kgco2e")
 ```
 
 ## Fault 3 — sex coded 0/1 with no labels
@@ -158,7 +164,7 @@ grp <- eiof_age_sex_group(fixed$age, fixed$sex)
 ## Fault 4 — water rounded to four significant digits
 
 ```{r}
-subset(report, variable == "water" & check == "precision")$message
+subset(report, variable == "water_litres" & check == "precision")$message
 ```
 
 This is what an Excel round trip does: the file displays `604.1` and saves what
@@ -168,7 +174,7 @@ Does it matter? That is an empirical question, and the proximity check answers
 it rather than leaving you to worry:
 
 ```{r}
-eiof_check_precision(broken$water, grp, "water", name = "water")
+eiof_check_precision(broken$water_litres, grp, "water", name = "water_litres")
 ```
 
 Here, no observation sits close enough to the water threshold for the rounding
@@ -182,8 +188,69 @@ worth panicking about:
 
 ```{r}
 nsig <- function(v) { for (d in 1:17) if (signif(v, d) == v) return(d); 17L }
-c(broken = max(vapply(broken$water[1:50], nsig, integer(1))),
-  demo   = max(vapply(eiof_demo$water[1:50], nsig, integer(1))))
+c(broken = max(vapply(broken$water_litres[1:50], nsig, integer(1))),
+  demo   = max(vapply(eiof_demo$water_litres[1:50], nsig, integer(1))))
+```
+
+See `vignette("precision")` for the empirical version of this question, and for
+why the two halves of the check — digits retained, and distance to the cut-off —
+answer different things.
+
+## Fault 5 — arable land stored as an integer
+
+```{r}
+class(broken$land_arable_m2yr)
+subset(report, variable == "land_arable_m2yr" & check == "type")$message
+```
+
+This is the quietest of the five, because an integer column is still numeric:
+
+```{r}
+is.numeric(broken$land_arable_m2yr)
+```
+
+So nothing about the vector's *type* looks wrong, and until October 2026 reiof
+would have computed with it. The damage is already done by the time you see the
+column, because `as.integer()` truncates toward zero rather than rounding:
+
+```{r}
+as.integer(c(0.9, 1.7, 2.999))
+```
+
+Every value below 1 m²·year has become an exact zero, and the rest lost their
+fractional part:
+
+```{r}
+c(zeros = sum(broken$land_arable_m2yr == 0),
+  mean_broken = mean(broken$land_arable_m2yr),
+  mean_true   = mean(eiof_demo$land_arable_m2yr))
+```
+
+Note that the report above shows only the type error for this column, not the
+zeros. Once a column fails the type check there is nothing trustworthy left to
+measure, so the later checks are skipped rather than run on garbage — the same
+behaviour you saw for `biodiv_pdf`.
+
+Measured in the companion Stata implementation on 200,000 simulated
+respondent-days, the same fault on greenhouse gas emissions biased the mean down
+from 3.836 to 3.336 — **13%**, with no warning anywhere.
+
+This is the **one** check reiof now performs on the default path, precisely
+because `is.numeric()` would not catch it:
+
+```{r, error = TRUE}
+eiof_absolute_threshold(broken$land_arable_m2yr, grp, "landarable")
+```
+
+**The fix** is not `as.double()`. That converts the type without restoring the
+digits — you would get `2` back as `2.0`, not as the `2.37` it used to be. The
+only real fix is upstream: re-import the column as a double, or re-export it
+from the source. Here, for the sake of carrying on, we take it from the
+unbroken copy and say so:
+
+```{r}
+fixed$land_arable_m2yr <- eiof_demo$land_arable_m2yr   # i.e. re-imported
+class(fixed$land_arable_m2yr)
 ```
 
 ## Re-run the checks
@@ -191,7 +258,8 @@ c(broken = max(vapply(broken$water[1:50], nsig, integer(1))),
 ```{r}
 report2 <- eiof_check_data(
   fixed,
-  impacts = c(biodiv = "biodiv", ghg = "ghg", water = "water"),
+  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e",
+              water = "water_litres", landarable = "land_arable_m2yr"),
   age = "age", sex = "sex", gdqs = "gdqs"
 )
 report2
@@ -207,11 +275,11 @@ summary(report2)
 ## Now compute the metrics
 
 ```{r}
-fixed$ghg_abs    <- eiof_absolute_threshold(fixed$ghg, grp, "ghg")
-fixed$biodiv_abs <- eiof_absolute_threshold(fixed$biodiv, grp, "biodiv")
-fixed$biodiv_bnd <- eiof_relative_band(fixed$biodiv, grp, "biodiv")
-fixed$hesd       <- eiof_hesd(fixed$biodiv, fixed$gdqs, grp, form = "binary")
-fixed$hdlei      <- eiof_hdlei(fixed$biodiv, fixed$gdqs, grp, form = "binary")
+fixed$ghg_abs    <- eiof_absolute_threshold(fixed$ghg_kgco2e, grp, "ghg")
+fixed$biodiv_abs <- eiof_absolute_threshold(fixed$biodiv_pdf, grp, "biodiv")
+fixed$biodiv_bnd <- eiof_relative_band(fixed$biodiv_pdf, grp, "biodiv")
+fixed$hesd       <- eiof_hesd(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
+fixed$hdlei      <- eiof_hdlei(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
 
 round(100 * c(
   ghg_below_threshold    = mean(fixed$ghg_abs,    na.rm = TRUE),
@@ -226,22 +294,30 @@ Compare the greenhouse gas figure with the 0% we got before fixing the units.
 ## A reusable pattern
 
 ```r
-# 1. check
-report <- eiof_check_data(dat, impacts = c(...), age = "age", sex = "sex",
+# 1. state which column holds which indicator, once
+my_map <- c(biodiv = "pdf_year", ghg = "ghg_total_kg", water = "water_l")
+
+# 2. check
+report <- eiof_check_data(dat, impacts = my_map, age = "age", sex = "sex",
                           gdqs = "gdqs")
 report
 
-# 2. stop if anything is blocking
+# 3. stop if anything is blocking
 if (!summary(report)$pass) stop("fix the errors above before continuing")
 
-# 3. compute
+# 4. compute
 grp <- eiof_age_sex_group(dat$age, dat$sex)
-dat$biodiv_abs <- eiof_absolute_threshold(dat$biodiv, grp, "biodiv")
-# ...
+abs_all  <- eiof_absolute_all(dat, grp, my_map)
+band_all <- eiof_relative_all(dat, grp, my_map)
 ```
 
 Putting the `stop()` in writing is worth the two lines. A check you can skip is
 a check that gets skipped on the day you are in a hurry.
+
+Note that step 1 is the only place your own column names appear. The **names**
+of `my_map` are reiof's indicator keys; the **values** are your columns. Nothing
+in the package has ever required the two to match — `eiof_demo`'s columns were
+renamed in October 2026 so that the examples stop implying otherwise.
 
 ## Error messages you may hit
 
@@ -251,7 +327,8 @@ a check that gets skipped on the day you are in a hurry.
 | `these values of sex were not recognised` | an extra category, or a typo in a label | recode, or set `male`/`female` explicitly |
 | `is a factor. as.numeric() on a factor returns level codes` | a factor impact column | `as.numeric(as.character(x))`, then re-check |
 | `is character, not numeric` | a stray symbol, decimal comma or thousands separator | find the offending cells, decide what they mean |
-| `column is integer` | impacts read as whole numbers | re-import as double; small values are already lost |
+| `column is integer` / `is an integer vector, not a double` | impacts read as whole numbers | re-import as double; `as.double()` will not bring the digits back |
+| `must be named with an indicator key` | `map`/`impacts` given without names | `c(ghg = "your_column")`, not `c("your_column")` |
 | `indicator must be one of` | a misspelled indicator | `eiof_list_indicators()` |
 | `group has N value(s) outside 1-8` | `group` built by hand | use `eiof_age_sex_group()` |
 | `percentile is required when metric = "rel"` | `eiof_lookup_cutoff()` without a percentile | add `percentile = 30` |

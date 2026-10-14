@@ -37,6 +37,6 @@ prevalence. The two are nested, not independent.
 \examples{
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-table(eiof_low_impact(eiof_demo$biodiv, grp), useNA = "ifany")
+table(eiof_low_impact(eiof_demo$biodiv_pdf, grp), useNA = "ifany")
 
 }

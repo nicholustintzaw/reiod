@@ -59,7 +59,7 @@
 #'
 #' @examples
 #' data(eiof_demo)
-#' eiof_check_impact(eiof_demo$biodiv, name = "biodiv")
+#' eiof_check_impact(eiof_demo$biodiv_pdf, name = "biodiv_pdf")
 #'
 #' # a factor column, the worst of the three import failures
 #' eiof_check_impact(factor(c("3.7e-13", "5.2e-13")), name = "biodiv")
@@ -202,10 +202,10 @@ eiof_check_impact <- function(value, name = "impact", indicator = NULL) {
 #' @examples
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' eiof_check_precision(eiof_demo$biodiv, grp, "biodiv", name = "biodiv")
+#' eiof_check_precision(eiof_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
 #'
 #' # the same values after a single-precision round trip
-#' eiof_check_precision(signif(eiof_demo$biodiv, 7), grp, "biodiv",
+#' eiof_check_precision(signif(eiof_demo$biodiv_pdf, 7), grp, "biodiv",
 #'                      name = "biodiv_float")
 #'
 #' @export
@@ -333,10 +333,10 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 #'
-#' eiof_check_magnitude(eiof_demo$ghg, "ghg", grp, name = "ghg")
+#' eiof_check_magnitude(eiof_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
 #'
 #' # the same data in grams
-#' eiof_check_magnitude(eiof_demo$ghg * 1000, "ghg", grp, name = "ghg_grams")
+#' eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
 #'
 #' @export
 eiof_check_magnitude <- function(value, indicator, group = NULL, name = "impact") {

@@ -51,7 +51,7 @@ eiof_healthy_diet <- function(gdqs, cutoff = 23) {
 #' @examples
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' table(eiof_sustainable_diet(eiof_demo$biodiv, grp), useNA = "ifany")
+#' table(eiof_sustainable_diet(eiof_demo$biodiv_pdf, grp), useNA = "ifany")
 #'
 #' @export
 eiof_sustainable_diet <- function(biodiversity, group) {
@@ -88,7 +88,7 @@ eiof_sustainable_diet <- function(biodiversity, group) {
 #' @examples
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' table(eiof_low_impact(eiof_demo$biodiv, grp), useNA = "ifany")
+#' table(eiof_low_impact(eiof_demo$biodiv_pdf, grp), useNA = "ifany")
 #'
 #' @export
 eiof_low_impact <- function(biodiversity, group, percentile = 30) {
@@ -202,10 +202,10 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 #'
-#' table(eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp))
+#' table(eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
 #'
 #' # everything at once
-#' parts <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "components")
+#' parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
 #' head(parts)
 #'
 #' @export
@@ -274,11 +274,11 @@ eiof_hesd <- function(biodiversity, gdqs, group,
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 #'
-#' table(eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp))
+#' table(eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
 #'
 #' # the nesting: every HDLEI diet is also a HESD diet
-#' a <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
-#' b <- eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
+#' a <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+#' b <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
 #' table(HESD = a, HDLEI = b, useNA = "ifany")
 #'
 #' @export

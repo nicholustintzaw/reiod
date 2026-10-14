@@ -23,8 +23,8 @@ test_that("a GDQS of exactly 23 counts as healthy", {
 test_that("the binary form is exactly category 1", {
   grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
   suppressMessages({
-    cat4 <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "category")
-    bin  <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
+    cat4 <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "category")
+    bin  <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
   })
   expect_equal(bin, ifelse(is.na(cat4), NA_integer_,
                            as.integer(as.integer(cat4) == 1L)))
@@ -35,13 +35,13 @@ test_that("sub-indicators equal the standalone functions", {
   eligible <- !(grp %in% c(1L, 5L))
 
   suppressMessages({
-    h <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "components")
-    d <- eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "components")
+    h <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
+    d <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
   })
 
   standalone_healthy <- eiof_healthy_diet(eiof_demo$gdqs)
-  standalone_sust    <- eiof_sustainable_diet(eiof_demo$biodiv, grp)
-  standalone_low     <- eiof_low_impact(eiof_demo$biodiv, grp)
+  standalone_sust    <- eiof_sustainable_diet(eiof_demo$biodiv_pdf, grp)
+  standalone_low     <- eiof_low_impact(eiof_demo$biodiv_pdf, grp)
 
   expect_equal(h$healthy[eligible], standalone_healthy[eligible])
   expect_equal(h$env[eligible],     standalone_sust[eligible])

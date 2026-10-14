@@ -51,15 +51,15 @@ you get roughly 10% of observations in each band **by construction**:
 
 ```{r}
 # WRONG: ranks the sample against itself
-wrong <- cut(eiof_demo$biodiv,
-             breaks = quantile(eiof_demo$biodiv, seq(0, 1, 0.1), na.rm = TRUE),
+wrong <- cut(eiof_demo$biodiv_pdf,
+             breaks = quantile(eiof_demo$biodiv_pdf, seq(0, 1, 0.1), na.rm = TRUE),
              labels = 1:10, include.lowest = TRUE)
 table(wrong)
 ```
 
 ```{r}
 # RIGHT: compares against the published global reference
-right <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv")
+right <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
 table(right)
 ```
 
@@ -100,7 +100,7 @@ The paper gives two forms. The first is the distribution:
 > capita dietary total land use."*
 
 ```{r}
-round(100 * prop.table(table(eiof_relative_band(eiof_demo$landtotal, grp,
+round(100 * prop.table(table(eiof_relative_band(eiof_demo$land_total_m2yr, grp,
                                                 "landtotal"))), 1)
 ```
 
@@ -108,7 +108,7 @@ The second is a mean position, for which `midpoint = TRUE` gives band midpoints
 (5, 15, … 95):
 
 ```{r}
-mid <- eiof_relative_band(eiof_demo$landtotal, grp, "landtotal",
+mid <- eiof_relative_band(eiof_demo$land_total_m2yr, grp, "landtotal",
                           midpoint = TRUE)
 mean(mid, na.rm = TRUE)
 ```

@@ -65,11 +65,11 @@ As for HESD, results are `NA` for respondents under 2 years.
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-table(eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp))
+table(eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
 
 # the nesting: every HDLEI diet is also a HESD diet
-a <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
-b <- eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
+a <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+b <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
 table(HESD = a, HDLEI = b, useNA = "ifany")
 
 }

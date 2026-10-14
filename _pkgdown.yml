@@ -23,6 +23,7 @@ articles:
     navbar: ~
     contents:
       - reiof
+      - precision
       - relative-benchmarks
       - troubleshooting
 
@@ -40,6 +41,8 @@ reference:
     contents:
       - eiof_absolute_threshold
       - eiof_relative_band
+      - eiof_absolute_all
+      - eiof_relative_all
       - eiof_hesd
       - eiof_hdlei
 
@@ -74,6 +77,7 @@ reference:
       - eiof_cutoffs
       - eiof_indicators
       - eiof_demo
+      - eiof_demo_map
 
   - title: Package
     contents:

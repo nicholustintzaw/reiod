@@ -224,3 +224,53 @@ test_that("eiof_lookup_cutoff returns the published values", {
   expect_error(eiof_lookup_cutoff("ghg", metric = "rel"), "percentile.*required")
   expect_error(eiof_lookup_cutoff("nonsense", metric = "abs"), "must be one of")
 })
+
+
+test_that("the literal published text ships, and matches the double", {
+  expect_true("value_published_str" %in% names(eiof_cutoffs))
+  expect_type(eiof_cutoffs$value_published_str, "character")
+  expect_identical(as.numeric(eiof_cutoffs$value_published_str),
+                   eiof_cutoffs$value_published)
+
+  # a value needing 14 significant digits, compared as TEXT rather than as a
+  # rendering of a double
+  s <- eiof_cutoffs$value_published_str[eiof_cutoffs$metric == "abs" &
+    eiof_cutoffs$indicator == "water" & eiof_cutoffs$demogroup == 8]
+  expect_identical(s, "1726.3821057877")
+})
+
+test_that("eiof_lookup_cutoff prints every published digit", {
+  x <- eiof_lookup_cutoff("water", group = 8, metric = "abs")
+  expect_s3_class(x, "eiof_cutoff")
+
+  out <- paste(utils::capture.output(print(x)), collapse = " ")
+  expect_match(out, "1726.3821057877", fixed = TRUE)
+
+  # R's default options(digits = 7) would have truncated it, which is the whole
+  # reason for the print method. c() drops the class and the metadata but keeps
+  # the names, so this is what the bare vector would have shown.
+  bare <- paste(utils::capture.output(print(c(x))), collapse = " ")
+  expect_false(grepl("1726.3821057877", bare, fixed = TRUE))
+  expect_match(bare, "1726.382", fixed = TRUE)
+
+  # the class must not leak into arithmetic or subsetting
+  expect_false(inherits(x * 2, "eiof_cutoff"))
+  expect_false(inherits(x[1], "eiof_cutoff"))
+  expect_false(inherits(c(x, 1), "eiof_cutoff"))
+  expect_type(as.numeric(x), "double")
+  expect_equal(unname(as.numeric(x)), 1726.3821057877)
+})
+
+test_that("the rescaled eutrophication rows are reported as such when printed", {
+  x <- eiof_lookup_cutoff("eutroph", metric = "rel", percentile = 20)
+  out <- paste(utils::capture.output(print(x)), collapse = " ")
+  expect_match(out, "as printed")
+  expect_match(out, "8.3451357297", fixed = TRUE)
+
+  # published = TRUE gives the unscaled figure, and then there is nothing to
+  # contrast it with
+  y <- eiof_lookup_cutoff("eutroph", metric = "rel", percentile = 20,
+                          published = TRUE)
+  expect_equal(unname(as.numeric(y))[2], 8.3451357297)
+  expect_equal(unname(as.numeric(x))[2], 0.0083451357297, tolerance = 1e-15)
+})

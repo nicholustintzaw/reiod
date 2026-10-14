@@ -50,6 +50,11 @@
 #' *position in the reference distribution*; it is not a summary of impact. For
 #' a mean impact, average the impact variable itself.
 #'
+#' @section Storage type is checked here, not only in the check suite:
+#' As for [eiof_absolute_threshold()], an integer `value` is refused. See that
+#' function for why `is.numeric()` alone is not enough. The rest of the data
+#' quality suite remains opt-in; run `vignette("precision")` first.
+#'
 #' @param value Numeric vector of per capita daily impact.
 #' @param group Integer vector of demographic groups 1-8, from
 #'   [eiof_age_sex_group()].
@@ -57,31 +62,51 @@
 #'   [eiof_list_indicators()].
 #' @param midpoint If `TRUE`, return the band midpoint percentile (5, 15, ...
 #'   95) instead of the band number. Default `FALSE`.
+#' @param details If `TRUE`, return a data frame that also reports the band
+#'   boundaries each observation was placed between. Default `FALSE`.
 #'
 #' @return An integer vector of bands 1-10, or of midpoints if
 #'   `midpoint = TRUE`. `NA` where the impact or the group is missing.
 #'
-#' @seealso [eiof_absolute_threshold()], [eiof_low_impact()]
+#'   If `details = TRUE`, a data frame with one row per observation and the
+#'   columns `value`, `group`, `band`, `cut_lower` and `cut_upper`. `cut_lower`
+#'   is the highest published percentile the value cleared, and is `NA` in
+#'   band 1 - correctly, because nothing is published below P10. `cut_upper` is
+#'   `NA` in band 10 for the same reason. (Equivalent to `cutvar()` in the
+#'   companion Stata command.)
+#'
+#' @seealso [eiof_absolute_threshold()], [eiof_relative_all()],
+#'   [eiof_low_impact()]
 #'
 #' @examples
 #' data(eiof_demo)
 #' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 #'
-#' band <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv")
+#' # the column is biodiv_pdf; the indicator key is "biodiv"
+#' band <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
 #' table(band, useNA = "ifany")
 #'
 #' # mean position in the global reference distribution
-#' mid <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv", midpoint = TRUE)
+#' mid <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+#'                           midpoint = TRUE)
 #' mean(mid, na.rm = TRUE)
 #'
+#' # the decile boundaries each diet was judged against
+#' head(eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+#'                         details = TRUE))
+#'
 #' @export
-eiof_relative_band <- function(value, group, indicator, midpoint = FALSE) {
+eiof_relative_band <- function(value, group, indicator, midpoint = FALSE,
+                               details = FALSE) {
 
   .eiof_check_indicator(indicator)
   .eiof_check_value(value)
   .eiof_check_group(group, n = length(value))
   if (!is.logical(midpoint) || length(midpoint) != 1L || is.na(midpoint)) {
     stop("`midpoint` must be TRUE or FALSE.", call. = FALSE)
+  }
+  if (!is.logical(details) || length(details) != 1L || is.na(details)) {
+    stop("`details` must be TRUE or FALSE.", call. = FALSE)
   }
 
   cp <- .eiof_rel_cutpoints(indicator)   # 8 x 9
@@ -92,6 +117,30 @@ eiof_relative_band <- function(value, group, indicator, midpoint = FALSE) {
     if (!length(idx)) next
     # band = 1 + (number of cut-points the value equals or exceeds)
     out[idx] <- 1L + as.integer(colSums(outer(cp[g, ], value[idx], "<=")))
+  }
+
+  if (details) {
+    if (midpoint) {
+      stop("`midpoint` and `details` cannot both be TRUE: the detail table ",
+           "reports the band and its boundaries, which a midpoint replaces.",
+           call. = FALSE)
+    }
+    lo <- hi <- rep(NA_real_, length(value))
+    known <- which(!is.na(out))
+    # band b sits between cut-point b-1 and cut-point b; band 1 has no lower
+    # bound and band 10 no upper, because nothing is published outside P10-P90.
+    b <- out[known]
+    g <- group[known]
+    has_lo <- b >= 2L
+    has_hi <- b <= 9L
+    if (any(has_lo)) {
+      lo[known[has_lo]] <- cp[cbind(g[has_lo], b[has_lo] - 1L)]
+    }
+    if (any(has_hi)) {
+      hi[known[has_hi]] <- cp[cbind(g[has_hi], b[has_hi])]
+    }
+    return(data.frame(value = as.numeric(value), group = as.integer(group),
+                      band = out, cut_lower = lo, cut_upper = hi))
   }
 
   if (midpoint) out <- out * 10L - 5L

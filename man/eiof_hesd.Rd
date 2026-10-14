@@ -66,10 +66,10 @@ two dimensions of a 2x2.
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-table(eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp))
+table(eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
 
 # everything at once
-parts <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "components")
+parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
 head(parts)
 
 }

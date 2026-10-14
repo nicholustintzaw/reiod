@@ -4,7 +4,7 @@
 \alias{eiof_absolute_threshold}
 \title{Absolute threshold metric (Table 3)}
 \usage{
-eiof_absolute_threshold(value, group, indicator)
+eiof_absolute_threshold(value, group, indicator, details = FALSE)
 }
 \arguments{
 \item{value}{Numeric vector of per capita daily impact, already summed
@@ -16,10 +16,20 @@ across everything the respondent consumed that day, in the unit shown by
 
 \item{indicator}{One of `"landtotal"`, `"landarable"`, `"landpasture"`,
 `"ghg"`, `"eutroph"`, `"water"`, `"biodiv"`.}
+
+\item{details}{If `TRUE`, return a data frame that also reports the threshold
+each observation was actually compared against, rather than just the
+result. Default `FALSE`.}
 }
 \value{
 An integer vector: `1` below the threshold, `0` at or above it, `NA`
   where the impact or the group is missing.
+
+  If `details = TRUE`, a data frame with one row per observation and the
+  columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
+  threshold applied to that row, so a reader can audit the comparison without
+  opening the reference table. (Equivalent to `threshvar()` in the companion
+  Stata command.)
 }
 \description{
 Codes a one-day diet `1` if its per capita environmental impact falls below
@@ -28,7 +38,7 @@ and `0` if it does not.
 }
 \section{Interpretation}{
 
-"x% of one-day diets fall below the absolute per capita daily threshold
+"x\% of one-day diets fall below the absolute per capita daily threshold
 established for \[indicator\]."
 
 This is a pass/fail against a planetary boundary share. It says nothing
@@ -52,21 +62,38 @@ coerced can turn missing data into an apparent threshold breach. Here the
 guard is explicit.
 }
 
+\section{Storage type is checked here, not only in the check suite}{
+
+An integer `value` is refused with an error. `is.numeric(1L)` is `TRUE`, so
+an integer column would otherwise pass every guard and be compared against
+the threshold with its fractional part already truncated away. Measured on
+200,000 simulated respondent-days in the companion Stata implementation, that
+biased mean greenhouse gas emissions down by 13\%. Convert with `as.double()`.
+
+This is the only data-quality test on the default path. The fuller suite -
+sign, zeros, unit magnitude, retained significant digits, cut-off proximity -
+is in [eiof_check_data()] and [eiof_check_precision()], and is **not** run for
+you. Run it first; see `vignette("precision")`.
+}
+
 \examples{
 data(eiof_demo)
 grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg, grp, "ghg")
+# the column is called ghg_kgco2e; the indicator key is "ghg".
+# They are different things, and your data will not use the keys.
+ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
 table(ghg_ok, useNA = "ifany")
 
-# all seven indicators
-for (ind in eiof_indicators$indicator) {
-  x <- eiof_absolute_threshold(eiof_demo[[ind]], grp, ind)
-  cat(sprintf("\%-12s \%5.1f\%\% below threshold\n", ind, 100 * mean(x, na.rm = TRUE)))
-}
+# which number each respondent was compared against
+head(eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg",
+                             details = TRUE))
+
+# all seven indicators: state the mapping from indicator key to column
+eiof_absolute_all(eiof_demo, grp, eiof_demo_map)[1:3, ]
 
 }
 \seealso{
-[eiof_relative_band()], [eiof_lookup_cutoff()],
-  [eiof_check_data()]
+[eiof_relative_band()], [eiof_absolute_all()],
+  [eiof_lookup_cutoff()], [eiof_check_data()]
 }

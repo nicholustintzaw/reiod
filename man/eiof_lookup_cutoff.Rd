@@ -2,6 +2,8 @@
 % Please edit documentation in R/lookup.R
 \name{eiof_lookup_cutoff}
 \alias{eiof_lookup_cutoff}
+\alias{print.eiof_cutoff}
+\alias{Ops.eiof_cutoff}
 \title{Look up a published cut-off value}
 \usage{
 eiof_lookup_cutoff(
@@ -11,6 +13,10 @@ eiof_lookup_cutoff(
   percentile = NULL,
   published = FALSE
 )
+
+\method{print}{eiof_cutoff}(x, digits = 15, ...)
+
+\method{Ops}{eiof_cutoff}(e1, e2)
 }
 \arguments{
 \item{indicator}{One of the seven indicator names.}
@@ -25,17 +31,53 @@ to 90.}
 
 \item{published}{If `TRUE`, return the value exactly as printed in the
 paper rather than the harmonised value the metric functions use. The two
-differ only for relative eutrophication; see
-`vignette("reiof")`.}
+differ only for relative eutrophication - 80 rows of 616, all of them
+relative; see `vignette("reiof")`.}
+
+\item{x}{An `eiof_cutoff` object.}
+
+\item{digits}{Significant digits to display. The default of 15 shows every
+published digit; the widest cut-off in the tables needs 14.}
+
+\item{...}{Ignored.}
+
+\item{e1, e2}{Operands.}
 }
 \value{
-A named numeric vector, named by demographic group label.
+A named numeric vector of class `eiof_cutoff`, named by demographic
+  group label. Use `print(x, digits = )` to change the displayed precision,
+  or `as.numeric(x)` to drop the class.
 }
 \description{
 Returns the cut-off itself, rather than applying it. Useful for reporting
 which number a respondent was compared against, and for checking the
 package against the printed tables.
 }
+\section{Printing, and why it has its own method}{
+
+The published cut-offs need up to **14 significant digits** - `water` for
+Female 10+ is `1726.3821057877`, and 15 of the 616 values need all 14. R's
+default `options(digits = 7)` would print that as `1726.382`, which looks as
+though the package had rounded the guideline.
+
+Storage was never the problem; the default *display* was. The returned object
+therefore carries a class and a print method that uses 15 significant digits
+and shows, alongside each value, the literal text transcribed from the paper:
+
+```
+  Male 10+ yr    14.2377570161    as printed 14.2377570161
+```
+
+The `as printed` column is `value_published_str` from [eiof_cutoffs] - a
+character string that has never been through a numeric type. If you need an
+exact decimal comparison against the PDF, compare against that, not against a
+rendering of a double. (The identical complaint, and the identical fix, arose
+in the companion Stata package in October 2026.)
+
+The object is an ordinary named numeric underneath: `[`, `c()` and arithmetic
+all return plain numbers, so nothing downstream needs to know about the class.
+}
+
 \examples{
 # the HESD biodiversity criterion, all groups
 eiof_lookup_cutoff("biodiv", metric = "abs")
@@ -43,7 +85,10 @@ eiof_lookup_cutoff("biodiv", metric = "abs")
 # the HDLEI biodiversity criterion
 eiof_lookup_cutoff("biodiv", metric = "rel", percentile = 30)
 
-# one group
-eiof_lookup_cutoff("ghg", group = 4, metric = "abs")
+# one group, printed to every published digit
+eiof_lookup_cutoff("water", group = 8, metric = "abs")
+
+# what R's default options(digits = 7) would have shown instead
+print(c(eiof_lookup_cutoff("water", group = 8, metric = "abs")))
 
 }

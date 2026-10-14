@@ -129,7 +129,7 @@ unassigned, and they would then vanish from every metric with no error raised.
 ## Step 2 — absolute threshold metrics (Table 3)
 
 ```{r}
-ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg, grp, "ghg")
+ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
 table(ghg_ok, useNA = "ifany")
 ```
 
@@ -139,25 +139,60 @@ threshold established for greenhouse gas emissions."*
 The comparison is strict — the published cut-offs carry a `<` sign, so a diet
 sitting exactly on the threshold is coded `0`, not `1`.
 
-All seven at once:
+### The indicator key and your column name are different things
+
+Note what that call does **not** say. `"ghg"` is the indicator key reiof knows;
+`ghg_kgco2e` is what the column happens to be called in this dataset. reiof
+takes a vector, so your column can be called anything.
+
+This is worth stating because it is easy to conclude otherwise. The demo data
+used to have columns named `ghg`, `biodiv`, `landtotal` — the keys themselves —
+which made a tidy-looking loop possible and taught people that a rename was
+required. It never was. The columns were renamed in October 2026 for exactly
+that reason.
+
+State the mapping once and the rest follows:
 
 ```{r}
-for (ind in eiof_indicators$indicator) {
-  x <- eiof_absolute_threshold(eiof_demo[[ind]], grp, ind)
-  cat(sprintf("%-12s %5.1f%% below threshold\n", ind, 100 * mean(x, na.rm = TRUE)))
-}
+eiof_demo_map
 ```
 
-To see which number a respondent was compared against:
+```{r}
+abs_all <- eiof_absolute_all(eiof_demo, grp, eiof_demo_map)
+round(100 * colMeans(abs_all, na.rm = TRUE), 1)
+```
+
+For your own data the line is the same shape:
+
+```r
+my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
+```
+
+Supply any subset — there is no need to have all seven.
+
+### Which number was each respondent compared against?
 
 ```{r}
 eiof_lookup_cutoff("ghg", metric = "abs")
 ```
 
+Those are printed to 15 significant digits on purpose. The published cut-offs
+need up to 14, and R's default `options(digits = 7)` would show
+`1726.3821057877` as `1726.382`, which looks as though the package had rounded
+the guideline. It had not — only the display was short. The `as printed` column
+is the literal text transcribed from the paper, so you can check it character
+for character rather than trusting a rendering of a double.
+
+Per observation, rather than per group:
+
+```{r}
+head(eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg", details = TRUE), 4)
+```
+
 ## Step 3 — relative benchmark metrics (Tables 4a–4g)
 
 ```{r}
-band <- eiof_relative_band(eiof_demo$biodiv, grp, "biodiv")
+band <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
 table(band, useNA = "ifany")
 ```
 
@@ -166,6 +201,16 @@ a fixed external reference distribution, the same for every analysis anywhere in
 the world. See `vignette("relative-benchmarks")` for what that distribution is,
 how it was built, and why `quantile()` is the wrong tool.
 
+There is a batch form here too, and a `details` form that shows the decile
+boundaries each diet was placed between:
+
+```{r}
+head(eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv", details = TRUE), 4)
+```
+
+`cut_lower` is `NA` in band 1 and `cut_upper` is `NA` in band 10 — correctly,
+because nothing is published below P10 or above P90.
+
 ## Step 4 — the composite metrics (Tables 5a, 5b)
 
 Both combine a diet quality criterion (GDQS ≥ 23) with an environmental one.
@@ -173,14 +218,14 @@ They differ only in the environmental criterion: HESD uses the **absolute**
 biodiversity threshold, HDLEI the **relative** 30th percentile.
 
 ```{r}
-table(eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp))
+table(eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
 ```
 
 Each criterion is also available on its own, which is often what you want for
 reporting:
 
 ```{r}
-parts <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "components")
+parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
 head(parts, 4)
 ```
 
@@ -213,7 +258,16 @@ relative eutrophication only.
 
 **This is an inference, not a documented conversion.** It is isolated in the
 `scale_to_db_unit` column of `eiof_cutoffs` so it can be switched off in one
-place. Confirm with Intake before publishing any eutrophication result.
+place. It affects **80 of the 616 rows, all of them relative eutrophication**,
+and no other indicator anywhere in the file:
+
+```{r}
+with(eiof_cutoffs, table(indicator, rescaled = scale_to_db_unit != 1))
+```
+
+`eiof_lookup_cutoff(..., published = TRUE)` returns the unscaled figure, and the
+print method flags the rescaling whenever it applies. Confirm with Intake before
+publishing any eutrophication result.
 
 ### 2. A low relative band is not evidence of sustainability
 
@@ -242,8 +296,8 @@ together; never use one as a proxy for the other.
 ### 3. HDLEI is nested inside HESD
 
 ```{r}
-h <- eiof_hesd(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
-d <- eiof_hdlei(eiof_demo$biodiv, eiof_demo$gdqs, grp, form = "binary")
+h <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+d <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
 table(HESD = h, HDLEI = d, useNA = "ifany")
 ```
 
@@ -273,14 +327,25 @@ and the right precision. They very often are not, and the failures are quiet.
 ```{r}
 report <- eiof_check_data(
   eiof_demo,
-  impacts = c(biodiv = "biodiv", ghg = "ghg"),
+  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
   age = "age", sex = "sex", gdqs = "gdqs"
 )
 summary(report)
 ```
 
-`vignette("troubleshooting")` walks through a deliberately broken dataset, the
-errors it produces, and how to fix each one.
+**These checks are not run for you.** Only one test is on the default path:
+the metric functions refuse an integer impact vector, because
+`is.numeric(1L)` is `TRUE` and nothing else would catch it. Everything else —
+sign, zeros, unit magnitude, retained significant digits, cut-off proximity —
+happens only if you call `eiof_check_data()`.
+
+Two vignettes cover it:
+
+* `vignette("precision")` — the pre-flight precision check, and how to decide
+  whether lost digits matter for *your* data. Run this before you generate any
+  indicator.
+* `vignette("troubleshooting")` — a deliberately broken dataset, the errors it
+  produces, and how to fix each one.
 
 ## Survey weights
 

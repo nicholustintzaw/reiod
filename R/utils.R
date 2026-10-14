@@ -100,6 +100,15 @@
 }
 
 #' Validate a numeric impact vector
+#'
+#' This runs on the path every metric function takes, so it carries the checks
+#' that must never be skippable. The fuller diagnostics live in
+#' [eiof_check_impact()], which reports rather than stops; this one stops.
+#'
+#' The integer branch was added after the companion Stata implementation
+#' measured the cost of the equivalent fault. See [eiof_check_impact()] for why
+#' `is.numeric()` alone is not enough: `is.numeric(1L)` is `TRUE`.
+#'
 #' @noRd
 .eiof_check_value <- function(value, arg = "value") {
   if (is.factor(value)) {
@@ -114,10 +123,37 @@
          "comma, or a thousands separator. See eiof_check_impact().",
          call. = FALSE)
   }
+  if (is.integer(value)) {
+    stop("`", arg, "` is an integer vector, not a double. Integer storage ",
+         "truncates toward zero, so the fractional part of every impact is ",
+         "already gone before reiof sees it - and `is.numeric()` returns TRUE ",
+         "for an integer, so nothing else would catch this. ",
+         "On 200,000 simulated respondent-days the companion Stata ",
+         "implementation measured a 13% downward bias in mean greenhouse gas ",
+         "emissions from exactly this fault. ",
+         "Convert with as.double(x), then re-check. See eiof_check_impact().",
+         call. = FALSE)
+  }
   if (!is.numeric(value)) {
     stop("`", arg, "` must be numeric.", call. = FALSE)
   }
   invisible(TRUE)
+}
+
+#' Strip reiof's own attributes from a vector
+#'
+#' `eiof_lookup_cutoff()` returns a classed vector so it can print at published
+#' precision. Arithmetic on it should return a plain number, not drag the class
+#' and its metadata along into an unrelated result.
+#'
+#' @noRd
+.eiof_bare <- function(x) {
+  if (inherits(x, "eiof_cutoff")) {
+    nm <- names(x)
+    x <- as.vector(x)
+    names(x) <- nm
+  }
+  x
 }
 
 #' Number of significant digits needed to reproduce each value exactly

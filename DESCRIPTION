@@ -1,6 +1,6 @@
 Package: reiof
 Title: Dietary Environmental Impact Metrics from the Intake EIOF Framework
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R:
     person(given = c("Nicholus", "Tint"),
            family = "Zaw",

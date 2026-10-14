@@ -6,7 +6,7 @@ has_level <- function(report, lvl, check = NULL) {
 
 test_that("clean data produces no errors", {
   rep <- eiof_check_data(eiof_demo,
-                         impacts = c(biodiv = "biodiv", ghg = "ghg"),
+                         impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
                          age = "age", sex = "sex", gdqs = "gdqs")
   expect_s3_class(rep, "eiof_check")
   expect_false(has_level(rep, "error"))
@@ -77,16 +77,16 @@ test_that("cut-off proximity reports the rows that could flip", {
 test_that("the magnitude check names a unit error", {
   grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
 
-  ok <- eiof_check_magnitude(eiof_demo$ghg, "ghg", grp, name = "ghg")
+  ok <- eiof_check_magnitude(eiof_demo$ghg_kgco2e, "ghg", grp, name = "ghg")
   expect_false(has_level(ok, "warning"))
 
   # the same data in grams
-  bad <- eiof_check_magnitude(eiof_demo$ghg * 1000, "ghg", grp, name = "ghg")
+  bad <- eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg")
   expect_true(has_level(bad, "warning", "magnitude"))
   expect_match(bad$message[1], "g <-> kg")
 
   # litres given as cubic metres
-  badw <- eiof_check_magnitude(eiof_demo$water / 1000, "water", grp)
+  badw <- eiof_check_magnitude(eiof_demo$water_litres / 1000, "water", grp)
   expect_true(has_level(badw, "warning", "magnitude"))
 })
 
@@ -123,8 +123,10 @@ test_that("eiof_check_data catches every planted fault in the broken file", {
   broken <- utils::read.csv(path, stringsAsFactors = FALSE)
 
   rep <- eiof_check_data(broken,
-                         impacts = c(biodiv = "biodiv", ghg = "ghg",
-                                     water = "water"),
+                         impacts = c(biodiv = "biodiv_pdf",
+                                     ghg = "ghg_kgco2e",
+                                     water = "water_litres",
+                                     landarable = "land_arable_m2yr"),
                          age = "age", sex = "sex", gdqs = "gdqs")
 
   expect_true(summary(rep)$n_error > 0)
@@ -133,22 +135,23 @@ test_that("eiof_check_data catches every planted fault in the broken file", {
   msgs <- paste(rep$message, collapse = " | ")
   expect_match(msgs, "character")      # biodiv imported as text
   expect_match(msgs, "cannot tell which code means male")   # sex 0/1
+  expect_match(msgs, "column is integer")                   # arable land
 })
 
 test_that("missing columns are reported, not silently skipped", {
-  rep <- eiof_check_data(eiof_demo, impacts = c(biodiv = "nope"))
+  rep <- eiof_check_data(eiof_demo, impacts = c(biodiv = "no_such_column"))
   expect_true(has_level(rep, "error", "structure"))
 })
 
 test_that("an unknown indicator name is rejected", {
-  expect_error(eiof_check_data(eiof_demo, impacts = c(wrong = "biodiv")),
+  expect_error(eiof_check_data(eiof_demo, impacts = c(wrong = "biodiv_pdf")),
                "unknown indicator")
-  expect_error(eiof_check_data(eiof_demo, impacts = c("biodiv")),
+  expect_error(eiof_check_data(eiof_demo, impacts = c("biodiv_pdf")),
                "NAMED character vector")
 })
 
 test_that("the report prints and summarises", {
-  rep <- eiof_check_data(eiof_demo, impacts = c(ghg = "ghg"),
+  rep <- eiof_check_data(eiof_demo, impacts = c(ghg = "ghg_kgco2e"),
                          age = "age", sex = "sex")
   expect_output(print(rep), "reiof data quality report")
   s <- summary(rep)

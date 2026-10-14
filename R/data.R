@@ -27,7 +27,34 @@
 #' result. Every other indicator reconciles between the two tables without
 #' adjustment.
 #'
-#' @format A data frame with 616 rows and 15 columns:
+#' @section Checking a value against the printed table:
+#' Three columns carry the same number in three forms, so that a reader can
+#' check the package without having to trust any numeric rendering:
+#'
+#' \tabular{ll}{
+#'   `value_published_str` \tab the literal characters from the paper, never
+#'     through a numeric type \cr
+#'   `value_published` \tab the nearest IEEE 754 double to that text \cr
+#'   `value` \tab the above times `scale_to_db_unit` - what the metric
+#'     functions compare against
+#' }
+#'
+#' `data-raw/build_data.R` asserts that
+#' `as.numeric(value_published_str) == value_published` for all 616 rows, and
+#' that each parsed value still prints back to exactly its published digits.
+#'
+#' A `double` cannot hold most decimal fractions exactly - that is true of every
+#' statistical package, not of this one. What is guaranteed here is that the
+#' stored double is the nearest double to the published decimal, that it
+#' round-trips back to that decimal, and that the decimal itself is in the file
+#' as text. **If you need an exact decimal comparison, compare against
+#' `value_published_str`.**
+#'
+#' Note that R's default `options(digits = 7)` will not show you a published
+#' value in full: 15 of the 616 need 14 significant digits.
+#' [eiof_lookup_cutoff()] prints at full precision for this reason.
+#'
+#' @format A data frame with 616 rows and 16 columns:
 #' \describe{
 #'   \item{metric}{`"abs"` for Table 3, `"rel"` for Tables 4a-4g}
 #'   \item{table}{Source table: `"3"`, `"4a"` ... `"4g"`}
@@ -43,8 +70,11 @@
 #'     for row 10, which repeats P90 as a lower bound}
 #'   \item{value}{**The cut-off the metric functions compare against**}
 #'   \item{value_published}{The value exactly as printed in the paper}
-#'   \item{scale_to_db_unit}{Multiplier linking the two; 1 except as described
-#'     above}
+#'   \item{value_published_str}{The same value as a character string, exactly as
+#'     transcribed. Shipped so the published figure can be compared character
+#'     for character, not as a rendering of a double}
+#'   \item{scale_to_db_unit}{Multiplier linking `value_published` to `value`;
+#'     1 except for the 80 relative eutrophication rows described above}
 #' }
 #'
 #' @source Intake-EIOD-Methods-Paper-Jan2026-Final.pdf, Tables 3 and 4a-4g
@@ -88,23 +118,37 @@
 #' distributions chosen to be roughly plausible. No prevalence computed from
 #' this dataset carries any substantive meaning.
 #'
-#' A small amount of missingness is included in `biodiv` and `gdqs` so examples
-#' show how it propagates.
+#' A small amount of missingness is included in `biodiv_pdf` and `gdqs` so
+#' examples show how it propagates.
+#'
+#' @section The column names are deliberately not the indicator keys:
+#' Until October 2026 the impact columns were called `landtotal`, `ghg`,
+#' `biodiv` and so on - the same strings the `indicator` argument takes. That
+#' made the examples tidy and taught something false: a loop over
+#' `eiof_demo[[ind]]` works only because the columns happen to be named after
+#' the keys, and readers concluded that reiof required those names.
+#'
+#' It never did. reiof takes vectors, so any column name has always worked. The
+#' columns now carry survey-realistic names with their units, which forces every
+#' example to state the indicator-to-column mapping explicitly. See
+#' [eiof_demo_map] and [eiof_absolute_all()].
 #'
 #' @format A data frame with 600 rows and 11 columns:
 #' \describe{
 #'   \item{id}{Row identifier}
 #'   \item{age}{Age in years, 0.5 to 65}
 #'   \item{sex}{Factor with levels `"male"` and `"female"`}
-#'   \item{landtotal, landarable, landpasture}{Land use, m2*year}
-#'   \item{ghg}{Greenhouse gas emissions, kg CO2eq}
-#'   \item{eutroph}{Eutrophication potential, kg PO4(3-)eq}
-#'   \item{water}{Water use, litres}
-#'   \item{biodiv}{Biodiversity loss, PDF*year}
+#'   \item{land_total_m2yr, land_arable_m2yr, land_pasture_m2yr}{Land use,
+#'     m2*year}
+#'   \item{ghg_kgco2e}{Greenhouse gas emissions, kg CO2eq}
+#'   \item{eutroph_kgpo4e}{Eutrophication potential, kg PO4(3-)eq}
+#'   \item{water_litres}{Water use, litres}
+#'   \item{biodiv_pdf}{Biodiversity loss, PDF*year}
 #'   \item{gdqs}{Global Diet Quality Score}
 #' }
 #'
-#' @seealso A deliberately broken copy ships as
+#' @seealso [eiof_demo_map] for the indicator-to-column mapping. A deliberately
+#'   broken copy ships as
 #'   `system.file("extdata", "eiof_broken.csv", package = "reiof")` and is used
 #'   in `vignette("troubleshooting")`.
 #'
@@ -112,3 +156,27 @@
 #' data(eiof_demo)
 #' head(eiof_demo)
 "eiof_demo"
+
+
+#' Indicator keys mapped to the demonstration data's column names
+#'
+#' A named character vector in the shape every `*_all()` function expects: the
+#' **name** is the indicator key reiof knows, the **value** is the column in
+#' [eiof_demo] that holds it.
+#'
+#' It is shipped rather than retyped in each example, and it exists at all
+#' because [eiof_demo]'s columns are deliberately *not* named after the
+#' indicator keys. Write the equivalent line for your own data once, near the
+#' top of your script, and every later call reads from it.
+#'
+#' @format A named character vector of length 7.
+#'
+#' @seealso [eiof_absolute_all()], [eiof_relative_all()], [eiof_demo]
+#'
+#' @examples
+#' data(eiof_demo_map)
+#' eiof_demo_map
+#'
+#' # the same shape, for your own data:
+#' # my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
+"eiof_demo_map"

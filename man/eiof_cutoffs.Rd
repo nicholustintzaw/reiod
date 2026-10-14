@@ -5,7 +5,7 @@
 \alias{eiof_cutoffs}
 \title{Published cut-offs for every dietary environmental impact metric}
 \format{
-A data frame with 616 rows and 15 columns:
+A data frame with 616 rows and 16 columns:
 \describe{
   \item{metric}{`"abs"` for Table 3, `"rel"` for Tables 4a-4g}
   \item{table}{Source table: `"3"`, `"4a"` ... `"4g"`}
@@ -21,8 +21,11 @@ A data frame with 616 rows and 15 columns:
     for row 10, which repeats P90 as a lower bound}
   \item{value}{**The cut-off the metric functions compare against**}
   \item{value_published}{The value exactly as printed in the paper}
-  \item{scale_to_db_unit}{Multiplier linking the two; 1 except as described
-    above}
+  \item{value_published_str}{The same value as a character string, exactly as
+    transcribed. Shipped so the published figure can be compared character
+    for character, not as a rendering of a double}
+  \item{scale_to_db_unit}{Multiplier linking `value_published` to `value`;
+    1 except for the 80 relative eutrophication rows described above}
 }
 }
 \source{
@@ -62,6 +65,35 @@ This is an inference from internal consistency, **not a documented
 conversion**. Confirm with Intake before publishing any eutrophication
 result. Every other indicator reconciles between the two tables without
 adjustment.
+}
+
+\section{Checking a value against the printed table}{
+
+Three columns carry the same number in three forms, so that a reader can
+check the package without having to trust any numeric rendering:
+
+\tabular{ll}{
+  `value_published_str` \tab the literal characters from the paper, never
+    through a numeric type \cr
+  `value_published` \tab the nearest IEEE 754 double to that text \cr
+  `value` \tab the above times `scale_to_db_unit` - what the metric
+    functions compare against
+}
+
+`data-raw/build_data.R` asserts that
+`as.numeric(value_published_str) == value_published` for all 616 rows, and
+that each parsed value still prints back to exactly its published digits.
+
+A `double` cannot hold most decimal fractions exactly - that is true of every
+statistical package, not of this one. What is guaranteed here is that the
+stored double is the nearest double to the published decimal, that it
+round-trips back to that decimal, and that the decimal itself is in the file
+as text. **If you need an exact decimal comparison, compare against
+`value_published_str`.**
+
+Note that R's default `options(digits = 7)` will not show you a published
+value in full: 15 of the 616 need 14 significant digits.
+[eiof_lookup_cutoff()] prints at full precision for this reason.
 }
 
 \examples{
