@@ -1,6 +1,6 @@
 #' List the seven environmental impact indicators
 #'
-#' Prints the indicator names the `eiof_*` functions accept, with their labels
+#' Prints the indicator names the `eiod_*` functions accept, with their labels
 #' and the units your impact values must be in.
 #'
 #' @param quiet If `TRUE`, return the table without printing it.
@@ -8,11 +8,11 @@
 #' @return A data frame of indicator, label and unit, invisibly when printing.
 #'
 #' @examples
-#' eiof_list_indicators()
+#' eiod_list_indicators()
 #'
 #' @export
-eiof_list_indicators <- function(quiet = FALSE) {
-  ind <- .eiof_data("eiof_indicators")
+eiod_list_indicators <- function(quiet = FALSE) {
+  ind <- .eiod_data("eiod_indicators")
   if (quiet) return(ind)
 
   cat("Seven environmental impact indicators, per capita per day:\n\n")
@@ -22,7 +22,7 @@ eiof_list_indicators <- function(quiet = FALSE) {
                 ind$indicator_label[i], ind$unit[i]))
   }
   cat("\nValues must already be summed across everything the respondent\n")
-  cat("consumed that day. reiof does not compute impacts from food items.\n")
+  cat("consumed that day. reiod does not compute impacts from food items.\n")
   invisible(ind)
 }
 
@@ -47,7 +47,7 @@ eiof_list_indicators <- function(quiet = FALSE) {
 #'   Male 10+ yr    14.2377570161    as published 14.2377570161
 #' ```
 #'
-#' The `as published` column is `value_published_str` from [eiof_cutoffs] - a
+#' The `as published` column is `value_published_str` from [eiod_cutoffs] - a
 #' character string that has never been through a numeric type. If you need an
 #' exact decimal comparison against the PDF, compare against that, not against a
 #' rendering of a double. (The identical complaint, and the identical fix, arose
@@ -65,34 +65,34 @@ eiof_list_indicators <- function(quiet = FALSE) {
 #' @param published If `TRUE`, return the value exactly as printed in the
 #'   paper rather than the harmonised value the metric functions use. The two
 #'   differ only for relative eutrophication - 80 rows of 616, all of them
-#'   relative; see `vignette("reiof")`.
+#'   relative; see `vignette("reiod")`.
 #'
-#' @return A named numeric vector of class `eiof_cutoff`, named by demographic
+#' @return A named numeric vector of class `eiod_cutoff`, named by demographic
 #'   group label. Use `print(x, digits = )` to change the displayed precision,
 #'   or `as.numeric(x)` to drop the class.
 #'
 #' @examples
 #' # the HESD biodiversity criterion, all groups
-#' eiof_lookup_cutoff("biodiv", metric = "abs")
+#' eiod_lookup_cutoff("biodiv", metric = "abs")
 #'
 #' # the HDLEI biodiversity criterion
-#' eiof_lookup_cutoff("biodiv", metric = "rel", percentile = 30)
+#' eiod_lookup_cutoff("biodiv", metric = "rel", percentile = 30)
 #'
 #' # one group, printed to every published digit
-#' eiof_lookup_cutoff("water", group = 8, metric = "abs")
+#' eiod_lookup_cutoff("water", group = 8, metric = "abs")
 #'
 #' # what R's default options(digits = 7) would have shown instead
-#' print(c(eiof_lookup_cutoff("water", group = 8, metric = "abs")))
+#' print(c(eiod_lookup_cutoff("water", group = 8, metric = "abs")))
 #'
 #' @export
-eiof_lookup_cutoff <- function(indicator, group = NULL,
+eiod_lookup_cutoff <- function(indicator, group = NULL,
                                metric = c("abs", "rel"),
                                percentile = NULL, published = FALSE) {
 
   metric <- match.arg(metric)
-  .eiof_check_indicator(indicator)
+  .eiod_check_indicator(indicator)
 
-  cut <- .eiof_data("eiof_cutoffs")
+  cut <- .eiod_data("eiod_cutoffs")
   s <- cut[cut$metric == metric & cut$indicator == indicator, ]
 
   if (metric == "rel") {
@@ -124,7 +124,7 @@ eiof_lookup_cutoff <- function(indicator, group = NULL,
 
   structure(
     stats::setNames(out, s$demogroup_label),
-    class           = c("eiof_cutoff", "numeric"),
+    class           = c("eiod_cutoff", "numeric"),
     indicator       = indicator,
     indicator_label = s$indicator_label[1],
     unit            = s$unit[1],
@@ -137,13 +137,13 @@ eiof_lookup_cutoff <- function(indicator, group = NULL,
 }
 
 
-#' @param x An `eiof_cutoff` object.
+#' @param x An `eiod_cutoff` object.
 #' @param digits Significant digits to display. The default of 15 shows every
 #'   published digit; the widest cut-off in the tables needs 14.
 #' @param ... Ignored.
-#' @rdname eiof_lookup_cutoff
+#' @rdname eiod_lookup_cutoff
 #' @export
-print.eiof_cutoff <- function(x, digits = 15, ...) {
+print.eiod_cutoff <- function(x, digits = 15, ...) {
 
   metric <- attr(x, "metric")
   pct    <- attr(x, "percentile")
@@ -186,20 +186,20 @@ print.eiof_cutoff <- function(x, digits = 15, ...) {
   if (rescaled && !pub) {
     cat("\n  `value` carries the x", format(unique(scale)[1]),
         " eutrophication rescaling - an INFERENCE,\n", sep = "")
-    cat("  not a documented conversion. See ?eiof_cutoffs. Use\n")
+    cat("  not a documented conversion. See ?eiod_cutoffs. Use\n")
     cat("  published = TRUE for the unscaled figure.\n")
   }
   invisible(x)
 }
 
 
-#' @rdname eiof_lookup_cutoff
+#' @rdname eiod_lookup_cutoff
 #' @param e1,e2 Operands.
 #' @export
-Ops.eiof_cutoff <- function(e1, e2) {
+Ops.eiod_cutoff <- function(e1, e2) {
   # Arithmetic on a cut-off should give a plain number back, not drag the
   # class and its metadata into an unrelated result.
-  if (!missing(e1)) e1 <- .eiof_bare(e1)
+  if (!missing(e1)) e1 <- .eiod_bare(e1)
   if (missing(e2)) return(get(.Generic)(e1))
-  get(.Generic)(e1, .eiof_bare(e2))
+  get(.Generic)(e1, .eiod_bare(e2))
 }

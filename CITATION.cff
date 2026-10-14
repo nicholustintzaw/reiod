@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this package, please cite both the package and the methods paper it implements."
-title: "reiof: Dietary Environmental Impact Metrics from the Intake EIOF Framework"
+title: "reiod: Dietary Environmental Impact Metrics from the Intake EIOD Framework"
 abstract: >-
   An R implementation of the absolute threshold, relative benchmark and
   composite dietary environmental impact metrics defined in Intake's
@@ -12,10 +12,10 @@ authors:
   - given-names: "Nicholus Tint"
     family-names: "Zaw"
     email: "n.t.zaw@cgiar.org"
-version: 0.0.0.9000
+version: 0.0.0.9002
 license: MIT
-repository-code: "https://github.com/nicholustintzaw/reiof"
-url: "https://nicholustintzaw.github.io/reiof/"
+repository-code: "https://github.com/nicholustintzaw/reiod"
+url: "https://nicholustintzaw.github.io/reiod/"
 keywords:
   - dietary assessment
   - environmental impact

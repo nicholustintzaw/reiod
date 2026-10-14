@@ -10,7 +10,7 @@
 #'
 #' This is a pass/fail against a planetary boundary share. It says nothing
 #' about how the diet compares with other diets; for that, see
-#' [eiof_relative_band()]. The two metric families answer different questions
+#' [eiod_relative_band()]. The two metric families answer different questions
 #' and will not agree.
 #'
 #' @section The comparison is strict:
@@ -33,14 +33,14 @@
 #'
 #' This is the only data-quality test on the default path. The fuller suite -
 #' sign, zeros, unit magnitude, retained significant digits, cut-off proximity -
-#' is in [eiof_check_data()] and [eiof_check_precision()], and is **not** run for
+#' is in [eiod_check_data()] and [eiod_check_precision()], and is **not** run for
 #' you. Run it first; see `vignette("precision")`.
 #'
 #' @param value Numeric vector of per capita daily impact, already summed
 #'   across everything the respondent consumed that day, in the unit shown by
-#'   [eiof_list_indicators()].
+#'   [eiod_list_indicators()].
 #' @param group Integer vector of demographic groups 1-8, from
-#'   [eiof_age_sex_group()].
+#'   [eiod_age_sex_group()].
 #' @param indicator One of `"landtotal"`, `"landarable"`, `"landpasture"`,
 #'   `"ghg"`, `"eutroph"`, `"water"`, `"biodiv"`.
 #' @param details If `TRUE`, return a data frame that also reports the threshold
@@ -56,36 +56,36 @@
 #'   opening the reference table. (Equivalent to `threshvar()` in the companion
 #'   Stata command.)
 #'
-#' @seealso [eiof_relative_band()], [eiof_absolute_all()],
-#'   [eiof_lookup_cutoff()], [eiof_check_data()]
+#' @seealso [eiod_relative_band()], [eiod_absolute_all()],
+#'   [eiod_lookup_cutoff()], [eiod_check_data()]
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
 #' # the column is called ghg_kgco2e; the indicator key is "ghg".
 #' # They are different things, and your data will not use the keys.
-#' ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
+#' ghg_ok <- eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg")
 #' table(ghg_ok, useNA = "ifany")
 #'
 #' # which number each respondent was compared against
-#' head(eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg",
+#' head(eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg",
 #'                              details = TRUE))
 #'
 #' # all seven indicators: state the mapping from indicator key to column
-#' eiof_absolute_all(eiof_demo, grp, eiof_demo_map)[1:3, ]
+#' eiod_absolute_all(eiod_demo, grp, eiod_demo_map)[1:3, ]
 #'
 #' @export
-eiof_absolute_threshold <- function(value, group, indicator, details = FALSE) {
+eiod_absolute_threshold <- function(value, group, indicator, details = FALSE) {
 
-  .eiof_check_indicator(indicator)
-  .eiof_check_value(value)
-  .eiof_check_group(group, n = length(value))
+  .eiod_check_indicator(indicator)
+  .eiod_check_value(value)
+  .eiod_check_group(group, n = length(value))
   if (!is.logical(details) || length(details) != 1L || is.na(details)) {
     stop("`details` must be TRUE or FALSE.", call. = FALSE)
   }
 
-  thr <- .eiof_abs_thresholds(indicator)
+  thr <- .eiod_abs_thresholds(indicator)
   out <- rep(NA_integer_, length(value))
 
   for (g in 1:8) {

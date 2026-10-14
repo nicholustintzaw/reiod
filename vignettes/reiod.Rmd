@@ -1,15 +1,15 @@
 ---
-title: "Getting started with reiof"
+title: "Getting started with reiod"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Getting started with reiof}
+  %\VignetteIndexEntry{Getting started with reiod}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-library(reiof)
+library(reiod)
 ```
 
 ## What EIOF is
@@ -34,22 +34,22 @@ families:
 All of them are age- and sex-specific, because average dietary energy
 requirement differs across groups.
 
-## What reiof is — and is not
+## What reiod is — and is not
 
-`reiof` implements those metrics in R.
+`reiod` implements those metrics in R.
 
 **It does not contain the EIOF database.** It ships the published *cut-offs* and
 applies them to impact values you have already derived. The work of matching
 food items to impact factors, applying the adjustment factors, and summing to
-the respondent-day happens upstream; `reiof` starts where that ends. It also
+the respondent-day happens upstream; `reiod` starts where that ends. It also
 does not calculate the Global Diet Quality Score — the composite metrics take a
 GDQS value as an input.
 
-So the input `reiof` expects is one row per respondent-day, with the impact
+So the input `reiod` expects is one row per respondent-day, with the impact
 totals already summed:
 
 ```{r}
-head(eiof_demo, 3)
+head(eiod_demo, 3)
 ```
 
 The package has **no dependencies at all**. The practical consequence is a plain
@@ -61,7 +61,7 @@ Units matter more here than in most analyses, because a unit error produces a
 confidently wrong answer rather than an obvious one.
 
 ```{r}
-eiof_list_indicators()
+eiod_list_indicators()
 ```
 
 ## Step 1 — the demographic group
@@ -70,57 +70,57 @@ Every cut-off is scaled to one of eight age/sex groups. This variable is
 required by everything else.
 
 ```{r}
-grp <- eiof_age_sex_group(age = eiof_demo$age, sex = eiof_demo$sex)
+grp <- eiod_age_sex_group(age = eiod_demo$age, sex = eiod_demo$sex)
 table(factor(grp, 1:8, attr(grp, "labels")))
 ```
 
 ### Which type should `sex` be?
 
-**A factor is the recommended input**, and `eiof_demo$sex` is one. The levels
+**A factor is the recommended input**, and `eiod_demo$sex` is one. The levels
 carry the meaning, so the data documents itself, `table()` prints "male" and
-"female" rather than 1 and 2, and `reiof` can resolve it without being told
+"female" rather than 1 and 2, and `reiod` can resolve it without being told
 anything further.
 
 Character works identically, and is what `read.csv()` gives you by default:
 
 ```{r}
-eiof_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
+eiod_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
 ```
 
 **Numeric sex is deliberately refused** unless you say which code means male:
 
 ```{r, error = TRUE}
-eiof_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
+eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
 ```
 
 This is not a missing feature. Survey data uses `1/2` and `0/1` about equally
 often, and the two are indistinguishable from the values alone — both are just
-two distinct numbers. If `reiof` guessed and guessed wrong, every result would
+two distinct numbers. If `reiod` guessed and guessed wrong, every result would
 be silently inverted: no error, nothing visibly odd, every male counted as
 female. Rather than carry that risk, it stops and asks.
 
 Say the codes and it works:
 
 ```{r}
-eiof_age_sex_group(age = c(1.5, 40), sex = c(1, 0), male = 1, female = 0)
+eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0), male = 1, female = 0)
 ```
 
 But the better habit is to convert once, near the top of your script, after
 which every later call is unambiguous:
 
 ```{r}
-sex_f <- eiof_as_sex_factor(c(1, 0, 1, 0), male = 1, female = 0)
+sex_f <- eiod_as_sex_factor(c(1, 0, 1, 0), male = 1, female = 0)
 sex_f
 ```
 
 ### A note on the age boundaries
 
-The paper prints the groups as "0-1.9", "2-4.9", "5-9.9" and "10+". `reiof`
+The paper prints the groups as "0-1.9", "2-4.9", "5-9.9" and "10+". `reiod`
 reads these as half-open intervals: `age < 2`, `2 <= age < 5`, `5 <= age < 10`,
 `age >= 10`. So a child aged 1.95 years is in the first group:
 
 ```{r}
-eiof_age_sex_group(c(1.9, 1.95, 1.999, 2.0), rep("male", 4))
+eiod_age_sex_group(c(1.9, 1.95, 1.999, 2.0), rep("male", 4))
 ```
 
 Testing `age <= 1.9` instead would leave everyone between 1.9 and 2.0
@@ -129,7 +129,7 @@ unassigned, and they would then vanish from every metric with no error raised.
 ## Step 2 — absolute threshold metrics (Table 3)
 
 ```{r}
-ghg_ok <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
+ghg_ok <- eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg")
 table(ghg_ok, useNA = "ifany")
 ```
 
@@ -141,8 +141,8 @@ sitting exactly on the threshold is coded `0`, not `1`.
 
 ### The indicator key and your column name are different things
 
-Note what that call does **not** say. `"ghg"` is the indicator key reiof knows;
-`ghg_kgco2e` is what the column happens to be called in this dataset. reiof
+Note what that call does **not** say. `"ghg"` is the indicator key reiod knows;
+`ghg_kgco2e` is what the column happens to be called in this dataset. reiod
 takes a vector, so your column can be called anything.
 
 This is worth stating because it is easy to conclude otherwise. The demo data
@@ -154,11 +154,11 @@ that reason.
 State the mapping once and the rest follows:
 
 ```{r}
-eiof_demo_map
+eiod_demo_map
 ```
 
 ```{r}
-abs_all <- eiof_absolute_all(eiof_demo, grp, eiof_demo_map)
+abs_all <- eiod_absolute_all(eiod_demo, grp, eiod_demo_map)
 round(100 * colMeans(abs_all, na.rm = TRUE), 1)
 ```
 
@@ -173,7 +173,7 @@ Supply any subset — there is no need to have all seven.
 ### Which number was each respondent compared against?
 
 ```{r}
-eiof_lookup_cutoff("ghg", metric = "abs")
+eiod_lookup_cutoff("ghg", metric = "abs")
 ```
 
 Those are printed to 15 significant digits on purpose. The published cut-offs
@@ -186,13 +186,13 @@ for character rather than trusting a rendering of a double.
 Per observation, rather than per group:
 
 ```{r}
-head(eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg", details = TRUE), 4)
+head(eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg", details = TRUE), 4)
 ```
 
 ## Step 3 — relative benchmark metrics (Tables 4a–4g)
 
 ```{r}
-band <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
+band <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
 table(band, useNA = "ifany")
 ```
 
@@ -205,7 +205,7 @@ There is a batch form here too, and a `details` form that shows the decile
 boundaries each diet was placed between:
 
 ```{r}
-head(eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv", details = TRUE), 4)
+head(eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv", details = TRUE), 4)
 ```
 
 `cut_lower` is `NA` in band 1 and `cut_upper` is `NA` in band 10 — correctly,
@@ -218,21 +218,21 @@ They differ only in the environmental criterion: HESD uses the **absolute**
 biodiversity threshold, HDLEI the **relative** 30th percentile.
 
 ```{r}
-table(eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
+table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
 ```
 
 Each criterion is also available on its own, which is often what you want for
 reporting:
 
 ```{r}
-parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
+parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
 head(parts, 4)
 ```
 
 `healthy` and `env` are the two sub-indicators; `category` is the four-way
 Table 5a classification; `binary` is category 1 against everything else. The
-sub-indicators are produced by calling `eiof_healthy_diet()` and
-`eiof_sustainable_diet()` internally, so they cannot drift from the standalone
+sub-indicators are produced by calling `eiod_healthy_diet()` and
+`eiod_sustainable_diet()` internally, so they cannot drift from the standalone
 functions.
 
 Note the message about respondents under 2 years. The methods paper restricts
@@ -253,19 +253,19 @@ larger.
 Read as grams, Table 4f places the absolute threshold between the 40th and 50th
 percentile, exactly where the two land thresholds sit. Read as kilograms, every
 diet on earth falls below the 10th percentile, which is not a coherent reading
-of a percentile distribution. `reiof` therefore applies a ÷1000 rescaling to
+of a percentile distribution. `reiod` therefore applies a ÷1000 rescaling to
 relative eutrophication only.
 
 **This is an inference, not a documented conversion.** It is isolated in the
-`scale_to_db_unit` column of `eiof_cutoffs` so it can be switched off in one
+`scale_to_db_unit` column of `eiod_cutoffs` so it can be switched off in one
 place. It affects **80 of the 616 rows, all of them relative eutrophication**,
 and no other indicator anywhere in the file:
 
 ```{r}
-with(eiof_cutoffs, table(indicator, rescaled = scale_to_db_unit != 1))
+with(eiod_cutoffs, table(indicator, rescaled = scale_to_db_unit != 1))
 ```
 
-`eiof_lookup_cutoff(..., published = TRUE)` returns the unscaled figure, and the
+`eiod_lookup_cutoff(..., published = TRUE)` returns the unscaled figure, and the
 print method flags the rescaling whenever it applies. Confirm with Intake before
 publishing any eutrophication result.
 
@@ -275,10 +275,10 @@ The reference distribution describes diets as they are, not as they would need
 to be. Compare where each absolute threshold falls within it:
 
 ```{r}
-for (ind in eiof_indicators$indicator) {
-  thr <- unname(eiof_lookup_cutoff(ind, 4, "abs"))
+for (ind in eiod_indicators$indicator) {
+  thr <- unname(eiod_lookup_cutoff(ind, 4, "abs"))
   p   <- vapply(seq(10, 90, 10),
-                function(q) unname(eiof_lookup_cutoff(ind, 4, "rel", q)),
+                function(q) unname(eiod_lookup_cutoff(ind, 4, "rel", q)),
                 numeric(1))
   k <- sum(thr >= p)
   pos <- if (k == 0) "below P10" else if (k == 9) "at/above P90" else
@@ -296,8 +296,8 @@ together; never use one as a proxy for the other.
 ### 3. HDLEI is nested inside HESD
 
 ```{r}
-h <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
-d <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+h <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
+d <- eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
 table(HESD = h, HDLEI = d, useNA = "ifany")
 ```
 
@@ -307,8 +307,8 @@ group, by the same constant factor:
 
 ```{r}
 vapply(1:8, function(g) {
-  unname(eiof_lookup_cutoff("biodiv", g, "abs")) /
-    unname(eiof_lookup_cutoff("biodiv", g, "rel", 30))
+  unname(eiod_lookup_cutoff("biodiv", g, "abs")) /
+    unname(eiod_lookup_cutoff("biodiv", g, "rel", 30))
 }, numeric(1))
 ```
 
@@ -325,8 +325,8 @@ Everything above assumes your impact values are the right type, the right unit
 and the right precision. They very often are not, and the failures are quiet.
 
 ```{r}
-report <- eiof_check_data(
-  eiof_demo,
+report <- eiod_check_data(
+  eiod_demo,
   impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
   age = "age", sex = "sex", gdqs = "gdqs"
 )
@@ -337,7 +337,7 @@ summary(report)
 the metric functions refuse an integer impact vector, because
 `is.numeric(1L)` is `TRUE` and nothing else would catch it. Everything else —
 sign, zeros, unit magnitude, retained significant digits, cut-off proximity —
-happens only if you call `eiof_check_data()`.
+happens only if you call `eiod_check_data()`.
 
 Two vignettes cover it:
 
@@ -349,7 +349,7 @@ Two vignettes cover it:
 
 ## Survey weights
 
-`reiof` returns respondent-level indicator vectors and nothing else. It applies
+`reiod` returns respondent-level indicator vectors and nothing else. It applies
 no survey design. Every prevalence you report should come from a design-aware
 estimator — the **survey** package, or whatever your analysis uses — or both
 your point estimates and your standard errors will be wrong for a complex

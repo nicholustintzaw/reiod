@@ -9,8 +9,8 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-library(reiof)
-grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+library(reiod)
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 ```
 
 The relative benchmark metrics are the part of the Intake framework most often
@@ -19,7 +19,7 @@ about that one idea.
 
 ## The reference distribution is external and fixed
 
-`eiof_relative_band()` does **not** rank respondents against each other in your
+`eiod_relative_band()` does **not** rank respondents against each other in your
 survey. Each one-day diet is compared against a reference distribution that is
 the same for every analysis anywhere in the world.
 
@@ -36,7 +36,7 @@ The result is a fixed table of numbers, printed in the paper and shipped in this
 package:
 
 ```{r}
-subset(eiof_cutoffs,
+subset(eiod_cutoffs,
        metric == "rel" & indicator == "biodiv" & demogroup == 4 &
          !is.na(percentile),
        select = c(percentile, value))
@@ -51,15 +51,15 @@ you get roughly 10% of observations in each band **by construction**:
 
 ```{r}
 # WRONG: ranks the sample against itself
-wrong <- cut(eiof_demo$biodiv_pdf,
-             breaks = quantile(eiof_demo$biodiv_pdf, seq(0, 1, 0.1), na.rm = TRUE),
+wrong <- cut(eiod_demo$biodiv_pdf,
+             breaks = quantile(eiod_demo$biodiv_pdf, seq(0, 1, 0.1), na.rm = TRUE),
              labels = 1:10, include.lowest = TRUE)
 table(wrong)
 ```
 
 ```{r}
 # RIGHT: compares against the published global reference
-right <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
+right <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
 table(right)
 ```
 
@@ -88,8 +88,8 @@ the P90 value as a lower bound.
 The inequality is strict, so a diet sitting exactly on P10 belongs in band 2:
 
 ```{r}
-p10 <- unname(eiof_lookup_cutoff("biodiv", 4, "rel", percentile = 10))
-eiof_relative_band(c(p10 * (1 - 1e-9), p10), c(4L, 4L), "biodiv")
+p10 <- unname(eiod_lookup_cutoff("biodiv", 4, "rel", percentile = 10))
+eiod_relative_band(c(p10 * (1 - 1e-9), p10), c(4L, 4L), "biodiv")
 ```
 
 ## Reporting
@@ -100,7 +100,7 @@ The paper gives two forms. The first is the distribution:
 > capita dietary total land use."*
 
 ```{r}
-round(100 * prop.table(table(eiof_relative_band(eiof_demo$land_total_m2yr, grp,
+round(100 * prop.table(table(eiod_relative_band(eiod_demo$land_total_m2yr, grp,
                                                 "landtotal"))), 1)
 ```
 
@@ -108,7 +108,7 @@ The second is a mean position, for which `midpoint = TRUE` gives band midpoints
 (5, 15, … 95):
 
 ```{r}
-mid <- eiof_relative_band(eiof_demo$land_total_m2yr, grp, "landtotal",
+mid <- eiod_relative_band(eiod_demo$land_total_m2yr, grp, "landtotal",
                           midpoint = TRUE)
 mean(mid, na.rm = TRUE)
 ```
@@ -120,7 +120,7 @@ They are emphatically not:
 
 ```{r}
 p <- vapply(seq(10, 90, 10),
-            function(q) unname(eiof_lookup_cutoff("landpasture", 4, "rel", q)),
+            function(q) unname(eiod_lookup_cutoff("landpasture", 4, "rel", q)),
             numeric(1))
 round(diff(p), 3)
 ```
@@ -151,8 +151,8 @@ For greenhouse gas emissions, every band — including band 1 — lies above the
 Table 3 absolute threshold:
 
 ```{r}
-thr <- unname(eiof_lookup_cutoff("ghg", 4, "abs"))
-p10 <- unname(eiof_lookup_cutoff("ghg", 4, "rel", percentile = 10))
+thr <- unname(eiod_lookup_cutoff("ghg", 4, "abs"))
+p10 <- unname(eiod_lookup_cutoff("ghg", 4, "rel", percentile = 10))
 c(absolute_threshold = thr, reference_P10 = p10, threshold_is_lower = thr < p10)
 ```
 

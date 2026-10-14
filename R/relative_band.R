@@ -51,15 +51,15 @@
 #' a mean impact, average the impact variable itself.
 #'
 #' @section Storage type is checked here, not only in the check suite:
-#' As for [eiof_absolute_threshold()], an integer `value` is refused. See that
+#' As for [eiod_absolute_threshold()], an integer `value` is refused. See that
 #' function for why `is.numeric()` alone is not enough. The rest of the data
 #' quality suite remains opt-in; run `vignette("precision")` first.
 #'
 #' @param value Numeric vector of per capita daily impact.
 #' @param group Integer vector of demographic groups 1-8, from
-#'   [eiof_age_sex_group()].
+#'   [eiod_age_sex_group()].
 #' @param indicator One of the seven indicator names; see
-#'   [eiof_list_indicators()].
+#'   [eiod_list_indicators()].
 #' @param midpoint If `TRUE`, return the band midpoint percentile (5, 15, ...
 #'   95) instead of the band number. Default `FALSE`.
 #' @param details If `TRUE`, return a data frame that also reports the band
@@ -75,33 +75,33 @@
 #'   `NA` in band 10 for the same reason. (Equivalent to `cutvar()` in the
 #'   companion Stata command.)
 #'
-#' @seealso [eiof_absolute_threshold()], [eiof_relative_all()],
-#'   [eiof_low_impact()]
+#' @seealso [eiod_absolute_threshold()], [eiod_relative_all()],
+#'   [eiod_low_impact()]
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
 #' # the column is biodiv_pdf; the indicator key is "biodiv"
-#' band <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
+#' band <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
 #' table(band, useNA = "ifany")
 #'
 #' # mean position in the global reference distribution
-#' mid <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+#' mid <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv",
 #'                           midpoint = TRUE)
 #' mean(mid, na.rm = TRUE)
 #'
 #' # the decile boundaries each diet was judged against
-#' head(eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv",
+#' head(eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv",
 #'                         details = TRUE))
 #'
 #' @export
-eiof_relative_band <- function(value, group, indicator, midpoint = FALSE,
+eiod_relative_band <- function(value, group, indicator, midpoint = FALSE,
                                details = FALSE) {
 
-  .eiof_check_indicator(indicator)
-  .eiof_check_value(value)
-  .eiof_check_group(group, n = length(value))
+  .eiod_check_indicator(indicator)
+  .eiod_check_value(value)
+  .eiod_check_group(group, n = length(value))
   if (!is.logical(midpoint) || length(midpoint) != 1L || is.na(midpoint)) {
     stop("`midpoint` must be TRUE or FALSE.", call. = FALSE)
   }
@@ -109,7 +109,7 @@ eiof_relative_band <- function(value, group, indicator, midpoint = FALSE,
     stop("`details` must be TRUE or FALSE.", call. = FALSE)
   }
 
-  cp <- .eiof_rel_cutpoints(indicator)   # 8 x 9
+  cp <- .eiod_rel_cutpoints(indicator)   # 8 x 9
   out <- rep(NA_integer_, length(value))
 
   for (g in 1:8) {

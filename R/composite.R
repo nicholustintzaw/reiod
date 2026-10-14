@@ -12,10 +12,10 @@
 #'   missing.
 #'
 #' @examples
-#' eiof_healthy_diet(c(10, 22.9, 23, 30, NA))
+#' eiod_healthy_diet(c(10, 22.9, 23, 30, NA))
 #'
 #' @export
-eiof_healthy_diet <- function(gdqs, cutoff = 23) {
+eiod_healthy_diet <- function(gdqs, cutoff = 23) {
   if (is.factor(gdqs)) {
     stop("`gdqs` is a factor. Convert with as.numeric(as.character(gdqs)).",
          call. = FALSE)
@@ -46,18 +46,18 @@ eiof_healthy_diet <- function(gdqs, cutoff = 23) {
 #'
 #' @return An integer vector: `1` sustainable, `0` not, `NA` where missing.
 #'
-#' @seealso [eiof_low_impact()], the stricter relative criterion used by HDLEI.
+#' @seealso [eiod_low_impact()], the stricter relative criterion used by HDLEI.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' table(eiof_sustainable_diet(eiof_demo$biodiv_pdf, grp), useNA = "ifany")
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+#' table(eiod_sustainable_diet(eiod_demo$biodiv_pdf, grp), useNA = "ifany")
 #'
 #' @export
-eiof_sustainable_diet <- function(biodiversity, group) {
+eiod_sustainable_diet <- function(biodiversity, group) {
   # Delegates, so there is exactly one implementation of the Table 3
   # comparison in the package.
-  eiof_absolute_threshold(value = biodiversity, group = group,
+  eiod_absolute_threshold(value = biodiversity, group = group,
                           indicator = "biodiv")
 }
 
@@ -69,7 +69,7 @@ eiof_sustainable_diet <- function(biodiversity, group) {
 #' Exported on its own so it can be reported separately from the composite.
 #'
 #' @section Relationship to the HESD criterion:
-#' This criterion is uniformly stricter than [eiof_sustainable_diet()]. For
+#' This criterion is uniformly stricter than [eiod_sustainable_diet()]. For
 #' biodiversity the relative P30 cut-off sits below the absolute threshold in
 #' every one of the eight demographic groups, by the same constant factor of
 #' about 1.52, because both are the same all-population figure scaled by the
@@ -86,12 +86,12 @@ eiof_sustainable_diet <- function(biodiversity, group) {
 #' @return An integer vector: `1` low impact, `0` not, `NA` where missing.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' table(eiof_low_impact(eiof_demo$biodiv_pdf, grp), useNA = "ifany")
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+#' table(eiod_low_impact(eiod_demo$biodiv_pdf, grp), useNA = "ifany")
 #'
 #' @export
-eiof_low_impact <- function(biodiversity, group, percentile = 30) {
+eiod_low_impact <- function(biodiversity, group, percentile = 30) {
   if (!is.numeric(percentile) || length(percentile) != 1L ||
       is.na(percentile) || percentile %% 10 != 0 ||
       percentile < 10 || percentile > 90) {
@@ -103,7 +103,7 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
             "criterion (30). Label any result from this as a sensitivity ",
             "analysis.")
   }
-  band <- eiof_relative_band(value = biodiversity, group = group,
+  band <- eiod_relative_band(value = biodiversity, group = group,
                              indicator = "biodiv")
   out <- rep(NA_integer_, length(band))
   ok <- !is.na(band)
@@ -117,7 +117,7 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
 # ---------------------------------------------------------------------------- #
 
 #' @noRd
-.eiof_composite <- function(healthy, env, group, form, labels, what) {
+.eiod_composite <- function(healthy, env, group, form, labels, what) {
 
   # Composites apply only from age 2. Groups 1 and 5 are the under-twos.
   eligible <- !is.na(group) & !(group %in% c(1L, 5L))
@@ -170,7 +170,7 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
 #' }
 #'
 #' Both criteria are also available on their own, as
-#' [eiof_healthy_diet()] and [eiof_sustainable_diet()]. This function calls
+#' [eiod_healthy_diet()] and [eiod_sustainable_diet()]. This function calls
 #' those two rather than re-implementing them, so the sub-indicators and the
 #' composite cannot drift apart.
 #'
@@ -183,8 +183,8 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
 #' belong in the analysis denominator at all.
 #'
 #' @section Relationship to HDLEI:
-#' HESD and [eiof_hdlei()] are nested, not independent: every HDLEI diet is
-#' also a HESD diet. See [eiof_low_impact()] for why. Do not present them as
+#' HESD and [eiod_hdlei()] are nested, not independent: every HDLEI diet is
+#' also a HESD diet. See [eiod_low_impact()] for why. Do not present them as
 #' two dimensions of a 2x2.
 #'
 #' @param biodiversity Numeric vector of per capita daily biodiversity loss.
@@ -199,17 +199,17 @@ eiof_low_impact <- function(biodiversity, group, percentile = 30) {
 #' @return A factor, integer vector, or data frame, depending on `form`.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
-#' table(eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
+#' table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
 #'
 #' # everything at once
-#' parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
+#' parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
 #' head(parts)
 #'
 #' @export
-eiof_hesd <- function(biodiversity, gdqs, group,
+eiod_hesd <- function(biodiversity, gdqs, group,
                       form = c("category", "binary", "components"),
                       gdqs_cutoff = 23) {
 
@@ -217,11 +217,11 @@ eiof_hesd <- function(biodiversity, gdqs, group,
   if (length(biodiversity) != length(gdqs)) {
     stop("`biodiversity` and `gdqs` must be the same length.", call. = FALSE)
   }
-  .eiof_check_group(group, n = length(biodiversity))
+  .eiod_check_group(group, n = length(biodiversity))
 
-  .eiof_composite(
-    healthy = eiof_healthy_diet(gdqs, cutoff = gdqs_cutoff),
-    env     = eiof_sustainable_diet(biodiversity, group),
+  .eiod_composite(
+    healthy = eiod_healthy_diet(gdqs, cutoff = gdqs_cutoff),
+    env     = eiod_sustainable_diet(biodiversity, group),
     group   = group,
     form    = form,
     labels  = c("Healthy and env. sustainable",
@@ -235,7 +235,7 @@ eiof_hesd <- function(biodiversity, gdqs, group,
 
 #' Healthy Diet with Low Environmental Impacts, HDLEI (Table 5b)
 #'
-#' Combines the same diet quality criterion as [eiof_hesd()] with a
+#' Combines the same diet quality criterion as [eiod_hesd()] with a
 #' **relative** low-impact criterion.
 #'
 #' \itemize{
@@ -252,8 +252,8 @@ eiof_hesd <- function(biodiversity, gdqs, group,
 #' @section These two metrics are nested:
 #' The HDLEI environmental cut-off is uniformly about 1.52 times stricter than
 #' the HESD one, in every demographic group, because both are the same
-#' all-population figure scaled by the same weight. So `eiof_hdlei(...) == 1`
-#' implies `eiof_hesd(...) == 1`, and HESD prevalence can never fall below
+#' all-population figure scaled by the same weight. So `eiod_hdlei(...) == 1`
+#' implies `eiod_hesd(...) == 1`, and HESD prevalence can never fall below
 #' HDLEI prevalence. Reporting both is still informative: the gap between them
 #' is the share of diets sitting between the two cut-offs. But they are not two
 #' independent dimensions.
@@ -264,25 +264,25 @@ eiof_hesd <- function(biodiversity, gdqs, group,
 #' @param biodiversity Numeric vector of per capita daily biodiversity loss.
 #' @param gdqs Numeric vector of Global Diet Quality Score values.
 #' @param group Integer vector of demographic groups 1-8.
-#' @param form `"category"`, `"binary"` or `"components"`; see [eiof_hesd()].
+#' @param form `"category"`, `"binary"` or `"components"`; see [eiod_hesd()].
 #' @param gdqs_cutoff GDQS threshold, default 23.
 #' @param percentile Relative cut-off, default 30 as published.
 #'
 #' @return A factor, integer vector, or data frame, depending on `form`.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
-#' table(eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp))
+#' table(eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
 #'
 #' # the nesting: every HDLEI diet is also a HESD diet
-#' a <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
-#' b <- eiof_hdlei(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+#' a <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
+#' b <- eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
 #' table(HESD = a, HDLEI = b, useNA = "ifany")
 #'
 #' @export
-eiof_hdlei <- function(biodiversity, gdqs, group,
+eiod_hdlei <- function(biodiversity, gdqs, group,
                        form = c("category", "binary", "components"),
                        gdqs_cutoff = 23, percentile = 30) {
 
@@ -290,11 +290,11 @@ eiof_hdlei <- function(biodiversity, gdqs, group,
   if (length(biodiversity) != length(gdqs)) {
     stop("`biodiversity` and `gdqs` must be the same length.", call. = FALSE)
   }
-  .eiof_check_group(group, n = length(biodiversity))
+  .eiod_check_group(group, n = length(biodiversity))
 
-  .eiof_composite(
-    healthy = eiof_healthy_diet(gdqs, cutoff = gdqs_cutoff),
-    env     = eiof_low_impact(biodiversity, group, percentile = percentile),
+  .eiod_composite(
+    healthy = eiod_healthy_diet(gdqs, cutoff = gdqs_cutoff),
+    env     = eiod_low_impact(biodiversity, group, percentile = percentile),
     group   = group,
     form    = form,
     labels  = c("Healthy with low env. impacts",

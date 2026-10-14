@@ -2,7 +2,7 @@
 #'
 #' Every cut-off in the Intake framework is scaled to one of eight age/sex
 #' groups, because average dietary energy requirement differs across them. This
-#' function builds that grouping variable, which all other `eiof_*` metric
+#' function builds that grouping variable, which all other `eiod_*` metric
 #' functions require.
 #'
 #' @section The eight groups:
@@ -46,7 +46,7 @@
 #' errors until the codes are stated.
 #'
 #' The recommended route for numeric data is to convert once, near the top of
-#' the analysis, with [eiof_as_sex_factor()]. After that every downstream call
+#' the analysis, with [eiod_as_sex_factor()]. After that every downstream call
 #' is unambiguous.
 #'
 #' For factor and character input, these labels are recognised automatically,
@@ -70,25 +70,25 @@
 #'   names, and can be turned into a labelled factor with
 #'   `factor(x, 1:8, attr(x, "labels"))`.
 #'
-#' @seealso [eiof_as_sex_factor()] to convert a numeric sex code once.
+#' @seealso [eiod_as_sex_factor()] to convert a numeric sex code once.
 #'
 #' @examples
 #' # the recommended input: sex as a factor
-#' eiof_age_sex_group(age = c(1.5, 3, 7, 40), sex = factor(c("male", "male",
+#' eiod_age_sex_group(age = c(1.5, 3, 7, 40), sex = factor(c("male", "male",
 #'                    "female", "female")))
 #'
 #' # character works the same way
-#' eiof_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
+#' eiod_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
 #'
 #' # numeric requires the codes to be stated
-#' eiof_age_sex_group(age = c(1.5, 40), sex = c(1, 2), male = 1, female = 2)
+#' eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 2), male = 1, female = 2)
 #'
 #' # age in months
-#' eiof_age_sex_group(age = c(23, 24), sex = c("male", "male"),
+#' eiod_age_sex_group(age = c(23, 24), sex = c("male", "male"),
 #'                    age_units = "months")
 #'
 #' @export
-eiof_age_sex_group <- function(age, sex,
+eiod_age_sex_group <- function(age, sex,
                                age_units = c("years", "months"),
                                male = NULL, female = NULL) {
 
@@ -121,7 +121,7 @@ eiof_age_sex_group <- function(age, sex,
   }
 
   # ---- resolve sex -------------------------------------------------------- #
-  sex_code <- .eiof_resolve_sex(sex, male = male, female = female)
+  sex_code <- .eiod_resolve_sex(sex, male = male, female = female)
 
   # ---- assign ------------------------------------------------------------- #
   # Half-open intervals; see the "Age boundaries" section above.
@@ -159,23 +159,23 @@ eiof_age_sex_group <- function(age, sex,
 #'
 #' @param x A numeric or character vector of sex codes.
 #' @param male,female The value of `x` that means male and female respectively.
-#'   Both are required: see the discussion in [eiof_age_sex_group()] for why
+#'   Both are required: see the discussion in [eiod_age_sex_group()] for why
 #'   this is not inferred.
 #' @param labels The two level labels to use, male first.
 #'
 #' @return A factor with two levels, `NA` preserved.
 #'
 #' @examples
-#' eiof_as_sex_factor(c(1, 2, 2, 1), male = 1, female = 2)
-#' eiof_as_sex_factor(c(0, 1, 1), male = 1, female = 0)
-#' eiof_as_sex_factor(c("M", "F"), male = "M", female = "F")
+#' eiod_as_sex_factor(c(1, 2, 2, 1), male = 1, female = 2)
+#' eiod_as_sex_factor(c(0, 1, 1), male = 1, female = 0)
+#' eiod_as_sex_factor(c("M", "F"), male = "M", female = "F")
 #'
 #' @export
-eiof_as_sex_factor <- function(x, male, female,
+eiod_as_sex_factor <- function(x, male, female,
                                labels = c("male", "female")) {
 
   if (missing(male) || missing(female)) {
-    stop("`male` and `female` are both required. reiof does not guess which ",
+    stop("`male` and `female` are both required. reiod does not guess which ",
          "code means male: 1/2 and 0/1 are both common, and guessing wrong ",
          "would invert every downstream result silently.", call. = FALSE)
   }

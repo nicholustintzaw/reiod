@@ -13,7 +13,7 @@
 ## 2. regenerate man/ and NAMESPACE from the roxygen comments in R/
 # devtools::document()
 
-## 3. rebuild the datasets from data-raw/eiof_cutoffs.csv
+## 3. rebuild the datasets from data-raw/eiod_cutoffs.csv
 #    (only needed if the CSV changes, e.g. if Intake issues a correction)
 # source("data-raw/build_data.R")
 

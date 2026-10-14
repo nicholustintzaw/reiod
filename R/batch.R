@@ -5,7 +5,7 @@
 # become one. The less obvious one matters more - they give the documentation
 # a correct idiom to teach.
 #
-# The old examples looped `eiof_demo[[ind]]` over `eiof_indicators$indicator`,
+# The old examples looped `eiod_demo[[ind]]` over `eiod_indicators$indicator`,
 # which reads as though the package requires your columns to be named after the
 # indicator keys. It never did. But that loop is what people copy, and in the
 # companion Stata package the same pattern led users to believe a rename was
@@ -15,7 +15,7 @@
 
 #' Validate a map from indicator key to column name
 #' @noRd
-.eiof_check_map <- function(map, data, arg = "map") {
+.eiod_check_map <- function(map, data, arg = "map") {
 
   if (!is.character(map) || !length(map)) {
     stop("`", arg, "` must be a non-empty NAMED character vector mapping ",
@@ -26,16 +26,16 @@
   if (is.null(nm) || any(is.na(nm)) || any(nm == "")) {
     stop("every element of `", arg, "` must be named with an indicator key.\n",
          "  The NAME is the indicator (one of ",
-         paste(.eiof_valid_indicators(), collapse = ", "), ");\n",
+         paste(.eiod_valid_indicators(), collapse = ", "), ");\n",
          "  the VALUE is the column in your data holding that impact.",
          call. = FALSE)
   }
-  bad <- setdiff(nm, .eiof_valid_indicators())
+  bad <- setdiff(nm, .eiod_valid_indicators())
   if (length(bad)) {
     stop("unknown indicator key(s) in `", arg, "`: ",
          paste(bad, collapse = ", "), ".\n  Valid keys: ",
-         paste(.eiof_valid_indicators(), collapse = ", "),
-         ".\n  See eiof_list_indicators().", call. = FALSE)
+         paste(.eiod_valid_indicators(), collapse = ", "),
+         ".\n  See eiod_list_indicators().", call. = FALSE)
   }
   if (anyDuplicated(nm)) {
     stop("`", arg, "` names an indicator more than once: ",
@@ -53,54 +53,54 @@
 
 #' All absolute threshold metrics at once (Table 3)
 #'
-#' Applies [eiof_absolute_threshold()] to several indicators in one call and
+#' Applies [eiod_absolute_threshold()] to several indicators in one call and
 #' returns a data frame of results, one column per indicator.
 #'
 #' @section The map is the point:
 #' `map` states, explicitly, which column of your data holds which indicator.
-#' The **name** is the indicator key reiof knows (`"ghg"`); the **value** is
+#' The **name** is the indicator key reiod knows (`"ghg"`); the **value** is
 #' whatever your column is actually called (`"ghg_kgco2e"`). They are different
-#' things, and nothing in reiof has ever required them to match - the vector API
-#' means `eiof_absolute_threshold(d$anything, grp, "ghg")` works.
+#' things, and nothing in reiod has ever required them to match - the vector API
+#' means `eiod_absolute_threshold(d$anything, grp, "ghg")` works.
 #'
 #' Supply any subset. Indicators you do not name are simply absent from the
 #' result; there is no need to have all seven.
 #'
 #' @param data A data frame with one row per respondent-day.
 #' @param group Integer vector of demographic groups 1-8, from
-#'   [eiof_age_sex_group()], of length `nrow(data)`.
+#'   [eiod_age_sex_group()], of length `nrow(data)`.
 #' @param map Named character vector: names are indicator keys, values are
-#'   column names in `data`. See [eiof_demo_map] for the shape.
+#'   column names in `data`. See [eiod_demo_map] for the shape.
 #' @param prefix Prefix for the returned column names. Default `"abs_"`.
 #'
 #' @return A data frame with `nrow(data)` rows and one integer column per
 #'   indicator in `map`, named `paste0(prefix, indicator)`.
 #'
-#' @seealso [eiof_absolute_threshold()] for the single-indicator form and the
-#'   full discussion of the metric; [eiof_relative_all()].
+#' @seealso [eiod_absolute_threshold()] for the single-indicator form and the
+#'   full discussion of the metric; [eiod_relative_all()].
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
 #' # your own column names, stated once
-#' res <- eiof_absolute_all(eiof_demo, grp,
+#' res <- eiod_absolute_all(eiod_demo, grp,
 #'                          map = c(ghg = "ghg_kgco2e", biodiv = "biodiv_pdf"))
 #' colMeans(res, na.rm = TRUE)
 #'
 #' # all seven, using the mapping shipped with the demo data
-#' all7 <- eiof_absolute_all(eiof_demo, grp, eiof_demo_map)
+#' all7 <- eiod_absolute_all(eiod_demo, grp, eiod_demo_map)
 #' round(100 * colMeans(all7, na.rm = TRUE), 1)
 #'
 #' @export
-eiof_absolute_all <- function(data, group, map, prefix = "abs_") {
+eiod_absolute_all <- function(data, group, map, prefix = "abs_") {
 
   if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
-  .eiof_check_map(map, data)
-  .eiof_check_group(group, n = nrow(data))
+  .eiod_check_map(map, data)
+  .eiod_check_group(group, n = nrow(data))
 
   out <- lapply(names(map), function(ind)
-    eiof_absolute_threshold(data[[map[[ind]]]], group, ind))
+    eiod_absolute_threshold(data[[map[[ind]]]], group, ind))
   names(out) <- paste0(prefix, names(map))
   as.data.frame(out, stringsAsFactors = FALSE)
 }
@@ -108,10 +108,10 @@ eiof_absolute_all <- function(data, group, map, prefix = "abs_") {
 
 #' All relative benchmark metrics at once (Tables 4a-4g)
 #'
-#' Applies [eiof_relative_band()] to several indicators in one call and returns
+#' Applies [eiod_relative_band()] to several indicators in one call and returns
 #' a data frame of results, one column per indicator.
 #'
-#' @inheritSection eiof_absolute_all The map is the point
+#' @inheritSection eiod_absolute_all The map is the point
 #'
 #' @param data A data frame with one row per respondent-day.
 #' @param group Integer vector of demographic groups 1-8, of length
@@ -119,35 +119,35 @@ eiof_absolute_all <- function(data, group, map, prefix = "abs_") {
 #' @param map Named character vector: names are indicator keys, values are
 #'   column names in `data`.
 #' @param midpoint If `TRUE`, return band midpoint percentiles rather than band
-#'   numbers. See [eiof_relative_band()] for why a mean band is not a mean
+#'   numbers. See [eiod_relative_band()] for why a mean band is not a mean
 #'   impact.
 #' @param prefix Prefix for the returned column names. Default `"band_"`.
 #'
 #' @return A data frame with `nrow(data)` rows and one integer column per
 #'   indicator in `map`.
 #'
-#' @seealso [eiof_relative_band()], [eiof_absolute_all()]
+#' @seealso [eiod_relative_band()], [eiod_absolute_all()]
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
-#' bands <- eiof_relative_all(eiof_demo, grp, eiof_demo_map)
+#' bands <- eiod_relative_all(eiod_demo, grp, eiod_demo_map)
 #' sapply(bands, function(b) round(mean(b, na.rm = TRUE), 2))
 #'
 #' @export
-eiof_relative_all <- function(data, group, map, midpoint = FALSE,
+eiod_relative_all <- function(data, group, map, midpoint = FALSE,
                               prefix = "band_") {
 
   if (!is.data.frame(data)) stop("`data` must be a data frame.", call. = FALSE)
-  .eiof_check_map(map, data)
-  .eiof_check_group(group, n = nrow(data))
+  .eiod_check_map(map, data)
+  .eiod_check_group(group, n = nrow(data))
   if (!is.logical(midpoint) || length(midpoint) != 1L || is.na(midpoint)) {
     stop("`midpoint` must be TRUE or FALSE.", call. = FALSE)
   }
 
   out <- lapply(names(map), function(ind)
-    eiof_relative_band(data[[map[[ind]]]], group, ind, midpoint = midpoint))
+    eiod_relative_band(data[[map[[ind]]]], group, ind, midpoint = midpoint))
   names(out) <- paste0(prefix, names(map))
   as.data.frame(out, stringsAsFactors = FALSE)
 }

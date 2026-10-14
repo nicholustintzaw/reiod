@@ -1,6 +1,6 @@
-Package: reiof
-Title: Dietary Environmental Impact Metrics from the Intake EIOF Framework
-Version: 0.0.0.9001
+Package: reiod
+Title: Dietary Environmental Impact Metrics from the Intake EIOD Framework
+Version: 0.0.0.9002
 Authors@R:
     person(given = c("Nicholus", "Tint"),
            family = "Zaw",
@@ -31,7 +31,7 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Language: en-GB
-URL: https://nicholustintzaw.github.io/reiof/,
-    https://github.com/nicholustintzaw/reiof
-BugReports: https://github.com/nicholustintzaw/reiof/issues
+URL: https://nicholustintzaw.github.io/reiod/,
+    https://github.com/nicholustintzaw/reiod
+BugReports: https://github.com/nicholustintzaw/reiod/issues
 Config/roxygen2/version: 8.1.0

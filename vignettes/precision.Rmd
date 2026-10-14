@@ -9,7 +9,7 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-library(reiof)
+library(reiod)
 ```
 
 This is a pre-flight check. Run it **before** you generate any indicator, not
@@ -27,7 +27,7 @@ Biodiversity loss is reported in PDF\*year and takes values around `1e-13`. The
 cut-offs are of the same order:
 
 ```{r}
-eiof_lookup_cutoff("biodiv", group = 4, metric = "abs")
+eiod_lookup_cutoff("biodiv", group = 4, metric = "abs")
 ```
 
 It is reasonable to look at that and wonder whether a comparison at such a small
@@ -44,7 +44,7 @@ identical(x, as.numeric("3.6896027444e-13"))
 .Machine$double.xmin            # smallest normal double
 ```
 
-The exponent is not the problem. Nothing in reiof uses a tolerance, and nothing
+The exponent is not the problem. Nothing in reiod uses a tolerance, and nothing
 should.
 
 ## What actually destroys impact data
@@ -57,8 +57,8 @@ and read. Four mechanisms, in rough order of how badly they bite:
 | **Factor** column | `as.numeric()` returns level codes. `3.7e-13` becomes `1`. | error, always |
 | **Integer** column | Truncates toward zero. Everything below 1 becomes `0`. | error, always |
 | **Character** column | One stray cell such as `"<0.001"` retypes the whole column. | error, always |
-| **Truncated export** | Excel writes what it displays; a `%.6g` CSV format drops digits. | `eiof_check_precision()` |
-| **Underflow** | Values below `1e-308` flush to subnormal or to zero. | `eiof_check_precision()` |
+| **Truncated export** | Excel writes what it displays; a `%.6g` CSV format drops digits. | `eiod_check_precision()` |
+| **Underflow** | Values below `1e-308` flush to subnormal or to zero. | `eiod_check_precision()` |
 
 The first three are *type* faults and the metric functions will not proceed past
 them. The last two leave a perfectly valid double column — just one with fewer
@@ -79,18 +79,18 @@ it:
 
 So the representation worry is empirically close to nothing, and the truncation
 worry is large. That is the opposite of the intuition most people arrive with,
-and it is why the integer check is the one test reiof performs automatically.
+and it is why the integer check is the one test reiod performs automatically.
 
 ```{r, error = TRUE}
-grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-eiof_absolute_threshold(as.integer(eiof_demo$water_litres), grp, "water")
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+eiod_absolute_threshold(as.integer(eiod_demo$water_litres), grp, "water")
 ```
 
 Everything else below is opt-in.
 
 ## The two checks
 
-`eiof_check_precision()` answers two separate questions.
+`eiod_check_precision()` answers two separate questions.
 
 ### 1. How many digits does the column actually retain?
 
@@ -100,13 +100,13 @@ reproduces it exactly, and reports the maximum. Full-precision doubles return
 re-save returns 3. The cases separate cleanly.
 
 ```{r}
-eiof_check_precision(eiof_demo$biodiv_pdf, name = "biodiv_pdf")
+eiod_check_precision(eiod_demo$biodiv_pdf, name = "biodiv_pdf")
 ```
 
 The same column after a single-precision round trip:
 
 ```{r}
-eiof_check_precision(signif(eiof_demo$biodiv_pdf, 7), name = "biodiv_float")
+eiod_check_precision(signif(eiod_demo$biodiv_pdf, 7), name = "biodiv_float")
 ```
 
 A maximum of 7 across hundreds of distinct values is not a coincidence. It is
@@ -122,7 +122,7 @@ and the check counts how many observations sit close enough to their own cut-off
 that rounding could move them across it:
 
 ```{r}
-eiof_check_precision(eiof_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
+eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
 ```
 
 Usually the answer is zero and the worry can be set aside with a number attached
@@ -132,7 +132,7 @@ look at them.
 The same check against a relative benchmark rather than the absolute threshold:
 
 ```{r}
-eiof_check_precision(eiof_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf",
+eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf",
                      metric = "rel", percentile = 30)
 ```
 
@@ -141,7 +141,7 @@ than double precision — it is asking "could a *plausible export error* flip
 this?", not "could the last bit flip this?".
 
 ```{r}
-eiof_check_precision(eiof_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf",
+eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf",
                      tolerance = 1e-3)
 ```
 
@@ -152,32 +152,32 @@ writing. A check you can skip is a check that gets skipped on the day you are in
 a hurry.
 
 ```r
-library(reiof)
+library(reiod)
 
 # 1. state which column holds which indicator, once
 my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
 
 # 2. demographic group
-grp <- eiof_age_sex_group(dat$age, dat$sex)
+grp <- eiod_age_sex_group(dat$age, dat$sex)
 
 # 3. the full check suite: type, sign, zeros, unit magnitude, precision
-report <- eiof_check_data(dat, impacts = my_map,
+report <- eiod_check_data(dat, impacts = my_map,
                           age = "age", sex = "sex", gdqs = "gdqs")
 report
 if (!summary(report)$pass) stop("fix the errors above before computing")
 
 # 4. precision, per indicator, against the cut-off that will actually be used
 for (ind in names(my_map)) {
-  print(eiof_check_precision(dat[[my_map[[ind]]]], grp, ind,
+  print(eiod_check_precision(dat[[my_map[[ind]]]], grp, ind,
                              name = my_map[[ind]]))
 }
 
 # 5. only now generate the indicators
-abs_all  <- eiof_absolute_all(dat, grp, my_map)
-band_all <- eiof_relative_all(dat, grp, my_map)
+abs_all  <- eiod_absolute_all(dat, grp, my_map)
+band_all <- eiod_relative_all(dat, grp, my_map)
 ```
 
-`eiof_check_data()` already runs the precision check for every indicator in
+`eiod_check_data()` already runs the precision check for every indicator in
 `impacts`, so step 4 is for when you want to vary `metric`, `percentile` or
 `tolerance` — for example to check against the P30 benchmark that HDLEI uses,
 rather than against the absolute threshold.
@@ -197,7 +197,7 @@ narrow the space of silent failures; they do not eliminate it.
 a respondent was compared against, ask:
 
 ```{r}
-eiof_lookup_cutoff("biodiv", metric = "abs")
+eiod_lookup_cutoff("biodiv", metric = "abs")
 ```
 
 The `as printed` column is the literal text transcribed from the paper. It has
@@ -206,10 +206,10 @@ need an exact decimal check — not a rendering of a double. (A `double` cannot
 hold most decimal fractions exactly. That is true of every statistical package.
 What is guaranteed here is that the stored value is the nearest double to the
 published decimal, that it round-trips back to it, and that the decimal itself
-ships as text in `eiof_cutoffs$value_published_str`.)
+ships as text in `eiod_cutoffs$value_published_str`.)
 
 ## See also
 
 * `vignette("troubleshooting")` — a broken dataset with five planted faults,
   including the integer one, worked through end to end.
-* `?eiof_check_precision`, `?eiof_check_data`, `?eiof_cutoffs`.
+* `?eiod_check_precision`, `?eiod_check_data`, `?eiod_cutoffs`.

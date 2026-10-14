@@ -1,4 +1,4 @@
 library(testthat)
-library(reiof)
+library(reiod)
 
-test_check("reiof")
+test_check("reiod")

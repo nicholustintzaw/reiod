@@ -1,14 +1,14 @@
 # ---------------------------------------------------------------------------- #
 # Checks on environmental impact variables.
 #
-# Unlike the eiof_* metric functions, these never stop() on bad input. Their
+# Unlike the eiod_* metric functions, these never stop() on bad input. Their
 # whole job is to report problems, so they must survive the problems they
 # report.
 # ---------------------------------------------------------------------------- #
 
 #' Build one finding
 #' @noRd
-.eiof_finding <- function(check, variable, level, n, message) {
+.eiod_finding <- function(check, variable, level, n, message) {
   data.frame(check = check, variable = variable, level = level,
              n = as.integer(n), message = message,
              stringsAsFactors = FALSE)
@@ -16,16 +16,16 @@
 
 #' Build a report object from a list of findings
 #' @noRd
-.eiof_report <- function(findings, n_obs = NA_integer_, source = NULL) {
+.eiod_report <- function(findings, n_obs = NA_integer_, source = NULL) {
   findings <- findings[!vapply(findings, is.null, logical(1))]
   out <- if (length(findings)) do.call(rbind, findings) else
-    .eiof_finding(character(0), character(0), character(0),
+    .eiod_finding(character(0), character(0), character(0),
                   integer(0), character(0))
   rownames(out) <- NULL
   out$level <- factor(out$level, levels = c("error", "warning", "note"))
   out <- out[order(out$level), , drop = FALSE]
   rownames(out) <- NULL
-  structure(out, class = c("eiof_check", "data.frame"),
+  structure(out, class = c("eiod_check", "data.frame"),
             n_obs = n_obs, source = source)
 }
 
@@ -55,29 +55,29 @@
 #' @param indicator Optionally the indicator name, used to report the expected
 #'   unit.
 #'
-#' @return An object of class `eiof_check`.
+#' @return An object of class `eiod_check`.
 #'
 #' @examples
-#' data(eiof_demo)
-#' eiof_check_impact(eiof_demo$biodiv_pdf, name = "biodiv_pdf")
+#' data(eiod_demo)
+#' eiod_check_impact(eiod_demo$biodiv_pdf, name = "biodiv_pdf")
 #'
 #' # a factor column, the worst of the three import failures
-#' eiof_check_impact(factor(c("3.7e-13", "5.2e-13")), name = "biodiv")
+#' eiod_check_impact(factor(c("3.7e-13", "5.2e-13")), name = "biodiv")
 #'
 #' @export
-eiof_check_impact <- function(value, name = "impact", indicator = NULL) {
+eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
 
   f <- list()
   n <- length(value)
 
   # ---- type ---------------------------------------------------------------- #
   if (is.factor(value)) {
-    f[[length(f) + 1]] <- .eiof_finding(
+    f[[length(f) + 1]] <- .eiod_finding(
       "type", name, "error", n,
       paste0("column is a factor. as.numeric() on a factor returns level ",
              "codes, not values, so this fails silently. Fix with ",
              "as.numeric(as.character(x))."))
-    return(.eiof_report(f, n_obs = n))
+    return(.eiod_report(f, n_obs = n))
   }
   if (is.character(value)) {
     suppressWarnings(num <- as.numeric(value))
@@ -92,37 +92,37 @@ eiof_check_impact <- function(value, name = "impact", indicator = NULL) {
       msg <- paste0(msg, " All values convert cleanly, so as.numeric() is ",
                     "safe here, but check why the column imported as text.")
     }
-    f[[length(f) + 1]] <- .eiof_finding("type", name, "error", n, msg)
-    return(.eiof_report(f, n_obs = n))
+    f[[length(f) + 1]] <- .eiod_finding("type", name, "error", n, msg)
+    return(.eiod_report(f, n_obs = n))
   }
   if (is.integer(value)) {
-    f[[length(f) + 1]] <- .eiof_finding(
+    f[[length(f) + 1]] <- .eiod_finding(
       "type", name, "error", n,
       paste0("column is integer. It cannot represent values below 1, so any ",
              "small impact is already lost. Re-import as double."))
-    return(.eiof_report(f, n_obs = n))
+    return(.eiod_report(f, n_obs = n))
   }
   if (!is.numeric(value)) {
-    f[[length(f) + 1]] <- .eiof_finding(
+    f[[length(f) + 1]] <- .eiod_finding(
       "type", name, "error", n,
       paste0("column is ", class(value)[1], ", not numeric."))
-    return(.eiof_report(f, n_obs = n))
+    return(.eiod_report(f, n_obs = n))
   }
 
   # ---- validity ------------------------------------------------------------ #
   n_na <- sum(is.na(value))
   if (n_na == n) {
-    f[[length(f) + 1]] <- .eiof_finding("missing", name, "error", n_na,
+    f[[length(f) + 1]] <- .eiod_finding("missing", name, "error", n_na,
       "every value is missing.")
   } else if (n_na > 0) {
-    f[[length(f) + 1]] <- .eiof_finding("missing", name, "note", n_na,
+    f[[length(f) + 1]] <- .eiod_finding("missing", name, "note", n_na,
       sprintf("%d missing (%.1f%%). These return NA, not 0.",
               n_na, 100 * n_na / n))
   }
 
   n_inf <- sum(!is.na(value) & !is.finite(value))
   if (n_inf > 0) {
-    f[[length(f) + 1]] <- .eiof_finding("finite", name, "error", n_inf,
+    f[[length(f) + 1]] <- .eiod_finding("finite", name, "error", n_inf,
       sprintf("%d non-finite value(s) (Inf or NaN).", n_inf))
   }
 
@@ -130,26 +130,26 @@ eiof_check_impact <- function(value, name = "impact", indicator = NULL) {
 
   n_neg <- sum(fin < 0)
   if (n_neg > 0) {
-    f[[length(f) + 1]] <- .eiof_finding("negative", name, "error", n_neg,
+    f[[length(f) + 1]] <- .eiod_finding("negative", name, "error", n_neg,
       sprintf("%d negative value(s). No environmental impact can be negative.",
               n_neg))
   }
 
   n_zero <- sum(fin == 0)
   if (n_zero > 0) {
-    f[[length(f) + 1]] <- .eiof_finding("zero", name, "warning", n_zero,
+    f[[length(f) + 1]] <- .eiod_finding("zero", name, "warning", n_zero,
       sprintf(paste0("%d value(s) are exactly zero. A diet that was consumed ",
                      "cannot have zero impact; this usually means an unmatched ",
                      "food item summed to 0 instead of NA."), n_zero))
   }
 
-  if (!is.null(indicator) && indicator %in% .eiof_valid_indicators()) {
-    f[[length(f) + 1]] <- .eiof_finding("unit", name, "note", NA_integer_,
-      paste0("expected unit for \"", indicator, "\": ", .eiof_unit(indicator),
+  if (!is.null(indicator) && indicator %in% .eiod_valid_indicators()) {
+    f[[length(f) + 1]] <- .eiod_finding("unit", name, "note", NA_integer_,
+      paste0("expected unit for \"", indicator, "\": ", .eiod_unit(indicator),
              " per capita per day."))
   }
 
-  .eiof_report(f, n_obs = n)
+  .eiod_report(f, n_obs = n)
 }
 
 
@@ -197,19 +197,19 @@ eiof_check_impact <- function(value, name = "impact", indicator = NULL) {
 #'   `"rel"`.
 #' @param percentile Required when `metric = "rel"`.
 #'
-#' @return An object of class `eiof_check`.
+#' @return An object of class `eiod_check`.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
-#' eiof_check_precision(eiof_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+#' eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
 #'
 #' # the same values after a single-precision round trip
-#' eiof_check_precision(signif(eiof_demo$biodiv_pdf, 7), grp, "biodiv",
+#' eiod_check_precision(signif(eiod_demo$biodiv_pdf, 7), grp, "biodiv",
 #'                      name = "biodiv_float")
 #'
 #' @export
-eiof_check_precision <- function(value, group = NULL, indicator = NULL,
+eiod_check_precision <- function(value, group = NULL, indicator = NULL,
                                  name = "impact", tolerance = 1e-6,
                                  metric = c("abs", "rel"),
                                  percentile = NULL) {
@@ -219,7 +219,7 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
   n <- length(value)
 
   if (!is.numeric(value) || is.integer(value)) {
-    return(.eiof_report(list(.eiof_finding(
+    return(.eiod_report(list(.eiod_finding(
       "precision", name, "note", NA_integer_,
       "skipped: variable is not a double. Fix the type first.")), n_obs = n))
   }
@@ -229,23 +229,23 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
 
   # ---- significant digits retained ----------------------------------------- #
   if (n_distinct >= 20) {
-    nsig <- .eiof_nsig(fin)
+    nsig <- .eiod_nsig(fin)
     mx <- max(nsig, na.rm = TRUE)
     if (mx <= 7) {
-      f[[length(f) + 1]] <- .eiof_finding(
+      f[[length(f) + 1]] <- .eiod_finding(
         "precision", name, "warning", n_distinct,
         sprintf(paste0("at most %d significant digits across %d distinct ",
                        "values. Consistent with single-precision storage or a ",
                        "truncated export. Check how the column was written."),
                 mx, n_distinct))
     } else {
-      f[[length(f) + 1]] <- .eiof_finding(
+      f[[length(f) + 1]] <- .eiod_finding(
         "precision", name, "note", n_distinct,
         sprintf("up to %d significant digits retained across %d distinct values.",
                 mx, n_distinct))
     }
   } else if (n_distinct > 0) {
-    f[[length(f) + 1]] <- .eiof_finding(
+    f[[length(f) + 1]] <- .eiod_finding(
       "precision", name, "note", n_distinct,
       sprintf(paste0("only %d distinct non-zero values; too few to judge ",
                      "stored precision."), n_distinct))
@@ -255,7 +255,7 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
   if (length(fin)) {
     n_sub <- sum(abs(fin) < .Machine$double.xmin)
     if (n_sub > 0) {
-      f[[length(f) + 1]] <- .eiof_finding(
+      f[[length(f) + 1]] <- .eiod_finding(
         "underflow", name, "error", n_sub,
         sprintf("%d value(s) are subnormal (below %.3g) and have lost precision.",
                 n_sub, .Machine$double.xmin))
@@ -264,14 +264,14 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
 
   # ---- cut-off proximity ---------------------------------------------------- #
   if (is.null(group) || is.null(indicator)) {
-    f[[length(f) + 1]] <- .eiof_finding(
+    f[[length(f) + 1]] <- .eiod_finding(
       "proximity", name, "note", NA_integer_,
       paste0("cut-off proximity not checked: supply `group` and `indicator` ",
              "to find out whether precision could change any classification."))
   } else {
     cuts <- rep(NA_real_, n)
     if (metric == "abs") {
-      thr <- .eiof_abs_thresholds(indicator)
+      thr <- .eiod_abs_thresholds(indicator)
       ok <- !is.na(group)
       cuts[ok] <- thr[group[ok]]
       what <- "the absolute threshold"
@@ -279,7 +279,7 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
       if (is.null(percentile)) {
         stop("`percentile` is required when metric = \"rel\".", call. = FALSE)
       }
-      cp <- .eiof_rel_cutpoints(indicator)
+      cp <- .eiod_rel_cutpoints(indicator)
       ok <- !is.na(group)
       cuts[ok] <- cp[cbind(group[ok], percentile / 10)]
       what <- paste0("the P", percentile, " benchmark")
@@ -291,14 +291,14 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
     if (length(near)) {
       ex <- paste(utils::head(near, 6), collapse = ", ")
       if (length(near) > 6) ex <- paste0(ex, ", ...")
-      f[[length(f) + 1]] <- .eiof_finding(
+      f[[length(f) + 1]] <- .eiod_finding(
         "proximity", name, "warning", length(near),
         sprintf(paste0("%d observation(s) sit within %.0e (relative) of %s. ",
                        "Their classification is not robust to the precision in ",
                        "your input. Rows: %s"),
                 length(near), tolerance, what, ex))
     } else {
-      f[[length(f) + 1]] <- .eiof_finding(
+      f[[length(f) + 1]] <- .eiod_finding(
         "proximity", name, "note", 0L,
         sprintf(paste0("no observation sits within %.0e of %s, so stored ",
                        "precision does not change any classification here."),
@@ -306,7 +306,7 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
     }
   }
 
-  .eiof_report(f, n_obs = n)
+  .eiod_report(f, n_obs = n)
 }
 
 
@@ -327,30 +327,30 @@ eiof_check_precision <- function(value, group = NULL, indicator = NULL,
 #' @param group Demographic groups 1-8, used to weight the expected median.
 #' @param name A label for the variable, used in the report.
 #'
-#' @return An object of class `eiof_check`.
+#' @return An object of class `eiod_check`.
 #'
 #' @examples
-#' data(eiof_demo)
-#' grp <- eiof_age_sex_group(eiof_demo$age, eiof_demo$sex)
+#' data(eiod_demo)
+#' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 #'
-#' eiof_check_magnitude(eiof_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
+#' eiod_check_magnitude(eiod_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
 #'
 #' # the same data in grams
-#' eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
+#' eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
 #'
 #' @export
-eiof_check_magnitude <- function(value, indicator, group = NULL, name = "impact") {
+eiod_check_magnitude <- function(value, indicator, group = NULL, name = "impact") {
 
-  .eiof_check_indicator(indicator)
+  .eiod_check_indicator(indicator)
   n <- length(value)
 
   if (!is.numeric(value) || all(is.na(value))) {
-    return(.eiof_report(list(.eiof_finding(
+    return(.eiod_report(list(.eiod_finding(
       "magnitude", name, "note", NA_integer_,
       "skipped: variable is not usable numeric data.")), n_obs = n))
   }
 
-  cp <- .eiof_rel_cutpoints(indicator)
+  cp <- .eiod_rel_cutpoints(indicator)
   p50 <- cp[, 5L]
 
   # A unit error and a broken sex variable are independent faults. If the
@@ -404,13 +404,13 @@ eiof_check_magnitude <- function(value, indicator, group = NULL, name = "impact"
                  ratio)
   if (!is.null(hit)) {
     msg <- paste0(msg, " Consistent with a ", hit, " unit error. ",
-                  "Expected unit: ", .eiof_unit(indicator), ".")
+                  "Expected unit: ", .eiod_unit(indicator), ".")
   } else if (lvl == "warning") {
     msg <- paste0(msg, " Unusual but not a recognised unit factor. ",
-                  "Check the unit (expected ", .eiof_unit(indicator),
+                  "Check the unit (expected ", .eiod_unit(indicator),
                   ") and the population.")
   }
 
-  .eiof_report(list(.eiof_finding("magnitude", name, lvl, NA_integer_, msg)),
+  .eiod_report(list(.eiod_finding("magnitude", name, lvl, NA_integer_, msg)),
                n_obs = n)
 }

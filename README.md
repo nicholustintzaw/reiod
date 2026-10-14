@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# reiof
+# reiod
 
 <!-- badges: start -->
 
@@ -9,8 +9,8 @@
 WIP](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostatus.org/#wip)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![R-CMD-check](https://github.com/nicholustintzaw/reiof/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nicholustintzaw/reiof/actions/workflows/R-CMD-check.yaml)
-[![pkgdown](https://github.com/nicholustintzaw/reiof/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/nicholustintzaw/reiof/actions/workflows/pkgdown.yaml)
+[![R-CMD-check](https://github.com/nicholustintzaw/reiod/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/nicholustintzaw/reiod/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/nicholustintzaw/reiod/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/nicholustintzaw/reiod/actions/workflows/pkgdown.yaml)
 [![License:
 MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 <!-- badges: end -->
@@ -18,7 +18,7 @@ MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/
 Dietary environmental impact metrics from Intake’s Environmental Impacts
 of Foods framework, for R.
 
-**`reiof` does not contain the EIOF database.** It implements the metric
+**`reiod` does not contain the EIOF database.** It implements the metric
 *cut-offs* defined in the Intake methods paper and applies them to
 impact values you have already derived. Matching food items to impact
 factors, applying edible-portion, processing and cooking-yield
@@ -30,10 +30,10 @@ Quality Score; the composite metrics take a GDQS value as input.
 
 | Family             | Question                                                               | Source       | Function                    |
 |--------------------|------------------------------------------------------------------------|--------------|-----------------------------|
-| Absolute threshold | Is this diet below the per capita daily share of a planetary boundary? | Table 3      | `eiof_absolute_threshold()` |
-| Relative benchmark | Where does this diet sit in a fixed global reference distribution?     | Tables 4a–4g | `eiof_relative_band()`      |
-| Composite — HESD   | Healthy *and* environmentally sustainable?                             | Table 5a     | `eiof_hesd()`               |
-| Composite — HDLEI  | Healthy *and* low environmental impact?                                | Table 5b     | `eiof_hdlei()`              |
+| Absolute threshold | Is this diet below the per capita daily share of a planetary boundary? | Table 3      | `eiod_absolute_threshold()` |
+| Relative benchmark | Where does this diet sit in a fixed global reference distribution?     | Tables 4a–4g | `eiod_relative_band()`      |
+| Composite — HESD   | Healthy *and* environmentally sustainable?                             | Table 5a     | `eiod_hesd()`               |
+| Composite — HDLEI  | Healthy *and* low environmental impact?                                | Table 5b     | `eiod_hdlei()`              |
 
 Seven indicators: total, arable and pasture land use; greenhouse gases;
 eutrophication potential; water use; biodiversity loss. All cut-offs are
@@ -43,28 +43,28 @@ age- and sex-specific.
 
 ``` r
 # install.packages("pak")
-pak::pak("nicholustintzaw/reiof")
+pak::pak("nicholustintzaw/reiod")
 ```
 
-**No dependencies.** `reiof` imports nothing, so it installs with no
+**No dependencies.** `reiod` imports nothing, so it installs with no
 dependency tree. The consequence is a plain vector API: pass
 `df$biodiv_pdf`, not `biodiv_pdf`.
 
 Your columns can be called anything. `"biodiv"` is the indicator *key*
-reiof knows; what the column is named in your data is a separate matter,
+reiod knows; what the column is named in your data is a separate matter,
 and the two never have to match.
 
 ## Usage
 
 ``` r
-library(reiof)
+library(reiod)
 
 # 1. state which column holds which indicator, once
 my_map <- c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e")
 
 # 2. check the data before computing anything
-report <- eiof_check_data(
-  eiof_demo,
+report <- eiod_check_data(
+  eiod_demo,
   impacts = my_map,
   age = "age", sex = "sex", gdqs = "gdqs"
 )
@@ -74,12 +74,12 @@ summary(report)
 
 ``` r
 # 3. the demographic group, required by everything else
-grp <- eiof_age_sex_group(age = eiof_demo$age, sex = eiof_demo$sex)
+grp <- eiod_age_sex_group(age = eiod_demo$age, sex = eiod_demo$sex)
 
 # 4. the metrics
-ghg_abs    <- eiof_absolute_threshold(eiof_demo$ghg_kgco2e, grp, "ghg")
-biodiv_bnd <- eiof_relative_band(eiof_demo$biodiv_pdf, grp, "biodiv")
-hesd       <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "binary")
+ghg_abs    <- eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg")
+biodiv_bnd <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
+hesd       <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
 #> 15 observation(s) aged under 2 years set to NA: the GDQS is not validated below age 2, so the HESD metric does not apply to them.
 
 round(100 * c(ghg_below_threshold = mean(ghg_abs, na.rm = TRUE),
@@ -91,7 +91,7 @@ round(100 * c(ghg_below_threshold = mean(ghg_abs, na.rm = TRUE),
 Several indicators at once, with the same mapping:
 
 ``` r
-round(100 * colMeans(eiof_absolute_all(eiof_demo, grp, eiof_demo_map),
+round(100 * colMeans(eiod_absolute_all(eiod_demo, grp, eiod_demo_map),
                      na.rm = TRUE), 1)
 #>   abs_landtotal  abs_landarable abs_landpasture         abs_ghg     abs_eutroph 
 #>            70.2            80.8            68.7            22.2            53.5 
@@ -103,7 +103,7 @@ Each composite also returns its two criteria separately, which is
 usually what you want for reporting:
 
 ``` r
-parts <- eiof_hesd(eiof_demo$biodiv_pdf, eiof_demo$gdqs, grp, form = "components")
+parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
 #> 15 observation(s) aged under 2 years set to NA: the GDQS is not validated below age 2, so the HESD metric does not apply to them.
 head(parts, 3)
 #>   healthy env                         category binary
@@ -118,14 +118,14 @@ A **factor is the recommended input**; character works the same way.
 Numeric is deliberately refused unless you say which code means male:
 
 ``` r
-eiof_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
-#> Error: `sex` is numeric, so reiof cannot tell which code means male.
+eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
+#> Error: `sex` is numeric, so reiod cannot tell which code means male.
 #>   Observed codes: 0, 1
 #>   Survey data uses 1/2 and 0/1 about equally often, and guessing wrong would invert every result without any error.
 #>   Either state the codes:
-#>     eiof_age_sex_group(age, sex, male = 1, female = 2)
+#>     eiod_age_sex_group(age, sex, male = 1, female = 2)
 #>   or convert once, which is the recommended route:
-#>     dat$sex <- eiof_as_sex_factor(dat$sex, male = 1, female = 2)
+#>     dat$sex <- eiod_as_sex_factor(dat$sex, male = 1, female = 2)
 ```
 
 Survey data uses `1/2` and `0/1` about equally often, and they cannot be
@@ -133,7 +133,7 @@ told apart from the values alone. Guessing wrong would invert every
 result silently. Convert once instead:
 
 ``` r
-eiof_as_sex_factor(c(1, 0), male = 1, female = 0)
+eiod_as_sex_factor(c(1, 0), male = 1, female = 0)
 #> [1] male   female
 #> Levels: male female
 ```
@@ -143,7 +143,7 @@ eiof_as_sex_factor(c(1, 0), male = 1, female = 0)
 1.  **Eutrophication units are unresolved.** The relative benchmarks
     carry an inferred ÷1000 rescaling that Intake has not confirmed. It
     affects 80 of the 616 rows, all of them relative eutrophication, and
-    is isolated in `eiof_cutoffs$scale_to_db_unit` so it can be switched
+    is isolated in `eiod_cutoffs$scale_to_db_unit` so it can be switched
     off in one place.
 2.  **A low relative band is not evidence of sustainability.** For
     greenhouse gases even band 1 exceeds the planetary boundary; for
@@ -152,11 +152,11 @@ eiof_as_sex_factor(c(1, 0), male = 1, female = 0)
     1.52× stricter, so every HDLEI diet is also a HESD diet. They are
     not two independent dimensions.
 
-All three are explained in `vignette("reiof")`.
+All three are explained in `vignette("reiod")`.
 
 ## Documentation
 
-- `vignette("reiof")` — EIOF, reiof, and step-by-step usage
+- `vignette("reiod")` — EIOF, reiod, and step-by-step usage
 - `vignette("precision")` — the pre-flight precision check; run this
   before generating any indicator
 - `vignette("relative-benchmarks")` — what the reference distribution
@@ -166,7 +166,7 @@ All three are explained in `vignette("reiof")`.
 
 ## Data quality checks
 
-`eiof_check_data()` runs six component checks covering variable type,
+`eiod_check_data()` runs six component checks covering variable type,
 plausibility, numerical precision and unit magnitude. **They are
 opt-in** — the only test on the default metric path is that an impact
 vector must not be an integer, because `is.numeric(1L)` is `TRUE` and
@@ -194,8 +194,8 @@ reference and names the likely conversion when the ratio lands near a
 known factor:
 
 ``` r
-eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_grams")
-#> reiof data quality report
+eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_grams")
+#> reiod data quality report
 #> 
 #>   ERROR    0
 #>   WARNING  1
@@ -212,7 +212,7 @@ eiof_check_magnitude(eiof_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_gra
 Intake (2026). *Methods for Assessing Healthy, Environmentally
 Sustainable Diets Globally.* Tables 3, 4a–4g, 5a and 5b.
 
-The cut-offs ship as `eiof_cutoffs`, a 616-row long-format dataset built
+The cut-offs ship as `eiod_cutoffs`, a 616-row long-format dataset built
 from the same source file as a companion Stata implementation, so the
 two cannot drift apart at the data layer.
 

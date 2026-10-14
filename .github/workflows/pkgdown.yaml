@@ -9,7 +9,7 @@
 # hand once:
 #   Settings -> Pages -> Build and deployment -> Source: "GitHub Actions"
 #
-# The site is published at https://nicholustintzaw.github.io/reiof/
+# The site is published at https://nicholustintzaw.github.io/reiod/
 
 on:
   push:

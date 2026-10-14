@@ -10,28 +10,28 @@
 #' @param name Dataset name.
 #' @return The dataset.
 #' @noRd
-.eiof_data <- function(name) {
-  get(name, envir = asNamespace("reiof"))
+.eiod_data <- function(name) {
+  get(name, envir = asNamespace("reiod"))
 }
 
 #' The seven valid indicator names
 #' @noRd
-.eiof_valid_indicators <- function() {
+.eiod_valid_indicators <- function() {
   c("landtotal", "landarable", "landpasture", "ghg",
     "eutroph", "water", "biodiv")
 }
 
 #' Validate an indicator name
 #' @noRd
-.eiof_check_indicator <- function(indicator) {
+.eiod_check_indicator <- function(indicator) {
   if (!is.character(indicator) || length(indicator) != 1L || is.na(indicator)) {
     stop("`indicator` must be a single character string.", call. = FALSE)
   }
-  ok <- .eiof_valid_indicators()
+  ok <- .eiod_valid_indicators()
   if (!indicator %in% ok) {
     stop("`indicator` must be one of: ", paste(ok, collapse = ", "),
          ".\n  Got: \"", indicator, "\".",
-         "\n  See eiof_list_indicators() for labels and units.",
+         "\n  See eiod_list_indicators() for labels and units.",
          call. = FALSE)
   }
   invisible(indicator)
@@ -41,8 +41,8 @@
 #'
 #' @return A numeric vector of length 8, indexed by demographic group.
 #' @noRd
-.eiof_abs_thresholds <- function(indicator) {
-  cut <- .eiof_data("eiof_cutoffs")
+.eiod_abs_thresholds <- function(indicator) {
+  cut <- .eiod_data("eiod_cutoffs")
   s <- cut[cut$metric == "abs" & cut$indicator == indicator, ]
   if (nrow(s) != 8L) {
     stop("expected 8 absolute thresholds for \"", indicator,
@@ -57,8 +57,8 @@
 #' @return An 8 x 9 numeric matrix: rows are demographic groups, columns are
 #'   the P10..P90 cut-points in ascending order.
 #' @noRd
-.eiof_rel_cutpoints <- function(indicator) {
-  cut <- .eiof_data("eiof_cutoffs")
+.eiod_rel_cutpoints <- function(indicator) {
+  cut <- .eiod_data("eiod_cutoffs")
   s <- cut[cut$metric == "rel" & cut$indicator == indicator &
              !is.na(cut$percentile), ]
   if (nrow(s) != 72L) {
@@ -75,22 +75,22 @@
 
 #' The unit string for one indicator
 #' @noRd
-.eiof_unit <- function(indicator) {
-  ind <- .eiof_data("eiof_indicators")
+.eiod_unit <- function(indicator) {
+  ind <- .eiod_data("eiod_indicators")
   ind$unit[match(indicator, ind$indicator)]
 }
 
 #' Validate a demographic group vector
 #' @noRd
-.eiof_check_group <- function(group, n = NULL) {
+.eiod_check_group <- function(group, n = NULL) {
   if (!is.numeric(group)) {
     stop("`group` must be numeric, with values 1-8. ",
-         "Build it with eiof_age_sex_group().", call. = FALSE)
+         "Build it with eiod_age_sex_group().", call. = FALSE)
   }
   bad <- !is.na(group) & !(group %in% 1:8)
   if (any(bad)) {
     stop(sum(bad), " value(s) in `group` are outside 1-8. ",
-         "Build it with eiof_age_sex_group().", call. = FALSE)
+         "Build it with eiod_age_sex_group().", call. = FALSE)
   }
   if (!is.null(n) && length(group) != n) {
     stop("`group` has length ", length(group),
@@ -103,35 +103,35 @@
 #'
 #' This runs on the path every metric function takes, so it carries the checks
 #' that must never be skippable. The fuller diagnostics live in
-#' [eiof_check_impact()], which reports rather than stops; this one stops.
+#' [eiod_check_impact()], which reports rather than stops; this one stops.
 #'
 #' The integer branch was added after the companion Stata implementation
-#' measured the cost of the equivalent fault. See [eiof_check_impact()] for why
+#' measured the cost of the equivalent fault. See [eiod_check_impact()] for why
 #' `is.numeric()` alone is not enough: `is.numeric(1L)` is `TRUE`.
 #'
 #' @noRd
-.eiof_check_value <- function(value, arg = "value") {
+.eiod_check_value <- function(value, arg = "value") {
   if (is.factor(value)) {
     stop("`", arg, "` is a factor. as.numeric() on a factor returns the level ",
          "codes, not the values, so this would silently produce wrong results. ",
          "Convert with as.numeric(as.character(x)), then re-check. ",
-         "See eiof_check_impact().", call. = FALSE)
+         "See eiod_check_impact().", call. = FALSE)
   }
   if (is.character(value)) {
     stop("`", arg, "` is character, not numeric. This usually means the ",
          "column failed to import: a stray symbol such as \"<0.001\", a decimal ",
-         "comma, or a thousands separator. See eiof_check_impact().",
+         "comma, or a thousands separator. See eiod_check_impact().",
          call. = FALSE)
   }
   if (is.integer(value)) {
     stop("`", arg, "` is an integer vector, not a double. Integer storage ",
          "truncates toward zero, so the fractional part of every impact is ",
-         "already gone before reiof sees it - and `is.numeric()` returns TRUE ",
+         "already gone before reiod sees it - and `is.numeric()` returns TRUE ",
          "for an integer, so nothing else would catch this. ",
          "On 200,000 simulated respondent-days the companion Stata ",
          "implementation measured a 13% downward bias in mean greenhouse gas ",
          "emissions from exactly this fault. ",
-         "Convert with as.double(x), then re-check. See eiof_check_impact().",
+         "Convert with as.double(x), then re-check. See eiod_check_impact().",
          call. = FALSE)
   }
   if (!is.numeric(value)) {
@@ -140,15 +140,15 @@
   invisible(TRUE)
 }
 
-#' Strip reiof's own attributes from a vector
+#' Strip reiod's own attributes from a vector
 #'
-#' `eiof_lookup_cutoff()` returns a classed vector so it can print at published
+#' `eiod_lookup_cutoff()` returns a classed vector so it can print at published
 #' precision. Arithmetic on it should return a plain number, not drag the class
 #' and its metadata along into an unrelated result.
 #'
 #' @noRd
-.eiof_bare <- function(x) {
-  if (inherits(x, "eiof_cutoff")) {
+.eiod_bare <- function(x) {
+  if (inherits(x, "eiod_cutoff")) {
     nm <- names(x)
     x <- as.vector(x)
     names(x) <- nm
@@ -158,14 +158,14 @@
 
 #' Number of significant digits needed to reproduce each value exactly
 #'
-#' Used by [eiof_check_precision()]. A column whose maximum is 7 or fewer,
+#' Used by [eiod_check_precision()]. A column whose maximum is 7 or fewer,
 #' across many distinct values, is consistent with single-precision storage or
 #' a truncated export.
 #'
 #' @param x A numeric vector.
 #' @return An integer vector; `NA` where `x` is zero or not finite.
 #' @noRd
-.eiof_nsig <- function(x) {
+.eiod_nsig <- function(x) {
   res <- rep(NA_integer_, length(x))
   ok <- is.finite(x) & x != 0
   if (!any(ok)) return(res)
@@ -181,7 +181,7 @@
 #' Resolve a sex vector to internal codes
 #'
 #' Returns 1 for male, 2 for female, `NA` for missing. Accepts a factor,
-#' character or numeric vector. See [eiof_age_sex_group()] for the full
+#' character or numeric vector. See [eiod_age_sex_group()] for the full
 #' discussion of which input type to prefer.
 #'
 #' The numeric branch deliberately refuses to guess. Survey data uses 1/2 and
@@ -189,14 +189,14 @@
 #' silently, so `male` and `female` must be given explicitly.
 #'
 #' @noRd
-.eiof_resolve_sex <- function(sex, male = NULL, female = NULL) {
+.eiod_resolve_sex <- function(sex, male = NULL, female = NULL) {
 
   if (is.logical(sex) && all(is.na(sex))) {
     return(rep(NA_integer_, length(sex)))
   }
   if (is.logical(sex)) {
     stop("`sex` is logical (TRUE/FALSE), which does not say which value means ",
-         "male. Convert it first, for example with eiof_as_sex_factor().",
+         "male. Convert it first, for example with eiod_as_sex_factor().",
          call. = FALSE)
   }
 
@@ -238,14 +238,14 @@
   if (is.numeric(sex)) {
     obs <- sort(unique(sex[!is.na(sex)]))
     if (is.null(male)) {
-      stop("`sex` is numeric, so reiof cannot tell which code means male.\n",
+      stop("`sex` is numeric, so reiod cannot tell which code means male.\n",
            "  Observed codes: ", paste(obs, collapse = ", "), "\n",
            "  Survey data uses 1/2 and 0/1 about equally often, and guessing ",
            "wrong would invert every result without any error.\n",
            "  Either state the codes:\n",
-           "    eiof_age_sex_group(age, sex, male = 1, female = 2)\n",
+           "    eiod_age_sex_group(age, sex, male = 1, female = 2)\n",
            "  or convert once, which is the recommended route:\n",
-           "    dat$sex <- eiof_as_sex_factor(dat$sex, male = 1, female = 2)",
+           "    dat$sex <- eiod_as_sex_factor(dat$sex, male = 1, female = 2)",
            call. = FALSE)
     }
     if (length(male) != 1L || length(female) != 1L ||

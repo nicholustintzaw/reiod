@@ -9,7 +9,7 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-library(reiof)
+library(reiod)
 ```
 
 This vignette works through a dataset with five real faults in it — the kinds
@@ -24,10 +24,10 @@ the one with the most counter-intuitive answer — see `vignette("precision")`.
 
 ## The data
 
-A copy of `eiof_demo` ships with the package, broken on purpose:
+A copy of `eiod_demo` ships with the package, broken on purpose:
 
 ```{r}
-path <- system.file("extdata", "eiof_broken.csv", package = "reiof")
+path <- system.file("extdata", "eiod_broken.csv", package = "reiod")
 broken <- read.csv(path, stringsAsFactors = FALSE)
 str(broken[, c("age", "sex", "ghg_kgco2e", "land_arable_m2yr",
                "water_litres", "biodiv_pdf", "gdqs")])
@@ -41,7 +41,7 @@ either case.
 ## Run the checks first
 
 ```{r}
-report <- eiof_check_data(
+report <- eiod_check_data(
   broken,
   impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e",
               water = "water_litres", landarable = "land_arable_m2yr"),
@@ -75,7 +75,7 @@ as.numeric(factor(c("3.7e-13", "5.2e-13", "1.1e-13")))
 Those are level codes, not values. `3.7e-13` becomes `1`. That is a
 plausible-looking number with no warning at all, and every downstream
 calculation would run happily and be completely wrong. This is the single most
-destructive failure mode in the list, which is why `reiof` refuses to coerce
+destructive failure mode in the list, which is why `reiod` refuses to coerce
 anything for you.
 
 Note also that the magnitude and precision checks for `biodiv` do not appear in
@@ -96,7 +96,7 @@ fixed$biodiv_pdf <- as.numeric(fixed$biodiv_pdf)
 ```
 
 ```{r}
-eiof_check_impact(fixed$biodiv_pdf, name = "biodiv_pdf", indicator = "biodiv")
+eiod_check_impact(fixed$biodiv_pdf, name = "biodiv_pdf", indicator = "biodiv")
 ```
 
 ## Fault 2 — greenhouse gases in the wrong unit
@@ -121,8 +121,8 @@ not one diet in the sample meets the greenhouse gas threshold — a result that
 looks like a finding:
 
 ```{r}
-grp_tmp <- eiof_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
-table(eiof_absolute_threshold(broken$ghg_kgco2e, grp_tmp, "ghg"), useNA = "ifany")
+grp_tmp <- eiod_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
+table(eiod_absolute_threshold(broken$ghg_kgco2e, grp_tmp, "ghg"), useNA = "ifany")
 ```
 
 Zero diets below the threshold. Nothing errored. You could put that in a report.
@@ -131,20 +131,20 @@ Zero diets below the threshold. Nothing errored. You could put that in a report.
 
 ```{r}
 fixed$ghg_kgco2e <- fixed$ghg_kgco2e / 1000
-eiof_check_magnitude(fixed$ghg_kgco2e, "ghg", grp_tmp, name = "ghg_kgco2e")
+eiod_check_magnitude(fixed$ghg_kgco2e, "ghg", grp_tmp, name = "ghg_kgco2e")
 ```
 
 ## Fault 3 — sex coded 0/1 with no labels
 
 ```{r, error = TRUE}
-eiof_age_sex_group(broken$age, broken$sex)
+eiod_age_sex_group(broken$age, broken$sex)
 ```
 
-`reiof` will not guess. The reason is visible if you try it both ways:
+`reiod` will not guess. The reason is visible if you try it both ways:
 
 ```{r}
-a <- eiof_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
-b <- eiof_age_sex_group(broken$age, broken$sex, male = 0, female = 1)
+a <- eiod_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
+b <- eiod_age_sex_group(broken$age, broken$sex, male = 0, female = 1)
 table(guess_A = factor(a, 1:8), guess_B = factor(b, 1:8))[1:4, 5:8]
 ```
 
@@ -156,9 +156,9 @@ error and nothing visibly odd in the output.
 script:
 
 ```{r}
-fixed$sex <- eiof_as_sex_factor(broken$sex, male = 1, female = 0)
+fixed$sex <- eiod_as_sex_factor(broken$sex, male = 1, female = 0)
 levels(fixed$sex)
-grp <- eiof_age_sex_group(fixed$age, fixed$sex)
+grp <- eiod_age_sex_group(fixed$age, fixed$sex)
 ```
 
 ## Fault 4 — water rounded to four significant digits
@@ -174,7 +174,7 @@ Does it matter? That is an empirical question, and the proximity check answers
 it rather than leaving you to worry:
 
 ```{r}
-eiof_check_precision(broken$water_litres, grp, "water", name = "water_litres")
+eiod_check_precision(broken$water_litres, grp, "water", name = "water_litres")
 ```
 
 Here, no observation sits close enough to the water threshold for the rounding
@@ -189,7 +189,7 @@ worth panicking about:
 ```{r}
 nsig <- function(v) { for (d in 1:17) if (signif(v, d) == v) return(d); 17L }
 c(broken = max(vapply(broken$water_litres[1:50], nsig, integer(1))),
-  demo   = max(vapply(eiof_demo$water_litres[1:50], nsig, integer(1))))
+  demo   = max(vapply(eiod_demo$water_litres[1:50], nsig, integer(1))))
 ```
 
 See `vignette("precision")` for the empirical version of this question, and for
@@ -209,7 +209,7 @@ This is the quietest of the five, because an integer column is still numeric:
 is.numeric(broken$land_arable_m2yr)
 ```
 
-So nothing about the vector's *type* looks wrong, and until October 2026 reiof
+So nothing about the vector's *type* looks wrong, and until October 2026 reiod
 would have computed with it. The damage is already done by the time you see the
 column, because `as.integer()` truncates toward zero rather than rounding:
 
@@ -223,7 +223,7 @@ fractional part:
 ```{r}
 c(zeros = sum(broken$land_arable_m2yr == 0),
   mean_broken = mean(broken$land_arable_m2yr),
-  mean_true   = mean(eiof_demo$land_arable_m2yr))
+  mean_true   = mean(eiod_demo$land_arable_m2yr))
 ```
 
 Note that the report above shows only the type error for this column, not the
@@ -235,11 +235,11 @@ Measured in the companion Stata implementation on 200,000 simulated
 respondent-days, the same fault on greenhouse gas emissions biased the mean down
 from 3.836 to 3.336 — **13%**, with no warning anywhere.
 
-This is the **one** check reiof now performs on the default path, precisely
+This is the **one** check reiod now performs on the default path, precisely
 because `is.numeric()` would not catch it:
 
 ```{r, error = TRUE}
-eiof_absolute_threshold(broken$land_arable_m2yr, grp, "landarable")
+eiod_absolute_threshold(broken$land_arable_m2yr, grp, "landarable")
 ```
 
 **The fix** is not `as.double()`. That converts the type without restoring the
@@ -249,14 +249,14 @@ from the source. Here, for the sake of carrying on, we take it from the
 unbroken copy and say so:
 
 ```{r}
-fixed$land_arable_m2yr <- eiof_demo$land_arable_m2yr   # i.e. re-imported
+fixed$land_arable_m2yr <- eiod_demo$land_arable_m2yr   # i.e. re-imported
 class(fixed$land_arable_m2yr)
 ```
 
 ## Re-run the checks
 
 ```{r}
-report2 <- eiof_check_data(
+report2 <- eiod_check_data(
   fixed,
   impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e",
               water = "water_litres", landarable = "land_arable_m2yr"),
@@ -275,11 +275,11 @@ summary(report2)
 ## Now compute the metrics
 
 ```{r}
-fixed$ghg_abs    <- eiof_absolute_threshold(fixed$ghg_kgco2e, grp, "ghg")
-fixed$biodiv_abs <- eiof_absolute_threshold(fixed$biodiv_pdf, grp, "biodiv")
-fixed$biodiv_bnd <- eiof_relative_band(fixed$biodiv_pdf, grp, "biodiv")
-fixed$hesd       <- eiof_hesd(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
-fixed$hdlei      <- eiof_hdlei(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
+fixed$ghg_abs    <- eiod_absolute_threshold(fixed$ghg_kgco2e, grp, "ghg")
+fixed$biodiv_abs <- eiod_absolute_threshold(fixed$biodiv_pdf, grp, "biodiv")
+fixed$biodiv_bnd <- eiod_relative_band(fixed$biodiv_pdf, grp, "biodiv")
+fixed$hesd       <- eiod_hesd(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
+fixed$hdlei      <- eiod_hdlei(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
 
 round(100 * c(
   ghg_below_threshold    = mean(fixed$ghg_abs,    na.rm = TRUE),
@@ -298,7 +298,7 @@ Compare the greenhouse gas figure with the 0% we got before fixing the units.
 my_map <- c(biodiv = "pdf_year", ghg = "ghg_total_kg", water = "water_l")
 
 # 2. check
-report <- eiof_check_data(dat, impacts = my_map, age = "age", sex = "sex",
+report <- eiod_check_data(dat, impacts = my_map, age = "age", sex = "sex",
                           gdqs = "gdqs")
 report
 
@@ -306,32 +306,32 @@ report
 if (!summary(report)$pass) stop("fix the errors above before continuing")
 
 # 4. compute
-grp <- eiof_age_sex_group(dat$age, dat$sex)
-abs_all  <- eiof_absolute_all(dat, grp, my_map)
-band_all <- eiof_relative_all(dat, grp, my_map)
+grp <- eiod_age_sex_group(dat$age, dat$sex)
+abs_all  <- eiod_absolute_all(dat, grp, my_map)
+band_all <- eiod_relative_all(dat, grp, my_map)
 ```
 
 Putting the `stop()` in writing is worth the two lines. A check you can skip is
 a check that gets skipped on the day you are in a hurry.
 
 Note that step 1 is the only place your own column names appear. The **names**
-of `my_map` are reiof's indicator keys; the **values** are your columns. Nothing
-in the package has ever required the two to match — `eiof_demo`'s columns were
+of `my_map` are reiod's indicator keys; the **values** are your columns. Nothing
+in the package has ever required the two to match — `eiod_demo`'s columns were
 renamed in October 2026 so that the examples stop implying otherwise.
 
 ## Error messages you may hit
 
 | Message | Cause | Fix |
 |---|---|---|
-| `cannot tell which code means male` | numeric `sex` | `eiof_as_sex_factor(x, male =, female =)` |
+| `cannot tell which code means male` | numeric `sex` | `eiod_as_sex_factor(x, male =, female =)` |
 | `these values of sex were not recognised` | an extra category, or a typo in a label | recode, or set `male`/`female` explicitly |
 | `is a factor. as.numeric() on a factor returns level codes` | a factor impact column | `as.numeric(as.character(x))`, then re-check |
 | `is character, not numeric` | a stray symbol, decimal comma or thousands separator | find the offending cells, decide what they mean |
 | `column is integer` / `is an integer vector, not a double` | impacts read as whole numbers | re-import as double; `as.double()` will not bring the digits back |
 | `must be named with an indicator key` | `map`/`impacts` given without names | `c(ghg = "your_column")`, not `c("your_column")` |
-| `indicator must be one of` | a misspelled indicator | `eiof_list_indicators()` |
-| `group has N value(s) outside 1-8` | `group` built by hand | use `eiof_age_sex_group()` |
-| `percentile is required when metric = "rel"` | `eiof_lookup_cutoff()` without a percentile | add `percentile = 30` |
+| `indicator must be one of` | a misspelled indicator | `eiod_list_indicators()` |
+| `group has N value(s) outside 1-8` | `group` built by hand | use `eiod_age_sex_group()` |
+| `percentile is required when metric = "rel"` | `eiod_lookup_cutoff()` without a percentile | add `percentile = 30` |
 
 ## What the checks do not do
 
