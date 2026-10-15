@@ -193,6 +193,13 @@ and precision. If the upstream matching of food items to impact factors was
 wrong, every check here passes and the results are still wrong. These checks
 narrow the space of silent failures; they do not eliminate it.
 
+**It cannot see incomplete EIOF coverage.** Not every food has an impact factor,
+and a food without one contributes nothing to the day's total — so the total is
+understated, invisibly. By the time `reiod` sees one number per respondent-day,
+whether it was summed over complete or incomplete coverage is not recoverable
+from the number. Count it upstream and report it; see
+`vignette("troubleshooting")`, "The one you have to handle yourself".
+
 **It is not a substitute for looking at the cut-offs.** If you want to know what
 a respondent was compared against, ask:
 

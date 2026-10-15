@@ -25,6 +25,29 @@
 #' opt-in. See `vignette("precision")` and the `?eiod_cutoffs` section on the
 #' eutrophication rescaling.
 #'
+#' @section Values must be summed over ALL consumed foods - including any the
+#'   EIOF database cannot cost:
+#' Not every food has an impact factor. The EIOF country databases mark foods
+#' with no available estimate, and such a food contributes **nothing** to the
+#' day's total - so a respondent who ate one has an impact that is understated
+#' by an unknown amount.
+#'
+#' **This package cannot detect that.** It receives one number per
+#' respondent-day; whether that number was summed over complete or incomplete
+#' coverage is not recoverable from the number itself. The only exception is
+#' the extreme case: if every food lacked a factor and the sum was coded `0`
+#' rather than `NA`, [eiod_check_impact()] flags the zero.
+#'
+#' It matters more here than in most analyses because these metrics compare
+#' each respondent against a **fixed external cut-off** rather than against your
+#' sample, so uneven coverage shifts results with nothing in the output looking
+#' wrong.
+#'
+#' Count it where it is still visible - when you aggregate to the
+#' respondent-day - preferably as the **share of consumed weight** carrying a
+#' factor rather than a count of items, and report it with any prevalence. See
+#' `vignette("troubleshooting")`.
+#'
 #' @param quiet If `TRUE`, return the table without printing it.
 #'
 #' @return A data frame of indicator, label and unit, invisibly when printing.

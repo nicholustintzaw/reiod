@@ -30,8 +30,10 @@ A data frame with 616 rows and 14 columns:
 }
 \source{
 Intake-EIOD-Methods-Paper-Jan2026-Final.pdf, Tables 3 and 4a-4g
-  (pages 16-19). Transcribed programmatically; see `data-raw/build_data.R`.
-  The same source file drives a companion Stata implementation.
+  (pages 16-19), available at
+  <https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf>.
+  Transcribed programmatically; see `data-raw/build_data.R`. The same source
+  file drives a companion Stata implementation.
 }
 \usage{
 eiod_cutoffs

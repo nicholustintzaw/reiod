@@ -9,6 +9,7 @@
 # SOURCE  data-raw/eiod_cutoffs.csv
 #         Transcribed programmatically from Tables 3 and 4a-4g of
 #         Intake-EIOD-Methods-Paper-Jan2026-Final.pdf (pages 16-19).
+#         https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf
 #         This is the SAME file the companion Stata implementation reads, so
 #         the two implementations cannot drift apart at the data layer.
 #

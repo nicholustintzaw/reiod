@@ -340,3 +340,49 @@ of a plausible type, sign, magnitude and precision. If the upstream matching of
 food items to impact factors was wrong, every check here will pass and the
 results will still be wrong. The checks narrow the space of silent failures;
 they do not eliminate it.
+
+### The one you have to handle yourself: incomplete EIOF coverage
+
+**Not every food has an impact factor.** The EIOF country databases mark foods
+with no available estimate — in the files we have seen, as `#VALUE!` in each of
+the seven impact columns. Those are genuinely missing values, not an export
+fault, and there is nothing to repair.
+
+But a food with no factor contributes **nothing** to the day's total. If a
+respondent ate five items and one of them has no estimate, their impact is
+summed from four, and the result is **understated by an unknown amount**.
+
+**`reiod` cannot detect this, and no amount of checking will change that.** By
+the time you call `eiod_absolute_threshold()`, you are passing a single number
+per respondent-day. Whether that number came from five covered foods or four
+covered and one missing is not recoverable from the number itself — the
+aggregation discarded it one step earlier.
+
+There is one exception, and it is the extreme case. If *every* food for a
+respondent lacked a factor and your code summed to `0` rather than `NA`, that
+is visible, and `eiod_check_impact()` reports it:
+
+```{r}
+eiod_check_impact(c(0, 2.1, 3.4, 0), name = "ghg_kgco2e")
+```
+
+Partial coverage leaves no such trace.
+
+**Why this matters more here than in most analyses.** These metrics compare each
+respondent against a **fixed external cut-off**, not against the rest of your
+sample. Uneven coverage therefore shifts results without anything in the output
+looking wrong: a respondent with 30% of intake uncovered is not comparable with
+one at 2%, yet both produce a perfectly ordinary number and both get classified.
+
+**What to do, upstream of this package:**
+
+1. When you aggregate to the respondent-day, **count the consumed items with no
+   impact factor**, and keep the count.
+2. Better, compute the **share of consumed weight** that carries a factor. A
+   count of items can mislead in either direction — one uncovered staple matters
+   more than six uncovered garnishes.
+3. **Report it** alongside any prevalence you publish, and decide explicitly
+   whether respondents below some coverage threshold belong in the denominator.
+
+Note that a percentage of the *food list* tells you nothing about the share of
+*intake* affected. The two can differ by a lot, in either direction.

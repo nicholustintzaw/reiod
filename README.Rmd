@@ -179,8 +179,8 @@ eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_gra
 
 ## Source
 
-Intake (2026). *Methods for Assessing Healthy, Environmentally Sustainable
-Diets Globally.* Tables 3, 4a–4g, 5a and 5b.
+Intake (2026). [*Methods for Assessing Healthy, Environmentally Sustainable
+Diets Globally.*](https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf) Tables 3, 4a–4g, 5a and 5b.
 
 The cut-offs ship as `eiod_cutoffs`, a 616-row long-format dataset built from
 the same source file as a companion Stata implementation, so the two cannot

@@ -1,3 +1,20 @@
+# reiod 0.0.0.9006
+
+Documentation only. No computed result changes. 2026-10-15.
+
+* **Incomplete EIOF coverage is now documented as an upstream responsibility.** Not every
+  food has an impact factor; a food without one contributes nothing to the day total, so the
+  total is understated - and `reiod` cannot detect it, because it receives one number per
+  respondent-day and the aggregation has already discarded the evidence. The one detectable
+  case, every food uncosted and summed to `0` rather than `NA`, was already caught by the zero
+  check in `eiod_check_impact()`.
+
+  New section in `vignette("troubleshooting")`, "The one you have to handle yourself", with
+  what to compute upstream: the share of consumed weight carrying a factor, reported alongside
+  any prevalence. Cross-referenced from `vignette("precision")` and `?eiod_list_indicators`.
+
+* The methods paper is now hyperlinked wherever it is cited.
+
 # reiod 0.0.0.9005
 
 The eutrophication conversion is now visible. 2026-10-14.
