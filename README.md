@@ -93,8 +93,9 @@ Several indicators at once, with the same mapping:
 ``` r
 round(100 * colMeans(eiod_absolute_all(eiod_demo, grp, eiod_demo_map),
                      na.rm = TRUE), 1)
+#> eutrophication: your values were divided by 1000 (g -> kg PO4(3-)eq) to match Table 3, which the methods paper prints in kilograms. Supply this indicator in GRAMS, as the EIOF database reports it. Table 4f is printed in grams and needs no conversion. See vignette("eutrophication").
 #>   abs_landtotal  abs_landarable abs_landpasture         abs_ghg     abs_eutroph 
-#>            70.2            80.8            68.7            22.2            53.5 
+#>            70.2            80.8            68.7            22.2           100.0 
 #>       abs_water      abs_biodiv 
 #>            95.2            57.1
 ```
@@ -140,11 +141,13 @@ eiod_as_sex_factor(c(1, 0), male = 1, female = 0)
 
 ## Three things to know before reporting results
 
-1.  **Eutrophication units are unresolved.** The relative benchmarks
-    carry an inferred ÷1000 rescaling that Intake has not confirmed. It
-    affects 80 of the 616 rows, all of them relative eutrophication, and
-    is isolated in `eiod_cutoffs$scale_to_db_unit` so it can be switched
-    off in one place.
+1.  **Eutrophication is printed in two different units.** Table 3 is in
+    kg PO₄³⁻eq, Table 4f is in grams. **Supply your data in grams**, as
+    the EIOF database gives it to you (`Eutr. (g PO43-e/kg)`);
+    `eiod_absolute_threshold()` converts for you and says so. No
+    published cut-off is ever adjusted — `eiod_cutoffs` matches the PDF
+    on every one of its 616 rows. The unit reading is an inference
+    Intake has not yet confirmed; see `vignette("eutrophication")`.
 2.  **A low relative band is not evidence of sustainability.** For
     greenhouse gases even band 1 exceeds the planetary boundary; for
     water even band 10 is below it.
@@ -157,6 +160,7 @@ All three are explained in `vignette("reiod")`.
 ## Documentation
 
 - `vignette("reiod")` — EIOF, reiod, and step-by-step usage
+- `vignette("eutrophication")` — the one indicator with a unit problem
 - `vignette("precision")` — the pre-flight precision check; run this
   before generating any indicator
 - `vignette("relative-benchmarks")` — what the reference distribution

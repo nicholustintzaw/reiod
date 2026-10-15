@@ -24,7 +24,7 @@
 raw <- utils::read.csv(
   "data-raw/eiod_cutoffs.csv",
   stringsAsFactors = FALSE,
-  colClasses = c(value_published = "character", scale_to_db_unit = "character")
+  colClasses = c(value_published = "character")
 )
 
 # Keep the literal text. The numeric column below is the nearest double to this
@@ -53,9 +53,8 @@ value_published_str <- raw$value_published
 # expect_published_biodiv() in tests/testthat/test-reference_values.R, which
 # compares at published decimal precision AND at machine precision instead of
 # demanding bit-for-bit identity.
-raw$value_published  <- as.numeric(raw$value_published)
-raw$scale_to_db_unit <- as.numeric(raw$scale_to_db_unit)
-stopifnot(!anyNA(raw$value_published), !anyNA(raw$scale_to_db_unit))
+raw$value_published <- as.numeric(raw$value_published)
+stopifnot(!anyNA(raw$value_published))
 
 # Guard: every parsed value must still print back to exactly the digits that
 # were published. This is what "no precision was lost" actually means, and it
@@ -82,11 +81,25 @@ if (!all(.roundtrip_ok)) {
 }
 rm(.published_digits, .roundtrip_ok)
 
-# ---- 2. harmonised value ---------------------------------------------------- #
-# `value` is what the metric functions compare against. It equals the published
-# value except for relative eutrophication, which carries an inferred /1000
-# rescaling. See vignette("reiod"), "A caution on eutrophication".
-raw$value <- raw$value_published * raw$scale_to_db_unit
+# ---- 2. the shipped value is the published value, full stop ----------------- #
+#
+# NOTHING IS RESCALED HERE. Changed 2026-10-14, deliberately.
+#
+# Until this date the build multiplied the 80 relative eutrophication rows by
+# 0.001, so that every cut-off sat on one internal unit scale. That was
+# arithmetically fine and it was documented, but it meant `eiod_cutoffs` held
+# 80 numbers that could not be found anywhere in the methods paper - and the
+# whole point of shipping this dataset is that a reader can check it line by
+# line against the PDF.
+#
+# The adjustment now happens where it belongs: in the command, at the moment of
+# comparison, applied to the USER'S value, announced in a message, and
+# documented in its own vignette section. See .eiod_to_cutoff_unit() in R/utils.R.
+#
+# Consequence: `value` is the cut-off exactly as printed, for all 616 rows, and
+# the `unit` column now records what each table is actually printed in -
+# kg PO4(3-)eq for Table 3 eutrophication, g PO4(3-)eq for Table 4f.
+raw$value <- raw$value_published
 
 eiod_cutoffs <- data.frame(
   metric           = raw$metric,
@@ -103,9 +116,7 @@ eiod_cutoffs <- data.frame(
   row_order        = as.integer(raw$row_order),
   percentile       = as.integer(raw$percentile),
   value               = raw$value,
-  value_published     = raw$value_published,
   value_published_str = value_published_str,
-  scale_to_db_unit    = raw$scale_to_db_unit,
   stringsAsFactors = FALSE
 )
 
@@ -129,8 +140,7 @@ stopifnot(
   # complete grid, no duplicates
   !anyDuplicated(eiod_cutoffs[c("metric", "indicator", "demogroup", "row_order")]),
   # the shipped text and the shipped double are the same number
-  identical(as.numeric(eiod_cutoffs$value_published_str),
-            eiod_cutoffs$value_published)
+  identical(as.numeric(eiod_cutoffs$value_published_str), eiod_cutoffs$value)
 )
 
 # relative rows 1-9 are the P10..P90 cut-points and must be strictly increasing
@@ -149,22 +159,34 @@ for (s in by_series) {
   )
 }
 
-# the one rescaling is where we think it is, and nowhere else
+# nothing is rescaled: the shipped number IS the published number, every row
 stopifnot(
-  all(eiod_cutoffs$scale_to_db_unit[
-    !(eiod_cutoffs$metric == "rel" & eiod_cutoffs$indicator == "eutroph")] == 1),
-  sum(eiod_cutoffs$scale_to_db_unit != 1) == 80   # 8 groups x 10 rows
+  identical(eiod_cutoffs$value, as.numeric(eiod_cutoffs$value_published_str)),
+  !"scale_to_db_unit" %in% names(eiod_cutoffs)
+)
+
+# the unit column must say what each table actually prints. Eutrophication is
+# the only indicator where the two tables differ - see R/utils.R.
+stopifnot(
+  all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph" &
+                        eiod_cutoffs$metric == "abs"] == "kg PO4(3-)eq"),
+  all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph" &
+                        eiod_cutoffs$metric == "rel"] == "g PO4(3-)eq"),
+  # and every other indicator uses one unit across both tables
+  all(vapply(setdiff(unique(eiod_cutoffs$indicator), "eutroph"),
+             function(i) length(unique(eiod_cutoffs$unit[
+               eiod_cutoffs$indicator == i])) == 1L, logical(1)))
 )
 
 # spot-checks against values hand-typed from the printed tables
 stopifnot(
-  eiod_cutoffs$value_published[eiod_cutoffs$metric == "abs" &
+  eiod_cutoffs$value[eiod_cutoffs$metric == "abs" &
     eiod_cutoffs$indicator == "biodiv" & eiod_cutoffs$demogroup == 4] ==
     1.2844358718e-12,
-  eiod_cutoffs$value_published[eiod_cutoffs$metric == "abs" &
+  eiod_cutoffs$value[eiod_cutoffs$metric == "abs" &
     eiod_cutoffs$indicator == "water" & eiod_cutoffs$demogroup == 8] ==
     1726.3821057877,
-  eiod_cutoffs$value_published[eiod_cutoffs$metric == "rel" &
+  eiod_cutoffs$value[eiod_cutoffs$metric == "rel" &
     eiod_cutoffs$indicator == "landtotal" & eiod_cutoffs$demogroup == 4 &
     !is.na(eiod_cutoffs$percentile) & eiod_cutoffs$percentile == 50] ==
     15.4981270626
@@ -173,12 +195,27 @@ stopifnot(
 message("eiod_cutoffs: all structural checks passed")
 
 # ---- 4. indicator lookup ---------------------------------------------------- #
-ind <- unique(eiod_cutoffs[c("indicator", "indicator_label", "unit")])
+# `unit` here is the unit the USER must supply, which is not always the unit a
+# given cut-off table is printed in. For six indicators the two coincide. For
+# eutrophication they do not: the user supplies grams (because that is what the
+# EIOF database reports, `Eutr. (g PO43-e/kg)`), Table 4f is printed in grams,
+# and Table 3 is printed in kilograms. The commands reconcile the last of those
+# at the point of comparison - see .eiod_to_cutoff_unit() in R/utils.R.
+#
+# Built from the RELATIVE rows, because those are the ones printed in the input
+# unit for all seven indicators.
+ind <- unique(eiod_cutoffs[eiod_cutoffs$metric == "rel",
+                           c("indicator", "indicator_label", "unit")])
 ind <- ind[order(match(ind$indicator,
                        c("landtotal", "landarable", "landpasture", "ghg",
                          "eutroph", "water", "biodiv"))), ]
 rownames(ind) <- NULL
 eiod_indicators <- ind
+
+stopifnot(
+  nrow(eiod_indicators) == 7L,
+  eiod_indicators$unit[eiod_indicators$indicator == "eutroph"] == "g PO4(3-)eq"
+)
 
 # ---- 5. synthetic demonstration data ---------------------------------------- #
 # Used in examples, vignettes and tests. NOT real survey data; no prevalence

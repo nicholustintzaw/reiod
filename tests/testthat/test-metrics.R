@@ -66,7 +66,9 @@ test_that("all seven indicators run and return sensible shapes", {
   # has to be stated. That is the point of eiod_demo_map.
   for (ind in names(eiod_demo_map)) {
     v <- eiod_demo[[eiod_demo_map[[ind]]]]
-    a <- eiod_absolute_threshold(v, grp, ind)
+    suppressMessages({
+      a <- eiod_absolute_threshold(v, grp, ind)
+    })
     b <- eiod_relative_band(v, grp, ind)
     expect_length(a, nrow(eiod_demo))
     expect_length(b, nrow(eiod_demo))
@@ -133,7 +135,7 @@ test_that("details = TRUE reports the cut-off that was applied", {
 test_that("the *_all helpers take a map and allow a partial one", {
   grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 
-  all7 <- eiod_absolute_all(eiod_demo, grp, eiod_demo_map)
+  all7 <- suppressMessages(eiod_absolute_all(eiod_demo, grp, eiod_demo_map))
   expect_named(all7, paste0("abs_", names(eiod_demo_map)))
   expect_equal(nrow(all7), nrow(eiod_demo))
   expect_equal(all7$abs_ghg,

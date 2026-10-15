@@ -243,31 +243,40 @@ because it changes every percentage you report.
 
 ## Three things to know before reporting any of this
 
-### 1. Eutrophication units are unresolved
+### 1. Eutrophication is printed in two different units
 
-The paper states eutrophication potential is in kg PO₄³⁻-eq, and the Table 3
-absolute threshold is consistent with that (0.0077–0.0267). The Table 4f
-relative benchmarks for the same quantity are 5.3–48.7 — about a thousand times
-larger.
-
-Read as grams, Table 4f places the absolute threshold between the 40th and 50th
-percentile, exactly where the two land thresholds sit. Read as kilograms, every
-diet on earth falls below the 10th percentile, which is not a coherent reading
-of a percentile distribution. `reiod` therefore applies a ÷1000 rescaling to
-relative eutrophication only.
-
-**This is an inference, not a documented conversion.** It is isolated in the
-`scale_to_db_unit` column of `eiod_cutoffs` so it can be switched off in one
-place. It affects **80 of the 616 rows, all of them relative eutrophication**,
-and no other indicator anywhere in the file:
+**Table 3 prints it in kilograms; Table 4f prints it in grams.** Both values
+below are exactly what the methods paper has:
 
 ```{r}
-with(eiod_cutoffs, table(indicator, rescaled = scale_to_db_unit != 1))
+c(table_3  = as.numeric(eiod_lookup_cutoff("eutroph", 4, "abs")),
+  table_4f = as.numeric(eiod_lookup_cutoff("eutroph", 4, "rel", 10)))
 ```
 
-`eiod_lookup_cutoff(..., published = TRUE)` returns the unscaled figure, and the
-print method flags the rescaling whenever it applies. Confirm with Intake before
-publishing any eutrophication result.
+The ratio is about 690, and it is a unit difference rather than a difference in
+environmental standard.
+
+**What you have to do: supply your data in grams**, which is what the EIOF
+database already gives you — it reports `Eutr. (g PO43-e/kg)`, while every
+other indicator matches the paper's unit. `eiod_relative_band()` then needs no
+conversion, and `eiod_absolute_threshold()` divides by 1000 for you and says
+so:
+
+```{r}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+eutr_g <- eiod_demo$eutroph_kgpo4e * 1000     # pretend these are grams
+x <- eiod_absolute_threshold(eutr_g, grp, "eutroph")
+```
+
+**No published cut-off is ever adjusted.** `eiod_cutoffs` holds exactly what
+the paper prints, for all 616 rows, so you can check any of them against the
+PDF. The conversion is applied to your data, in one place, for this one
+indicator and this one table.
+
+**The unit reading is an inference and Intake has not confirmed it.**
+`vignette("eutrophication")` sets out the four lines of evidence, the
+eight-group check, and what changes if the answer comes back differently.
+Confirm before publishing any eutrophication result.
 
 ### 2. A low relative band is not evidence of sustainability
 

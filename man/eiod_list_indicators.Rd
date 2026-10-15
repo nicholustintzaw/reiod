@@ -16,6 +16,30 @@ A data frame of indicator, label and unit, invisibly when printing.
 Prints the indicator names the `eiod_*` functions accept, with their labels
 and the units your impact values must be in.
 }
+\section{If your data comes from the EIOF database, read this}{
+
+The EIOF country databases report six of the seven indicators in the unit
+this package expects - `Land (m2/kg)`, `GHG (kg CO2e/kg)`, `Water Use
+(L/kg)` and so on. **Eutrophication is the exception.** It is stored as
+`Eutr. (g PO43-e/kg)` - in **grams**, while the methods paper and this
+package work in **kilograms**.
+
+So the obvious pipeline gives you the wrong unit for one indicator:
+
+\preformatted{
+kg food consumed  x  g PO4e per kg food  =  GRAMS PO4e per person per day
+}
+
+Divide that total by 1000 before passing it to [eiod_absolute_threshold()]
+or [eiod_relative_band()], or every eutrophication result will be wrong by a
+factor of a thousand. No other indicator needs this.
+
+[eiod_check_magnitude()] detects it - a eutrophication column 1000x too
+large is reported as a likely gram/kilogram error - but that check is
+opt-in. See `vignette("precision")` and the `?eiod_cutoffs` section on the
+eutrophication rescaling.
+}
+
 \examples{
 eiod_list_indicators()
 

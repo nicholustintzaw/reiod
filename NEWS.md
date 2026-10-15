@@ -1,3 +1,111 @@
+# reiod 0.0.0.9005
+
+The eutrophication conversion is now visible. 2026-10-14.
+
+* `details = TRUE` on `eiod_absolute_threshold()` returns the converted value as
+  a **`value_kg`** column (renamed from `value_compared`), so the whole chain -
+  value in grams, value in kilograms, published cut-off, result - reads off one
+  table. The companion Stata command does the same thing in the shape Stata
+  users expect: it leaves `<yourvar>_kg` in the dataset.
+* `vignette("eutrophication")` gains a worked check of the arithmetic.
+
+No computed result changes.
+
+# reiod 0.0.0.9004
+
+The reference data now matches the methods paper on every row. 2026-10-14.
+
+## Breaking: supply eutrophication in GRAMS
+
+The input unit for `eutroph` changes from kg PO4(3-)eq to **g PO4(3-)eq** —
+which is what the EIOF database gives you, so for most users this means
+*removing* a conversion rather than adding one.
+
+Every other indicator is unchanged.
+
+## Breaking: `eiod_cutoffs` loses two columns
+
+`value_published` and `scale_to_db_unit` are gone. `value` is now the cut-off
+**exactly as printed in the paper, for all 616 rows**, and
+`value_published_str` is the same number as literal text.
+
+Until now, the 80 relative eutrophication rows were stored pre-divided by 1000
+so every cut-off sat on one internal scale. It worked, but it meant 80 of the
+shipped numbers could not be found anywhere in the source document — which
+defeats the purpose of shipping the reference data at all. **You can now check
+any row of `eiod_cutoffs` against the PDF and expect a character-for-character
+match.**
+
+Note that `d$value_published` will now *partial-match* `value_published_str`
+and silently return a character vector. If you referenced that column, change
+it to `d$value`.
+
+## The conversion moved into the command
+
+`eiod_absolute_threshold()` divides eutrophication values by 1000 before
+comparing against Table 3, which the paper prints in kilograms. It emits a
+message when it does. `eiod_relative_band()` does nothing, because Table 4f is
+printed in grams.
+
+* the rule lives in one internal function, `.eiod_to_cutoff_unit()`, used by
+  both metric functions and by `eiod_check_precision()`;
+* `details = TRUE` gains a `value_compared` column for `eutroph`, so the table
+  cannot be misread as comparing grams with kilograms;
+* `eiod_cutoffs$unit` now records what each table is printed in — kg for
+  Table 3 eutrophication, g for Table 4f. Every other indicator has one unit
+  across both;
+* `eiod_indicators$unit` reports the **input** unit, now `g PO4(3-)eq`.
+
+## Other
+
+* New `vignette("eutrophication")` — the whole issue in one place: what to
+  supply, what the package does, the evidence, and what changes if Intake's
+  answer differs.
+* `eiod_lookup_cutoff()`'s `published` argument no longer has any effect and is
+  retained only so existing scripts keep working. Both settings return the
+  published value, because that is now the only value there is.
+
+# reiod 0.0.0.9003
+
+Documentation only. No computed result changes. 2026-10-14.
+
+## If your impacts come from the EIOF database, read this
+
+The EIOF country databases store eutrophication as **`Eutr. (g PO43-e/kg)` — in
+grams** — while every other indicator matches the methods paper's unit
+(`Land (m2/kg)`, `GHG (kg CO2e/kg)`, `Water Use (L/kg)`). Checked across the
+Burkina Faso, Ethiopia, Ghana and Viet Nam files; it is the EIOF standard.
+
+So the obvious pipeline produces the wrong unit for exactly one indicator:
+
+```
+kg food consumed  x  g PO4e per kg food  =  GRAMS PO4e per person per day
+```
+
+**Divide that total by 1000 before passing it to `reiod`**, or every
+eutrophication result is wrong by a factor of a thousand. No other indicator
+needs converting. `eiod_check_magnitude()` detects it, but it is opt-in — so
+the warning is now stated wherever the expected unit is, including in the
+printed output of `eiod_list_indicators()`.
+
+## The eutrophication inference is now much better evidenced
+
+Still an inference, still unconfirmed by Intake — but the case is now four
+independent lines rather than two, and one of them is new and decisive about
+Intake's operational unit:
+
+* the **EIOF database reports eutrophication in grams** while the paper states kg;
+* the kilogram reading of Table 4f is physically impossible (18.4 kg PO4eq per
+  person per *day*);
+* rescaled, the Table 3 threshold lands between P40 and P50 of Table 4f in
+  **8 of 8** demographic groups, across a 3.5x spread of threshold values;
+* Tables 3 and 4 come from different upstream sources (planetary-boundary
+  literature vs the WWF Planet-Based Diets Database).
+
+See `?eiod_cutoffs` and `vignette("reiod")`. A full write-up, including a
+pending decision about which unit the package should work in, is in
+`outputs/r-package-development/EUTROPHICATION_UNITS.md`.
+
 # reiod 0.0.0.9002
 
 Renamed, and a cross-platform CI failure fixed. 2026-10-14.

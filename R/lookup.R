@@ -3,6 +3,28 @@
 #' Prints the indicator names the `eiod_*` functions accept, with their labels
 #' and the units your impact values must be in.
 #'
+#' @section If your data comes from the EIOF database, read this:
+#' The EIOF country databases report six of the seven indicators in the unit
+#' this package expects - `Land (m2/kg)`, `GHG (kg CO2e/kg)`, `Water Use
+#' (L/kg)` and so on. **Eutrophication is the exception.** It is stored as
+#' `Eutr. (g PO43-e/kg)` - in **grams**, while the methods paper and this
+#' package work in **kilograms**.
+#'
+#' So the obvious pipeline gives you the wrong unit for one indicator:
+#'
+#' ```
+#' kg food consumed  x  g PO4e per kg food  =  GRAMS PO4e per person per day
+#' ```
+#'
+#' Divide that total by 1000 before passing it to [eiod_absolute_threshold()]
+#' or [eiod_relative_band()], or every eutrophication result will be wrong by a
+#' factor of a thousand. No other indicator needs this.
+#'
+#' [eiod_check_magnitude()] detects it - a eutrophication column 1000x too
+#' large is reported as a likely gram/kilogram error - but that check is
+#' opt-in. See `vignette("precision")` and the `?eiod_cutoffs` section on the
+#' eutrophication rescaling.
+#'
 #' @param quiet If `TRUE`, return the table without printing it.
 #'
 #' @return A data frame of indicator, label and unit, invisibly when printing.
@@ -23,6 +45,11 @@ eiod_list_indicators <- function(quiet = FALSE) {
   }
   cat("\nValues must already be summed across everything the respondent\n")
   cat("consumed that day. reiod does not compute impacts from food items.\n")
+  cat("\n")
+  cat("NOTE on eutrophication, if your impacts come from the EIOF database:\n")
+  cat("  EIOF stores it as `Eutr. (g PO43-e/kg)` - in GRAMS - while this\n")
+  cat("  package expects kg PO4(3-)eq. Divide your summed total by 1000.\n")
+  cat("  No other indicator needs converting. See ?eiod_list_indicators.\n")
   invisible(ind)
 }
 
@@ -47,11 +74,22 @@ eiod_list_indicators <- function(quiet = FALSE) {
 #'   Male 10+ yr    14.2377570161    as published 14.2377570161
 #' ```
 #'
-#' The `as published` column is `value_published_str` from [eiod_cutoffs] - a
+#' The `as printed` column is `value_published_str` from [eiod_cutoffs] - a
 #' character string that has never been through a numeric type. If you need an
 #' exact decimal comparison against the PDF, compare against that, not against a
 #' rendering of a double. (The identical complaint, and the identical fix, arose
 #' in the companion Stata package in October 2026.)
+#'
+#' @section Nothing here is rescaled:
+#' **Every value this function returns is exactly what the methods paper
+#' prints**, for all 616 cut-offs. The package does not adjust a published
+#' number anywhere, so you can check any row of [eiod_cutoffs] against the PDF
+#' and expect a character-for-character match.
+#'
+#' Where the paper's own units need reconciling - which happens for
+#' eutrophication, and only for eutrophication - the adjustment is applied to
+#' **your data** at the moment of comparison, is announced in a message, and is
+#' described in `vignette("eutrophication")`.
 #'
 #' The object is an ordinary named numeric underneath: `[`, `c()` and arithmetic
 #' all return plain numbers, so nothing downstream needs to know about the class.
@@ -62,10 +100,12 @@ eiod_list_indicators <- function(quiet = FALSE) {
 #'   Table 4 relative benchmark cut-point.
 #' @param percentile Required when `metric = "rel"`: a multiple of 10 from 10
 #'   to 90.
-#' @param published If `TRUE`, return the value exactly as printed in the
-#'   paper rather than the harmonised value the metric functions use. The two
-#'   differ only for relative eutrophication - 80 rows of 616, all of them
-#'   relative; see `vignette("reiod")`.
+#' @param published **No longer has any effect**, and retained only so existing
+#'   scripts keep working. Until October 2026 the package stored 80 relative
+#'   eutrophication rows pre-rescaled, and this argument switched between the
+#'   stored and the published figure. Nothing is rescaled any more - `value` is
+#'   the published figure for all 616 rows - so both settings return the same
+#'   thing. See `vignette("eutrophication")`.
 #'
 #' @return A named numeric vector of class `eiod_cutoff`, named by demographic
 #'   group label. Use `print(x, digits = )` to change the displayed precision,
@@ -120,19 +160,16 @@ eiod_lookup_cutoff <- function(indicator, group = NULL,
   }
 
   s <- s[order(s$demogroup), ]
-  out <- if (published) s$value_published else s$value
 
   structure(
-    stats::setNames(out, s$demogroup_label),
+    stats::setNames(s$value, s$demogroup_label),
     class           = c("eiod_cutoff", "numeric"),
     indicator       = indicator,
     indicator_label = s$indicator_label[1],
     unit            = s$unit[1],
     metric          = metric,
     percentile      = percentile,
-    published       = published,
-    published_str   = s$value_published_str,
-    scale           = s$scale_to_db_unit
+    published_str   = s$value_published_str
   )
 }
 
@@ -147,9 +184,8 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
 
   metric <- attr(x, "metric")
   pct    <- attr(x, "percentile")
-  pub    <- isTRUE(attr(x, "published"))
   pstr   <- attr(x, "published_str")
-  scale  <- attr(x, "scale")
+  ind    <- attr(x, "indicator")
 
   head_txt <- if (identical(metric, "abs")) {
     "Table 3 absolute threshold"
@@ -164,11 +200,10 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
   lab <- names(x)
   if (is.null(lab)) lab <- rep("", length(x))
 
-  vhead    <- if (pub) "published value" else "value"
+  vhead    <- "value"
   wl       <- max(nchar(lab), 5L)
   wv       <- max(nchar(val), nchar(vhead))
   show_pub <- !is.null(pstr) && length(pstr) == length(x)
-  rescaled <- !is.null(scale) && any(scale != 1)
 
   cat(sprintf("  %-*s  %-*s%s\n", wl, "group", wv, vhead,
               if (show_pub) "  as printed" else ""))
@@ -179,15 +214,16 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
 
   cat("\n  printed at ", digits, " significant digits.\n", sep = "")
   if (show_pub) {
-    cat("  `as printed` is the literal text transcribed from the paper - it has\n")
-    cat("  never been through a numeric type. Compare against that for an exact\n")
-    cat("  decimal check.\n")
+    cat("  Every value above is EXACTLY as printed in the methods paper -\n")
+    cat("  nothing in this package rescales a published cut-off. `as printed`\n")
+    cat("  is the literal text, which has never been through a numeric type.\n")
   }
-  if (rescaled && !pub) {
-    cat("\n  `value` carries the x", format(unique(scale)[1]),
-        " eutrophication rescaling - an INFERENCE,\n", sep = "")
-    cat("  not a documented conversion. See ?eiod_cutoffs. Use\n")
-    cat("  published = TRUE for the unscaled figure.\n")
+  if (identical(ind, "eutroph")) {
+    cat("\n  NOTE: eutrophication is printed in different units in the two\n")
+    cat("  tables. Table 3 is in kg PO4(3-)eq; Table 4f is in g PO4(3-)eq.\n")
+    cat("  Supply your data in GRAMS, as the EIOF database reports it;\n")
+    cat("  eiod_absolute_threshold() converts to kg for you and says so.\n")
+    cat("  See vignette(\"eutrophication\").\n")
   }
   invisible(x)
 }

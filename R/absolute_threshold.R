@@ -24,6 +24,22 @@
 #' coerced can turn missing data into an apparent threshold breach. Here the
 #' guard is explicit.
 #'
+#' @section Eutrophication is converted, and nothing else is:
+#' Table 3 prints eutrophication in **kg** PO4(3-)eq while Table 4f prints it
+#' in **grams** - and the EIOF database, which is where your values come from,
+#' reports `Eutr. (g PO43-e/kg)`. So you supply grams, and this function
+#' divides by 1000 before comparing against Table 3. It emits a message when it
+#' does; wrap the call in `suppressMessages()` if you are looping and already
+#' know.
+#'
+#' **The published cut-off is never altered.** `eiod_cutoffs` holds exactly
+#' what the paper prints for all 616 rows; the adjustment is applied to your
+#' data at the point of comparison, in one place, and only for this one
+#' indicator and this one table. [eiod_relative_band()] needs no conversion.
+#'
+#' See `vignette("eutrophication")` for the evidence, and note that the unit
+#' reading is an inference not yet confirmed by Intake.
+#'
 #' @section Storage type is checked here, not only in the check suite:
 #' An integer `value` is refused with an error. `is.numeric(1L)` is `TRUE`, so
 #' an integer column would otherwise pass every guard and be compared against
@@ -54,7 +70,10 @@
 #'   columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
 #'   threshold applied to that row, so a reader can audit the comparison without
 #'   opening the reference table. (Equivalent to `threshvar()` in the companion
-#'   Stata command.)
+#'   Stata command.) For `indicator = "eutroph"` an extra `value_kg`
+#'   column appears, holding the value after the g-to-kg conversion described
+#'   below, so the whole chain - value in grams, value in kilograms, published
+#'   cut-off, result - can be read off one table.
 #'
 #' @seealso [eiod_relative_band()], [eiod_absolute_all()],
 #'   [eiod_lookup_cutoff()], [eiod_check_data()]
@@ -86,12 +105,19 @@ eiod_absolute_threshold <- function(value, group, indicator, details = FALSE) {
   }
 
   thr <- .eiod_abs_thresholds(indicator)
-  out <- rep(NA_integer_, length(value))
+
+  # Table 3 eutrophication is printed in kg while the EIOF database - and
+  # therefore the user's value - is in grams. One place does this; see
+  # .eiod_to_cutoff_unit() and vignette("eutrophication").
+  conv <- .eiod_to_cutoff_unit(value, indicator, "abs")
+  cmp  <- conv$value
+
+  out <- rep(NA_integer_, length(cmp))
 
   for (g in 1:8) {
-    idx <- which(!is.na(group) & group == g & !is.na(value))
+    idx <- which(!is.na(group) & group == g & !is.na(cmp))
     if (length(idx)) {
-      out[idx] <- as.integer(value[idx] < thr[g])
+      out[idx] <- as.integer(cmp[idx] < thr[g])
     }
   }
 
@@ -101,6 +127,21 @@ eiod_absolute_threshold <- function(value, group, indicator, details = FALSE) {
   ok <- !is.na(group)
   cutoff[ok] <- thr[group[ok]]
 
-  data.frame(value = as.numeric(value), group = as.integer(group),
-             cutoff = cutoff, below = out)
+  d <- data.frame(value = as.numeric(value), group = as.integer(group),
+                  cutoff = cutoff, below = out)
+
+  # Only when a conversion happened: keep what was actually compared, under a
+  # name that states the unit. The Stata command does the same thing by
+  # leaving `<yourvar>_kg' in the dataset; here the vector API means it lands
+  # in the detail frame instead. Either way the whole chain is inspectable:
+  #
+  #   value (g) -> value_kg -> cutoff (published Table 3, kg) -> below
+  if (conv$factor != 1) {
+    d <- data.frame(value = as.numeric(value),
+                    value_kg = as.numeric(cmp),
+                    group = as.integer(group),
+                    cutoff = cutoff, below = out)
+    attr(d, "conversion") <- conv$note
+  }
+  d
 }

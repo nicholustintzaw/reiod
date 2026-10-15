@@ -29,10 +29,12 @@ Table 4 relative benchmark cut-point.}
 \item{percentile}{Required when `metric = "rel"`: a multiple of 10 from 10
 to 90.}
 
-\item{published}{If `TRUE`, return the value exactly as printed in the
-paper rather than the harmonised value the metric functions use. The two
-differ only for relative eutrophication - 80 rows of 616, all of them
-relative; see `vignette("reiod")`.}
+\item{published}{**No longer has any effect**, and retained only so existing
+scripts keep working. Until October 2026 the package stored 80 relative
+eutrophication rows pre-rescaled, and this argument switched between the
+stored and the published figure. Nothing is rescaled any more - `value` is
+the published figure for all 616 rows - so both settings return the same
+thing. See `vignette("eutrophication")`.}
 
 \item{x}{An `eiod_cutoff` object.}
 
@@ -76,6 +78,19 @@ in the companion Stata package in October 2026.)
 
 The object is an ordinary named numeric underneath: `[`, `c()` and arithmetic
 all return plain numbers, so nothing downstream needs to know about the class.
+}
+
+\section{Nothing here is rescaled}{
+
+**Every value this function returns is exactly what the methods paper
+prints**, for all 616 cut-offs. The package does not adjust a published
+number anywhere, so you can check any row of [eiod_cutoffs] against the PDF
+and expect a character-for-character match.
+
+Where the paper's own units need reconciling - which happens for
+eutrophication, and only for eutrophication - the adjustment is applied to
+**your data** at the moment of comparison, is announced in a message, and is
+described in `vignette("eutrophication")`.
 }
 
 \examples{

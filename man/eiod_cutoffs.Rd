@@ -5,13 +5,15 @@
 \alias{eiod_cutoffs}
 \title{Published cut-offs for every dietary environmental impact metric}
 \format{
-A data frame with 616 rows and 16 columns:
+A data frame with 616 rows and 14 columns:
 \describe{
   \item{metric}{`"abs"` for Table 3, `"rel"` for Tables 4a-4g}
   \item{table}{Source table: `"3"`, `"4a"` ... `"4g"`}
   \item{indicator}{Short indicator name used by the `eiod_*` functions}
   \item{indicator_label}{Human-readable indicator name}
-  \item{unit}{Unit of `value`, per capita per day}
+  \item{unit}{Unit **this table is printed in**, per capita per day. The
+    same for both tables for six indicators; for eutrophication, kg for
+    Table 3 and g for Table 4f}
   \item{demogroup}{Demographic group, 1-8}
   \item{demogroup_label}{Group name, e.g. "Male 10+ yr"}
   \item{sex}{Factor, `"male"` or `"female"`}
@@ -19,13 +21,11 @@ A data frame with 616 rows and 16 columns:
   \item{row_order}{Position in the source table}
   \item{percentile}{10-90 for relative rows 1-9; `NA` for absolute rows and
     for row 10, which repeats P90 as a lower bound}
-  \item{value}{**The cut-off the metric functions compare against**}
-  \item{value_published}{The value exactly as printed in the paper}
+  \item{value}{**The cut-off exactly as printed in the paper**, and what the
+    metric functions compare against. Nothing is rescaled}
   \item{value_published_str}{The same value as a character string, exactly as
     transcribed. Shipped so the published figure can be compared character
     for character, not as a rendering of a double}
-  \item{scale_to_db_unit}{Multiplier linking `value_published` to `value`;
-    1 except for the 80 relative eutrophication rows described above}
 }
 }
 \source{
@@ -47,42 +47,99 @@ that reuse values already present - the HESD criterion is
 `metric == "rel" & indicator == "biodiv" & percentile == 30`. A second copy
 could drift from the first.
 }
-\section{The eutrophication rescaling}{
+\section{Nothing here is rescaled}{
 
-`value` equals `value_published` everywhere except the relative benchmarks
-for eutrophication, where `scale_to_db_unit` is 0.001.
+**`value` is the cut-off exactly as printed in the methods paper, for all
+616 rows**, and `value_published_str` is the same number as the literal text
+that was transcribed. You can check any row against the PDF and expect a
+character-for-character match. That is the whole purpose of shipping this
+dataset rather than hard-coding the numbers.
 
-The paper states that eutrophication potential is measured in kg PO4(3-)eq.
-The Table 3 absolute threshold is consistent with that, at 0.0077 to 0.0267.
-The Table 4f relative benchmarks for the same quantity are 5.3 to 48.7,
-about a thousand times larger. Read as grams, Table 4f places the absolute
-threshold between the 40th and 50th percentile of the global reference
-distribution, which is where the total-land and pasture-land thresholds also
-sit. Read as kilograms, every diet on earth would fall below the 10th
-percentile, which is not a coherent reading of a percentile distribution.
+Until October 2026 the 80 relative eutrophication rows were stored
+pre-divided by 1000, so that every cut-off sat on one internal unit scale.
+It was documented and arithmetically sound, but it meant 80 of the shipped
+numbers could not be found anywhere in the source document. The adjustment
+now happens in the command instead, applied to the user's value at the
+moment of comparison. See the next section, and
+`vignette("eutrophication")`.
+}
 
-This is an inference from internal consistency, **not a documented
-conversion**. Confirm with Intake before publishing any eutrophication
-result. Every other indicator reconciles between the two tables without
-adjustment.
+\section{Eutrophication is printed in two different units}{
+
+The `unit` column records what each table is actually printed in, and for
+**eutrophication the two tables differ**:
+
+\tabular{lll}{
+  Table 3 (`metric == "abs"`)  \tab 0.0077 - 0.0267 \tab **kg** PO4(3-)eq \cr
+  Table 4f (`metric == "rel"`) \tab 5.3 - 48.7      \tab **g** PO4(3-)eq
+}
+
+Every other indicator uses one unit across both tables.
+
+**Supply your data in grams**, which is what the EIOF database gives you
+(`Eutr. (g PO43-e/kg)` x kg food = g). [eiod_relative_band()] then needs no
+conversion, and [eiod_absolute_threshold()] divides by 1000 for you and says
+so in a message.
+
+The methods paper states on p.29 that eutrophication potential "is measured
+in kilograms of phosphate equivalents (kg PO4(3-)eq)". That statement sits in
+the section describing how the **EIOF database** was built, and the Table 3
+absolute thresholds are consistent with it, at 0.0077 to 0.0267.
+
+**The Table 4f relative benchmarks are not.** For Male 10+ they run from
+18.44 to 48.72 - about 690 times the Table 3 threshold for the same group.
+The paper never states a unit for the Table 4 series.
+
+Four things point the same way:
+
+\itemize{
+  \item **The EIOF database itself reports eutrophication in grams.** The
+    country databases store it as `Eutr. (g PO43-e/kg)` - checked across the
+    Burkina Faso, Ethiopia, Ghana and Viet Nam files - while every other
+    indicator matches the paper's unit (`m2/kg`, `kg CO2e/kg`, `L/kg`).
+    Eutrophication is the one place where Intake's operational unit and the
+    paper's stated unit disagree.
+  \item **The kilogram reading is physically impossible.** A 10th-percentile
+    adult diet would emit 18.4 kg PO4(3-)eq *per person per day* - 6.7 tonnes
+    a year, far more than the total mass of food a person eats.
+  \item **The gram reading reconciles the two tables in all eight
+    demographic groups.** Rescaled, the Table 3 threshold lands between the
+    40th and 50th percentile of Table 4f in **8 of 8** groups, across a 3.5x
+    spread of threshold values - which is where the total-land and
+    pasture-land thresholds also sit. Unscaled it falls below the 10th
+    percentile, which only greenhouse gases do.
+  \item **The two tables have different sources.** Table 3 derives from the
+    planetary-boundary work of Moberg et al. (2020) and Hallstrom et al.
+    (2022), who work in kg; Tables 4a-4g are decile averages from the WWF
+    Planet-Based Diets Database. Two independent upstreams is a plausible
+    route to one unharmonised unit.
+}
+
+**If your impacts come from the EIOF database**, your summed eutrophication
+total is therefore in grams and must be divided by 1000 before use here. See
+[eiod_list_indicators()].
+
+**It remains an inference, not a documented conversion**, because the paper
+does not state the unit of Table 4f either way. Confirm with Intake before
+publishing any eutrophication result. Every other indicator reconciles
+between the two tables without adjustment.
 }
 
 \section{Checking a value against the printed table}{
 
-Three columns carry the same number in three forms, so that a reader can
-check the package without having to trust any numeric rendering:
+Two columns carry the same number in two forms, so that a reader can check
+the package without having to trust any numeric rendering:
 
 \tabular{ll}{
   `value_published_str` \tab the literal characters from the paper, never
     through a numeric type \cr
-  `value_published` \tab the nearest IEEE 754 double to that text \cr
-  `value` \tab the above times `scale_to_db_unit` - what the metric
-    functions compare against
+  `value` \tab the nearest IEEE 754 double to that text - and what the
+    metric functions compare against
 }
 
 `data-raw/build_data.R` asserts that
-`as.numeric(value_published_str) == value_published` for all 616 rows, and
-that each parsed value still prints back to exactly its published digits.
+`as.numeric(value_published_str) == value` for all 616 rows, and that each
+parsed value still prints back to exactly its published digits.
 
 A `double` cannot hold most decimal fractions exactly - that is true of every
 statistical package, not of this one. What is guaranteed here is that the

@@ -29,7 +29,10 @@ An integer vector: `1` below the threshold, `0` at or above it, `NA`
   columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
   threshold applied to that row, so a reader can audit the comparison without
   opening the reference table. (Equivalent to `threshvar()` in the companion
-  Stata command.)
+  Stata command.) For `indicator = "eutroph"` an extra `value_kg`
+  column appears, holding the value after the g-to-kg conversion described
+  below, so the whole chain - value in grams, value in kilograms, published
+  cut-off, result - can be read off one table.
 }
 \description{
 Codes a one-day diet `1` if its per capita environmental impact falls below
@@ -60,6 +63,24 @@ R, `NA < threshold` is `NA`, but a careless implementation using
 `ifelse(value < threshold, 1, 0)` on a comparison that has already been
 coerced can turn missing data into an apparent threshold breach. Here the
 guard is explicit.
+}
+
+\section{Eutrophication is converted, and nothing else is}{
+
+Table 3 prints eutrophication in **kg** PO4(3-)eq while Table 4f prints it
+in **grams** - and the EIOF database, which is where your values come from,
+reports `Eutr. (g PO43-e/kg)`. So you supply grams, and this function
+divides by 1000 before comparing against Table 3. It emits a message when it
+does; wrap the call in `suppressMessages()` if you are looping and already
+know.
+
+**The published cut-off is never altered.** `eiod_cutoffs` holds exactly
+what the paper prints for all 616 rows; the adjustment is applied to your
+data at the point of comparison, in one place, and only for this one
+indicator and this one table. [eiod_relative_band()] needs no conversion.
+
+See `vignette("eutrophication")` for the evidence, and note that the unit
+reading is an inference not yet confirmed by Intake.
 }
 
 \section{Storage type is checked here, not only in the check suite}{

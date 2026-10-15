@@ -1,6 +1,6 @@
 Package: reiod
 Title: Dietary Environmental Impact Metrics from the Intake EIOD Framework
-Version: 0.0.0.9002
+Version: 0.0.0.9005
 Authors@R:
     person(given = c("Nicholus", "Tint"),
            family = "Zaw",

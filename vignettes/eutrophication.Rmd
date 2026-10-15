@@ -1,0 +1,221 @@
+---
+title: "Eutrophication: the one indicator with a unit problem"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Eutrophication: the one indicator with a unit problem}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(reiod)
+```
+
+Six of the seven indicators need nothing from you beyond the right numbers.
+**Eutrophication needs one sentence of attention**, and this vignette is that
+sentence expanded, because getting it wrong is a factor-of-1000 error that
+produces entirely plausible-looking output.
+
+## The short version
+
+```{r}
+eiod_lookup_cutoff("eutroph", group = 4, metric = "abs")
+```
+
+```{r}
+eiod_lookup_cutoff("eutroph", group = 4, metric = "rel", percentile = 10)
+```
+
+**0.0267 and 18.44 are both correct, and they are both exactly what the methods
+paper prints.** They differ by a factor of about 690 because **the two tables
+are printed in different units** — Table 3 in kilograms, Table 4f in grams.
+
+What you need to do:
+
+| | |
+|---|---|
+| **Supply your data in grams** | which is what the EIOF database already gives you |
+| `eiod_relative_band()` | no conversion — Table 4f is in grams too |
+| `eiod_absolute_threshold()` | **converts for you**, and tells you it did |
+
+That is the whole thing. The rest of this vignette is why, and how to check it.
+
+## Where the grams come from
+
+The EIOF country databases store impact intensities per kilogram of food. Six
+columns are in the unit the methods paper states. One is not:
+
+| EIOF column | Unit |
+|---|---|
+| `Land (m2/kg)`, `Cropland (m2/kg)`, `Pasture (m2/kg)` | matches the paper |
+| `GHG (kg CO2e/kg)` | matches the paper |
+| **`Eutr. (g PO43-e/kg)`** | **grams — the paper says kg** |
+| `Water Use (L/kg)` | matches the paper |
+| `Biodiversity` | matches the paper |
+
+So the ordinary pipeline
+
+```
+kg food consumed  ×  g PO₄³⁻e per kg food  =  g PO₄³⁻e per person per day
+```
+
+leaves you holding **grams**, for this indicator and no other. Checked across
+the Burkina Faso, Ethiopia, Ghana and Viet Nam databases — it is the EIOF
+standard, not a one-country quirk.
+
+## What `reiod` does about it
+
+```{r}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+eutr_g <- eiod_demo$eutroph_kgpo4e * 1000   # pretend these are grams
+```
+
+Against **Table 4f**, nothing happens — your grams meet the table's grams:
+
+```{r}
+band <- eiod_relative_band(eutr_g, grp, "eutroph")
+table(band, useNA = "ifany")
+```
+
+Against **Table 3**, the command divides your values by 1000 and says so:
+
+```{r}
+abs_flag <- eiod_absolute_threshold(eutr_g, grp, "eutroph")
+```
+
+```{r}
+table(abs_flag, useNA = "ifany")
+```
+
+The message is not decoration. It is the only place in the package where a
+number you supplied is altered before use, and it should be visible in your log.
+
+**`details = TRUE` lets you read the whole chain off one table** — value in
+grams, value in kilograms, the published cut-off, the result:
+
+```{r}
+head(eiod_absolute_threshold(eutr_g, grp, "eutroph", details = TRUE), 4)
+```
+
+`value` is what you passed in, `value_kg` is what was actually tested, and
+`cutoff` is the Table 3 threshold exactly as the paper prints it. Check it by
+hand if you like:
+
+```{r}
+d <- eiod_absolute_threshold(eutr_g, grp, "eutroph", details = TRUE)
+c(conversion_exact = isTRUE(all.equal(d$value_kg, d$value / 1000)),
+  result_follows   = identical(d$below,
+                               as.integer(d$value_kg < d$cutoff)))
+```
+
+The extra column appears **only** when a conversion happened — for the other
+six indicators the detail table has four columns, not five.
+
+The Stata command does the same thing in the shape Stata users expect: it
+leaves `<yourvar>_kg` in the dataset, so `list eutr_ado eutr_ado_kg
+thr_eutroph abs_eutroph` shows the identical chain.
+
+## Why the conversion is in the command and not in the data
+
+This is a deliberate design choice, changed in October 2026.
+
+The package used to store the 80 Table 4f eutrophication rows pre-divided by
+1000, so that every cut-off sat on one internal scale. It worked. But it meant
+80 of the shipped numbers **could not be found anywhere in the source
+document** — a reader checking `eiod_cutoffs` against the PDF would hit 80 rows
+that did not match, and would have to take the documentation's word for why.
+
+That defeats the purpose of shipping the reference data at all. So:
+
+```{r}
+# every value, every row, exactly as the paper prints it
+all.equal(eiod_cutoffs$value, as.numeric(eiod_cutoffs$value_published_str))
+nrow(eiod_cutoffs)
+```
+
+```{r}
+# and the unit column now records what each table is printed in
+with(eiod_cutoffs, table(indicator, unit))
+```
+
+Eutrophication is the only row with two entries. **Pick any cut-off in the
+package and you will find it, character for character, in the methods paper.**
+
+## How to check this yourself
+
+The claim is that Table 3 and Table 4f differ by exactly 1000. Here is the test,
+run on the shipped data rather than asserted:
+
+```{r}
+res <- t(vapply(1:8, function(g) {
+  thr <- as.numeric(eiod_lookup_cutoff("eutroph", g, "abs"))        # kg
+  p   <- vapply(seq(10, 90, 10), function(q)
+    as.numeric(eiod_lookup_cutoff("eutroph", g, "rel", q)), numeric(1))  # g
+  c(threshold_g = round(thr * 1000, 2),
+    band_lower  = sum(thr * 1000 >= p) * 10)
+}, numeric(2)))
+
+data.frame(group = names(eiod_lookup_cutoff("eutroph", metric = "abs")),
+           res, row.names = NULL)
+```
+
+Converted to grams, the Table 3 threshold falls in the **same decile band of
+Table 4f in all eight demographic groups**, across a 3.5× spread of threshold
+values. Left unconverted it falls below the 10th percentile in all eight — a
+position only greenhouse gases occupy, and one the paper documents explicitly
+for greenhouse gases and not at all for eutrophication.
+
+For comparison, where every indicator's absolute threshold sits in its own
+reference distribution:
+
+```{r}
+for (ind in eiod_indicators$indicator) {
+  thr <- as.numeric(eiod_lookup_cutoff(ind, 4, "abs"))
+  if (ind == "eutroph") thr <- thr * 1000      # kg -> g, as above
+  p <- vapply(seq(10, 90, 10),
+              function(q) as.numeric(eiod_lookup_cutoff(ind, 4, "rel", q)),
+              numeric(1))
+  k <- sum(thr >= p)
+  pos <- if (k == 0) "below P10" else if (k == 9) "at/above P90" else
+    sprintf("P%d-P%d", k * 10, (k + 1) * 10)
+  cat(sprintf("%-12s %s\n", ind, pos))
+}
+```
+
+## This is still an inference
+
+The methods paper states on p.29 that eutrophication potential is measured in
+kg PO₄³⁻eq. **It never states a unit for Tables 4a–4g at all.** So the reading
+above rests on four things, none of which is a statement by Intake:
+
+1. the EIOF database reports eutrophication in grams while every other
+   indicator matches the paper;
+2. the kilogram reading of Table 4f is physically impossible — a
+   10th-percentile adult diet would emit 18.4 kg PO₄³⁻eq *per person per day*,
+   6.7 tonnes a year, far more than the mass of food a person eats;
+3. the gram reading reconciles the two tables in 8 of 8 demographic groups;
+4. the two tables come from different upstream sources — Table 3 from the
+   planetary-boundary work of Moberg et al. (2020) and Hallström et al. (2022),
+   who work in kg; Tables 4a–4g from the WWF Planet-Based Diets Database.
+
+**The question is with Intake and has not been answered.** Until it is, treat
+any eutrophication result as carrying this assumption, and say so if you
+publish one. Nothing else in the package depends on an unconfirmed reading.
+
+## If Intake says we are wrong
+
+The adjustment lives in exactly one function, `.eiod_to_cutoff_unit()` in
+`R/utils.R`, and nowhere else. Both metric functions and the precision check
+route through it. Changing or removing it is a single edit, and the reference
+data needs no change at all — because the reference data was never adjusted in
+the first place.
+
+That is the second reason the conversion was moved out of the dataset.
+
+## See also
+
+* `?eiod_cutoffs` — the reference data, and the two-unit `unit` column
+* `?eiod_list_indicators` — the input unit for all seven
+* `vignette("precision")` — the pre-flight checks, including the magnitude
+  check that catches a 1000× error if you forget all of the above

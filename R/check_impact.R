@@ -285,7 +285,12 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
       what <- paste0("the P", percentile, " benchmark")
     }
 
-    rel_dist <- abs(value - cuts) / cuts
+    # Put the value on the same unit as the cut-off before measuring the
+    # distance between them. Only eutrophication/abs is affected; quiet,
+    # because a check function reports through its findings, not by messaging.
+    cmp <- .eiod_to_cutoff_unit(value, indicator, metric, quiet = TRUE)$value
+
+    rel_dist <- abs(cmp - cuts) / cuts
     near <- which(!is.na(rel_dist) & rel_dist < tolerance)
 
     if (length(near)) {
