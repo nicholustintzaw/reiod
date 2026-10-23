@@ -1,0 +1,146 @@
+---
+title: "1. Check your data first"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{1. Check your data first}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(reiod)
+```
+
+**Start here.** Every other article assumes your impact values are the right
+type, the right unit and the right precision. They very often are not, and
+when they are not the metrics do not complain — they return a confidently
+wrong number.
+
+That is the whole reason this page comes before the ones on computing
+anything. A unit error does not look like an error. It looks like a result.
+
+## The one check that is automatic, and the many that are not
+
+**Only one test runs on the default path.** The metric functions refuse an
+integer impact vector, because `is.numeric(1L)` is `TRUE` and nothing else
+would catch it:
+
+```{r, error = TRUE}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+eiod_absolute_threshold(as.integer(eiod_demo$land_arable_m2yr), grp, "landarable")
+```
+
+Everything else — sign, zeros, unit magnitude, retained significant digits,
+cut-off proximity — happens **only if you ask**. The checks report rather than
+stop, so one pass finds every problem instead of making you fix them one at a
+time.
+
+## The one call that runs them all
+
+`eiod_check_data()` runs six component checks over a whole data frame:
+
+```{r}
+report <- eiod_check_data(
+  eiod_demo,
+  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
+  age = "age", sex = "sex", gdqs = "gdqs"
+)
+summary(report)
+```
+
+The `impacts` argument is the same named-vector idea used everywhere in
+`reiod`: the **name** is the indicator key, the **value** is your column. You
+can check any subset.
+
+Print the report rather than summarising it to see each finding in full:
+
+```{r}
+report
+```
+
+## The two checks worth understanding
+
+### Unit magnitude
+
+This is the one that would have caught every real-world mistake we have seen.
+It compares your median against the published global reference and, when the
+ratio lands near a known conversion factor, names the conversion:
+
+```{r}
+eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_grams")
+```
+
+A factor of 1000 is the common one — grams where kilograms are expected, or
+the reverse. Note that eutrophication is the indicator where this is easiest
+to get wrong, and the one place `reiod` expects **grams**; see
+`vignette("eutrophication")`.
+
+### Precision
+
+R's `numeric` is a double, so a biodiversity value of `3.6896e-13` is
+comfortably representable and `<` comparison against a cut-off is exact. **The
+small exponent is not the problem.**
+
+The risk is ingestion fidelity — what happened to the number before it reached
+R. Excel re-saving displayed digits. A CSV export written at six significant
+digits. Stata `float` storage. A database `REAL` column. The check measures how
+many significant digits a column has actually retained, and counts how many
+observations sit close enough to their own cut-off that the lost digits could
+flip the classification:
+
+```{r}
+eiod_check_precision(eiod_demo$water_litres, grp, "water", name = "water_litres")
+```
+
+The companion Stata implementation measured this on 200,000 simulated
+respondent-days. Single-precision storage changed **0 of 200,000** absolute
+classifications and **1 of 200,000** relative bands — while **integer** storage
+of greenhouse gas emissions biased the mean down by **13%**. The intuition that
+the tiny exponent is the danger turns out to be the wrong worry. Truncation is
+the real one.
+
+`vignette("precision")` works through how to decide whether lost digits matter
+for *your* data. Run it before you generate any indicator.
+
+## The recommended pre-flight block
+
+```r
+library(reiod)
+
+# 1. state which column holds which indicator, once
+my_map <- c(ghg = "ghg_kgco2e", biodiv = "biodiv_pdf")
+
+# 2. the demographic group
+grp <- eiod_age_sex_group(mydata$age, mydata$sex)
+
+# 3. the full suite: type, sign, zeros, unit magnitude, precision
+summary(eiod_check_data(mydata, impacts = my_map,
+                        age = "age", sex = "sex", gdqs = "gdqs"))
+
+# 4. precision per indicator, against the cut-off that will actually be used
+for (ind in names(my_map)) {
+  print(eiod_check_precision(mydata[[my_map[[ind]]]], grp, ind, name = my_map[[ind]]))
+}
+
+# 5. only now generate the indicators
+```
+
+## What the checks cannot do
+
+**Incomplete EIOF coverage.** Not every food has an impact factor. A food
+without one contributes nothing to the day total, so the total is understated —
+and `reiod` cannot detect it, because it receives one number per
+respondent-day and the aggregation has already discarded the evidence.
+
+Count the share of consumed weight carrying an impact factor when you
+aggregate, and report it alongside any prevalence. The one detectable case —
+every food uncosted, summing to `0` rather than `NA` — is caught by the zero
+check. `vignette("troubleshooting")` has the full discussion.
+
+## See also
+
+* `vignette("precision")` — the precision pre-flight check in depth
+* `vignette("troubleshooting")` — a deliberately broken dataset, fault by
+  fault, with the fix for each
+* Then: `vignette("demographic-groups")`, which every metric needs

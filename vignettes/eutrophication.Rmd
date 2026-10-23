@@ -72,8 +72,8 @@ comparing.
 ## What this means for your code
 
 ```{r}
-grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
-eutr_g <- eiod_demo$eutroph_kgpo4e * 1000   # pretend these are grams
+grp    <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+eutr_g <- eiod_demo$eutroph_gpo4e   # already grams - nothing to convert
 ```
 
 Both metrics now take the same input, with no conversion and no message:

@@ -1,0 +1,128 @@
+---
+title: "5. Tables 5a & 5b — composite metrics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{5. Tables 5a and 5b - composite metrics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(reiod)
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+**The question:** is this diet both healthy *and* environmentally sound?
+
+Both composites combine a **diet quality** criterion (GDQS ≥ 23) with an
+**environmental** criterion. They differ only in the second:
+
+| | Table | Diet quality | Environment |
+|---|---|---|---|
+| **HESD** — healthy, environmentally sustainable diet | 5a | GDQS ≥ 23 | biodiversity below the **absolute** Table 3 threshold |
+| **HDLEI** — healthy diet, low environmental impact | 5b | GDQS ≥ 23 | biodiversity below the **relative** P30 |
+
+Neither composite defines a new cut-off. They call `eiod_absolute_threshold()`
+and `eiod_relative_band()` internally, so there is no second copy of any
+number anywhere in the package.
+
+```{r}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+**`reiod` does not calculate the GDQS.** You supply it.
+
+## A. One respondent
+
+```{r}
+# 40-year-old man, GDQS 28, biodiversity 5e-13 PDF*year
+eiod_hesd(biodiversity = 5e-13, gdqs = 28, group = 4)
+eiod_hdlei(biodiversity = 5e-13, gdqs = 28, group = 4)
+```
+
+## B. Vectors from your data
+
+```{r}
+table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
+```
+
+Note the message about respondents under 2 years. The methods paper restricts
+the composites to ages 2 and over, because the GDQS has not been validated
+below that age — Table 5a prints six demographic columns, not eight. If your
+sample includes under-twos, **decide explicitly whether they belong in the
+denominator**, because it changes every percentage you report.
+
+## C. The two criteria separately
+
+Usually what you want for reporting:
+
+```{r}
+parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                   form = "components")
+head(parts, 4)
+```
+
+`healthy` and `env` are the two sub-indicators; `category` is the four-way
+Table 5a classification; `binary` is category 1 against everything else. The
+sub-indicators come from `eiod_healthy_diet()` and `eiod_sustainable_diet()`,
+which are exported so you can report either on its own:
+
+```{r}
+round(100 * c(
+  healthy     = mean(eiod_healthy_diet(eiod_demo$gdqs), na.rm = TRUE),
+  sustainable = mean(eiod_sustainable_diet(eiod_demo$biodiv_pdf, grp),
+                     na.rm = TRUE),
+  low_impact  = mean(eiod_low_impact(eiod_demo$biodiv_pdf, grp), na.rm = TRUE)
+), 1)
+```
+
+## D. Adding both to a data frame
+
+```{r}
+d <- eiod_demo
+d$group <- eiod_age_sex_group(d$age, d$sex)
+d$hesd  <- eiod_hesd(d$biodiv_pdf,  d$gdqs, d$group, form = "binary")
+d$hdlei <- eiod_hdlei(d$biodiv_pdf, d$gdqs, d$group, form = "binary")
+
+head(d[, c("id", "group", "gdqs", "biodiv_pdf", "hesd", "hdlei")], 5)
+```
+
+## The thing to know before reporting these: HDLEI is nested inside HESD
+
+```{r}
+table(HESD = d$hesd, HDLEI = d$hdlei, useNA = "ifany")
+```
+
+The empty cell is **structural**, not a quirk of this sample. For biodiversity
+the relative P30 cut-off sits below the absolute threshold in every
+demographic group, by the same constant factor:
+
+```{r}
+vapply(1:8, function(g) {
+  unname(eiod_lookup_cutoff("biodiv", g, "abs")) /
+    unname(eiod_lookup_cutoff("biodiv", g, "rel", 30))
+}, numeric(1))
+```
+
+Both are the same all-population figure scaled by the same energy-requirement
+weight, so the ratio is constant by construction. Every HDLEI diet is
+therefore also a HESD diet, and HESD prevalence can never fall below HDLEI
+prevalence.
+
+Reporting both is still informative — the gap between them is the share of
+diets sitting between the two cut-offs — but **they are not two independent
+dimensions and must not be presented as a 2×2.**
+
+## Only one indicator is involved
+
+Unlike Tables 3 and 4, the composites use **biodiversity only**. There is no
+subset to choose and no batch form, because there is nothing to batch: the
+paper defines these two metrics on that one indicator.
+
+## See also
+
+* `vignette("table3-absolute")` — the absolute threshold HESD reuses
+* `vignette("table4-relative")` — the reference distribution HDLEI reuses
+* `?eiod_hesd`, `?eiod_hdlei`, `?eiod_healthy_diet`,
+  `?eiod_sustainable_diet`, `?eiod_low_impact`

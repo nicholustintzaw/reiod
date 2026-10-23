@@ -208,7 +208,7 @@ test_that("the correction leaves every realistic classification unchanged", {
   published_kg <- c(0.0076827204, 0.0119198764, 0.0164158298, 0.0267453228,
                     0.0074439228, 0.0110398856, 0.0150718438, 0.0215133770)
   set.seed(42)
-  v <- c(eiod_demo$eutroph_kgpo4e * 1000, stats::rlnorm(5000, log(20), 1))
+  v <- c(eiod_demo$eutroph_gpo4e, stats::rlnorm(5000, log(20), 1))
   g <- c(eiod_age_sex_group(eiod_demo$age, eiod_demo$sex),
          sample(1:8, 5000, replace = TRUE))
 
@@ -458,4 +458,57 @@ test_that("eutrophication cut-offs print exactly as the paper has them", {
   # and the print method flags that these eight rows differ from the PDF
   expect_match(zout, "CORRECTED BY INTAKE")
   expect_match(zout, "DIFFER FROM THE CURRENTLY PUBLISHED PDF")
+})
+
+
+# ---------------------------------------------------------------------------- #
+# The demo data must be on the same scale as the cut-offs it is demonstrated
+# against.
+#
+# This exists because of a real failure. When Intake's October 2026 correction
+# removed the g -> kg conversion, `eiod_demo$eutroph_kgpo4e` was left holding
+# kilograms and `eiod_demo_map` went on pointing `eutroph` at it. Nothing
+# errored. `eiod_absolute_all(eiod_demo, grp, eiod_demo_map)` simply returned
+# 100% below threshold, and the relative metric put every respondent in band 1
+# - the package's own demo quietly demonstrating the 1000x mistake its
+# breaking-change note warns about.
+#
+# Scale is asserted, not balance. Water legitimately sits ~95% below its
+# threshold on this data; tightening until that failed would mean tuning the
+# simulation to please the test.
+# ---------------------------------------------------------------------------- #
+test_that("every demo column is on its indicator's scale", {
+  for (ind in names(eiod_demo_map)) {
+    col   <- eiod_demo_map[[ind]]
+    thr   <- median(eiod_cutoffs$value[eiod_cutoffs$metric == "abs" &
+                                         eiod_cutoffs$indicator == ind])
+    ratio <- median(eiod_demo[[col]], na.rm = TRUE) / thr
+    expect_gt(ratio, 0.05, label = paste0(col, " / ", ind, " threshold"))
+    expect_lt(ratio, 20,   label = paste0(col, " / ", ind, " threshold"))
+  }
+})
+
+test_that("the shipped map produces no degenerate indicator", {
+  grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+
+  abs_p <- colMeans(eiod_absolute_all(eiod_demo, grp, eiod_demo_map),
+                    na.rm = TRUE)
+  # 0 or 1 everywhere means the column and the cut-off are not comparable
+  expect_true(all(abs_p > 0 & abs_p < 1),
+              info = paste(names(abs_p), round(abs_p, 3), collapse = "; "))
+
+  bands <- eiod_relative_all(eiod_demo, grp, eiod_demo_map)
+  expect_true(all(vapply(bands, function(b) length(unique(b[!is.na(b)])) > 1L,
+                         logical(1))),
+              info = "an indicator put every respondent in one band")
+})
+
+test_that("eutrophication demo data is in grams, named for it", {
+  expect_true("eutroph_gpo4e" %in% names(eiod_demo))
+  expect_false("eutroph_kgpo4e" %in% names(eiod_demo))
+  expect_identical(unname(eiod_demo_map[["eutroph"]]), "eutroph_gpo4e")
+
+  # grams: the median must land inside the Table 3 range, 7.4 to 26.7 g
+  expect_gt(median(eiod_demo$eutroph_gpo4e), 7)
+  expect_lt(median(eiod_demo$eutroph_gpo4e), 30)
 })

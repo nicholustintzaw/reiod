@@ -274,7 +274,16 @@ eiod_demo <- data.frame(
   land_arable_m2yr  = stats::rlnorm(n, log(2.5),   0.70),
   land_pasture_m2yr = stats::rlnorm(n, log(4),     1.00),
   ghg_kgco2e        = stats::rlnorm(n, log(3),     0.70),
-  eutroph_kgpo4e    = stats::rlnorm(n, log(0.02),  0.70),
+  # GRAMS, and named for it. Simulated at log(20) to sit either side of the
+  # Table 3 thresholds, which run 7.4 to 26.7 g.
+  #
+  # This column was `eutroph_kgpo4e`, drawn at log(0.02), until 2026-10-22.
+  # That was correct while the package divided by 1000 for you. When Intake's
+  # correction removed the division, the shipped map went on pointing
+  # `eutroph` at a kilogram column, and `eiod_absolute_all(eiod_demo, grp,
+  # eiod_demo_map)` returned 100% below threshold - the package's own demo
+  # demonstrating the 1000x error its breaking-change note warns about.
+  eutroph_gpo4e     = stats::rlnorm(n, log(20),    0.70),
   water_litres      = stats::rlnorm(n, log(600),   0.60),
   biodiv_pdf        = stats::rlnorm(n, log(8e-13), 1.00),
   gdqs              = round(stats::runif(n, 12, 38), 1),
@@ -293,7 +302,7 @@ eiod_demo_map <- c(
   landarable  = "land_arable_m2yr",
   landpasture = "land_pasture_m2yr",
   ghg         = "ghg_kgco2e",
-  eutroph     = "eutroph_kgpo4e",
+  eutroph     = "eutroph_gpo4e",
   water       = "water_litres",
   biodiv      = "biodiv_pdf"
 )
@@ -308,6 +317,39 @@ stopifnot(
             c("landtotal", "landarable", "landpasture", "ghg",
               "eutroph", "water", "biodiv"))
 )
+
+# ---------------------------------------------------------------------------- #
+# The guard that would have caught the eutrophication unit slip.
+#
+# A demo column on the wrong scale does not error. It classifies every row the
+# same way and the examples go on running, which is exactly how
+# `eutroph_kgpo4e` survived the October 2026 correction returning 100%.
+#
+# What is asserted is SCALE, not balance: each demo column's median must be
+# within a factor of 20 of the median Table 3 threshold for its indicator.
+# Today every ratio is between 0.55 and 2.8, so a factor of 20 is loose enough
+# never to fire on a redistribution and tight enough that a 1000x slip cannot
+# get past it.
+#
+# Balance would be the wrong test. Water legitimately sits 95% below its
+# threshold on this data, and tightening until that failed would mean tuning
+# the simulation to satisfy the check rather than the other way round.
+# ---------------------------------------------------------------------------- #
+local({
+  for (ind in names(eiod_demo_map)) {
+    col <- eiod_demo_map[[ind]]
+    thr <- stats::median(eiod_cutoffs$value[eiod_cutoffs$metric == "abs" &
+                                              eiod_cutoffs$indicator == ind])
+    ratio <- stats::median(eiod_demo[[col]], na.rm = TRUE) / thr
+    if (ratio < 0.05 || ratio > 20) {
+      stop("demo column '", col, "' has a median ", signif(ratio, 3),
+           "x the median Table 3 threshold for '", ind,
+           "'. That is an order-of-magnitude mismatch - check its UNIT.",
+           call. = FALSE)
+    }
+  }
+  message("demo data: all 7 columns are on the same scale as their thresholds")
+})
 
 # ---- 6. a deliberately broken copy, for the troubleshooting vignette -------- #
 # Five faults, one per failure mode the check suite is built to catch.

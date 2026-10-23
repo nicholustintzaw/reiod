@@ -17,16 +17,57 @@ navbar:
   structure:
     left:  [intro, reference, articles, news]
     right: [search, github]
+  components:
+    articles:
+      text: Articles
+      menu:
+        - text: Before you compute
+        - text: 1. Check your data first
+          href: articles/data-checks.html
+        - text: 2. Demographic groups
+          href: articles/demographic-groups.html
+        - text: ---------
+        - text: The metrics, table by table
+        - text: 3. Table 3 — absolute thresholds
+          href: articles/table3-absolute.html
+        - text: 4. Tables 4a–4g — relative benchmarks
+          href: articles/table4-relative.html
+        - text: 5. Tables 5a & 5b — composite metrics
+          href: articles/table5-composites.html
+        - text: ---------
+        - text: Reference notes
+        - text: The precision pre-flight check
+          href: articles/precision.html
+        - text: A broken dataset, fault by fault
+          href: articles/troubleshooting.html
+        - text: "Eutrophication: a corrected cut-off"
+          href: articles/eutrophication.html
 
 articles:
-  - title: Using the package
-    navbar: ~
+  - title: Before you compute
+    desc: >
+      Run these first. Everything else assumes your impact values are the
+      right type, the right unit and the right precision.
     contents:
-      - reiod
-      - eutrophication
+      - data-checks
+      - demographic-groups
+
+  - title: The metrics, table by table
+    desc: >
+      One article per table family. Each works through a single value, a
+      column from a dataset, adding results to a data frame, all seven
+      indicators at once, and only the indicators you have.
+    contents:
+      - table3-absolute
+      - table4-relative
+      - table5-composites
+
+  - title: Reference notes
+    desc: Deeper background on three things that catch people out.
+    contents:
       - precision
-      - relative-benchmarks
       - troubleshooting
+      - eutrophication
 
 reference:
   - title: Demographic group

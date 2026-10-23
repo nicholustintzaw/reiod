@@ -1,0 +1,196 @@
+---
+title: "3. Table 3 — absolute thresholds"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{3. Table 3 - absolute thresholds}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(reiod)
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+**The question:** is this diet below the per capita daily share of a planetary
+boundary?
+
+The cut-offs are Table 3 of the methods paper — one absolute threshold per
+indicator per demographic group, 56 numbers in all. The result is `1` if the
+diet is below its threshold, `0` if at or above it.
+
+This article assumes you have run `vignette("data-checks")` and have a `grp`
+vector from `vignette("demographic-groups")`:
+
+```{r}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+## A. One value
+
+Useful for checking the package against the printed table by hand. Pass
+length-one vectors:
+
+```{r}
+# a 40-year-old man, 2.1 kg CO2eq for the day — group 4
+eiod_absolute_threshold(2.1, group = 4, indicator = "ghg")
+```
+
+```{r}
+# the number it was compared against
+eiod_lookup_cutoff("ghg", group = 4, metric = "abs")
+```
+
+So `2.1 < 1.0836...` is false, and the result is `0`. The comparison is
+**strict** — the published cut-offs carry a `<` sign, so a diet sitting
+exactly on the threshold is coded `0`, not `1`.
+
+## B. One vector (a column from your data)
+
+The ordinary case. `reiod` has no dependencies, so the API is plain vectors:
+you pass `df$column`, not `column`.
+
+```{r}
+ghg_ok <- eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg")
+table(ghg_ok, useNA = "ifany")
+```
+
+```{r}
+round(100 * mean(ghg_ok, na.rm = TRUE), 1)
+```
+
+Read as: *"22.2% of one-day diets fall below the absolute per capita daily
+threshold established for greenhouse gas emissions."*
+
+### The indicator key and your column name are different things
+
+Note what that call does **not** say. `"ghg"` is the indicator key `reiod`
+knows; `ghg_kgco2e` is what the column happens to be called in this dataset.
+They are separate things and have never had to match.
+
+This is worth stating because it is easy to conclude otherwise. The demo data
+used to have columns named `ghg`, `biodiv`, `landtotal` — the keys themselves
+— which made a tidy-looking loop possible and taught people that a rename was
+required. It never was. The columns were renamed in October 2026 for exactly
+that reason.
+
+## C. Adding the result as a new column
+
+```{r}
+d <- eiod_demo
+d$group   <- eiod_age_sex_group(d$age, d$sex)
+d$abs_ghg <- eiod_absolute_threshold(d$ghg_kgco2e, d$group, "ghg")
+
+head(d[, c("id", "age", "sex", "group", "ghg_kgco2e", "abs_ghg")], 5)
+```
+
+Two or three columns at a time, the same way:
+
+```{r}
+d$abs_water  <- eiod_absolute_threshold(d$water_litres, d$group, "water")
+d$abs_biodiv <- eiod_absolute_threshold(d$biodiv_pdf,   d$group, "biodiv")
+
+round(100 * colMeans(d[, c("abs_ghg", "abs_water", "abs_biodiv")],
+                     na.rm = TRUE), 1)
+```
+
+## D. Several indicators in one call
+
+State the mapping once — the **name** is the indicator key, the **value** is
+your column — and pass it to `eiod_absolute_all()`:
+
+```{r}
+eiod_demo_map
+```
+
+```{r}
+abs_all <- eiod_absolute_all(eiod_demo, grp, eiod_demo_map)
+round(100 * colMeans(abs_all, na.rm = TRUE), 1)
+```
+
+For your own data the line is the same shape:
+
+```r
+my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
+```
+
+## E. Only the indicators you have
+
+**Supply any subset.** Indicators you do not name are simply absent from the
+result; there is no need to have all seven, and nothing is computed for the
+ones you leave out.
+
+```{r}
+two <- c(landtotal = "land_total_m2yr", water = "water_litres")
+res <- eiod_absolute_all(eiod_demo, grp, map = two)
+
+str(res)
+round(100 * colMeans(res, na.rm = TRUE), 1)
+```
+
+One indicator alone works too:
+
+```{r}
+head(eiod_absolute_all(eiod_demo, grp, map = c(water = "water_litres")), 3)
+```
+
+The batch form is a loop and nothing more — it gives exactly what the
+single-indicator calls give:
+
+```{r}
+identical(res$abs_water,
+          eiod_absolute_threshold(eiod_demo$water_litres, grp, "water"))
+```
+
+Binding a subset straight onto your data frame:
+
+```{r}
+d2 <- cbind(eiod_demo, eiod_absolute_all(eiod_demo, grp, map = two))
+names(d2)
+```
+
+Rename the output prefix with `prefix =` if `abs_` collides with something you
+already have.
+
+## Which number was each respondent compared against?
+
+Per group:
+
+```{r}
+eiod_lookup_cutoff("ghg", metric = "abs")
+```
+
+Those are printed to 15 significant digits on purpose. The published cut-offs
+need up to 14, and R's default `options(digits = 7)` would show
+`1726.3821057877` as `1726.382`, which looks as though the package had rounded
+the guideline. It had not — only the display was short. The `as printed`
+column is the literal text transcribed from the paper, so you can check it
+character for character rather than trusting a rendering of a double.
+
+Per observation:
+
+```{r}
+head(eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg",
+                             details = TRUE), 4)
+```
+
+## Two cautions specific to this table
+
+**Eutrophication must be supplied in grams.** Eight of the Table 3 cut-offs
+were corrected by Intake in October 2026 and differ from the published PDF,
+which prints that row in kilograms. If you have a script that divided
+eutrophication by 1000 before calling this function, **remove the division**.
+See `vignette("eutrophication")`.
+
+**This metric and the relative one answer different questions and will not
+agree.** For greenhouse gases the planetary-boundary threshold lies below the
+10th percentile of the reference distribution; for water it lies above the
+90th. Never use a relative band as a proxy for this result, or the reverse —
+`vignette("table4-relative")` shows where each threshold falls.
+
+## See also
+
+* `vignette("table4-relative")` — Tables 4a–4g
+* `vignette("table5-composites")` — Tables 5a and 5b
+* `?eiod_absolute_threshold`, `?eiod_absolute_all`, `?eiod_lookup_cutoff`

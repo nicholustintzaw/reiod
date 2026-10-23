@@ -1,8 +1,8 @@
 ---
-title: "Understanding the relative benchmark metrics"
+title: "4. Tables 4a–4g — relative benchmarks"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Understanding the relative benchmark metrics}
+  %\VignetteIndexEntry{4. Tables 4a-4g - relative benchmarks}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,9 +13,101 @@ library(reiod)
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 ```
 
+**The question:** where does this diet sit in a fixed global reference
+distribution?
+
+The cut-points are Tables 4a–4g of the methods paper — nine decile boundaries
+per indicator per demographic group, 560 numbers in all. The result is a band
+from 1 (lowest impact) to 10.
+
+This article assumes you have run `vignette("data-checks")` and have a `grp`
+vector from `vignette("demographic-groups")`:
+
+```{r}
+grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+# Part 1 — Using it
+
+## A. One value
+
+```{r}
+# a 40-year-old man, 9e-13 PDF*year of biodiversity loss — group 4
+eiod_relative_band(9e-13, group = 4, indicator = "biodiv")
+```
+
+The decile boundaries it was placed between:
+
+```{r}
+eiod_relative_band(9e-13, 4, "biodiv", details = TRUE)
+```
+
+## B. One vector (a column from your data)
+
+```{r}
+band <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
+table(band, useNA = "ifany")
+```
+
+```{r}
+head(eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv", details = TRUE), 4)
+```
+
+`cut_lower` is `NA` in band 1 and `cut_upper` is `NA` in band 10 — correctly,
+because nothing is published below P10 or above P90.
+
+## C. Adding the result as a new column
+
+```{r}
+d <- eiod_demo
+d$group       <- eiod_age_sex_group(d$age, d$sex)
+d$band_biodiv <- eiod_relative_band(d$biodiv_pdf, d$group, "biodiv")
+d$band_water  <- eiod_relative_band(d$water_litres, d$group, "water")
+
+head(d[, c("id", "group", "biodiv_pdf", "band_biodiv", "band_water")], 5)
+```
+
+## D. Several indicators in one call
+
+```{r}
+bands <- eiod_relative_all(eiod_demo, grp, eiod_demo_map)
+round(sapply(bands, mean, na.rm = TRUE), 2)
+```
+
+## E. Only the indicators you have
+
+**Supply any subset** — the same named-vector mapping as everywhere else, and
+nothing is computed for indicators you leave out:
+
+```{r}
+two <- c(landtotal = "land_total_m2yr", water = "water_litres")
+res <- eiod_relative_all(eiod_demo, grp, map = two)
+
+str(res)
+round(sapply(res, mean, na.rm = TRUE), 2)
+```
+
+Identical to calling the single-indicator form:
+
+```{r}
+identical(res$band_water,
+          eiod_relative_band(eiod_demo$water_litres, grp, "water"))
+```
+
+Binding a subset onto your data frame, and the midpoint form in the same call:
+
+```{r}
+d3 <- cbind(eiod_demo,
+            eiod_relative_all(eiod_demo, grp, map = two,
+                              midpoint = TRUE, prefix = "mid_"))
+head(d3[, c("id", "mid_landtotal", "mid_water")], 4)
+```
+
+# Part 2 — What the bands actually mean
+
 The relative benchmark metrics are the part of the Intake framework most often
-misread, and the misreading changes what the numbers mean. This vignette is
-about that one idea.
+misread, and the misreading changes what the numbers mean. The rest of this
+article is about that one idea.
 
 ## The reference distribution is external and fixed
 
@@ -160,3 +252,29 @@ So "this population is in the lowest decile globally for dietary greenhouse gas
 emissions" and "this population's diets are within the planetary boundary" can
 both be false at the same time, or the first true and the second false. Report
 the absolute and relative metrics side by side.
+
+Where each absolute threshold falls inside its own reference distribution,
+for all seven indicators:
+
+```{r}
+for (ind in eiod_indicators$indicator) {
+  thr <- unname(eiod_lookup_cutoff(ind, 4, "abs"))
+  p   <- vapply(seq(10, 90, 10),
+                function(q) unname(eiod_lookup_cutoff(ind, 4, "rel", q)),
+                numeric(1))
+  k <- sum(thr >= p)
+  pos <- if (k == 0) "below P10" else if (k == 9) "at/above P90" else
+    sprintf("P%d-P%d", k * 10, (k + 1) * 10)
+  cat(sprintf("%-12s %s\n", ind, pos))
+}
+```
+
+Greenhouse gases sit **below P10** — a diet in the lowest band still exceeds
+the boundary. Water sits **above P90**, so essentially every diet passes. The
+two metric families answer different questions and will not agree.
+
+## See also
+
+* `vignette("table3-absolute")` — Table 3, the absolute thresholds
+* `vignette("table5-composites")` — Tables 5a and 5b
+* `?eiod_relative_band`, `?eiod_relative_all`, `?eiod_lookup_cutoff`

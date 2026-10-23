@@ -1,0 +1,104 @@
+---
+title: "2. Demographic groups"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{2. Demographic groups}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(reiod)
+```
+
+Every cut-off in the methods paper is scaled to one of **eight age × sex
+groups**, because average dietary energy requirement differs across them. So
+this variable is required by every metric function in the package, and it is
+the second thing to compute after checking your data.
+
+```{r}
+grp <- eiod_age_sex_group(age = eiod_demo$age, sex = eiod_demo$sex)
+table(factor(grp, 1:8, attr(grp, "labels")))
+```
+
+The result is an integer vector of 1–8 carrying a `labels` attribute, so you
+can always recover what each number means.
+
+## Adding it to your data frame
+
+```{r}
+d <- eiod_demo
+d$group <- eiod_age_sex_group(d$age, d$sex)
+head(d[, c("id", "age", "sex", "group")], 4)
+```
+
+## Which type should `sex` be?
+
+**A factor is the recommended input**, and `eiod_demo$sex` is one. The levels
+carry the meaning, so the data documents itself, `table()` prints "male" and
+"female" rather than 1 and 2, and `reiod` can resolve it without being told
+anything further.
+
+Character works identically, and is what `read.csv()` gives you by default:
+
+```{r}
+eiod_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
+```
+
+**Numeric sex is deliberately refused** unless you say which code means male:
+
+```{r, error = TRUE}
+eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
+```
+
+This is not a missing feature. Survey data uses `1/2` and `0/1` about equally
+often, and the two are indistinguishable from the values alone — both are just
+two distinct numbers. If `reiod` guessed and guessed wrong, every result would
+be silently inverted: no error, nothing visibly odd, every male counted as
+female. Rather than carry that risk, it stops and asks.
+
+Say the codes and it works:
+
+```{r}
+eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0), male = 1, female = 0)
+```
+
+But the better habit is to convert once, near the top of your script, after
+which every later call is unambiguous:
+
+```{r}
+sex_f <- eiod_as_sex_factor(c(1, 0, 1, 0), male = 1, female = 0)
+sex_f
+```
+
+## A note on the age boundaries
+
+The paper prints the groups as "0-1.9", "2-4.9", "5-9.9" and "10+". `reiod`
+reads these as half-open intervals: `age < 2`, `2 <= age < 5`,
+`5 <= age < 10`, `age >= 10`. So a child aged 1.95 years is in the first
+group:
+
+```{r}
+eiod_age_sex_group(c(1.9, 1.95, 1.999, 2.0), rep("male", 4))
+```
+
+Testing `age <= 1.9` instead would leave everyone between 1.9 and 2.0
+unassigned, and they would then vanish from every metric with no error raised.
+
+**Age must be in years**, and may be fractional. If your data holds age in
+months, divide by 12 first — `eiod_age_sex_group()` cannot tell the
+difference, and a sample recorded in months would place everyone over 10
+months into the adult group.
+
+## Checking it before you rely on it
+
+```{r}
+eiod_check_demographics(eiod_demo$age, eiod_demo$sex)
+```
+
+## See also
+
+* `vignette("data-checks")` — what to run before this
+* `vignette("table3-absolute")` — the first metric that uses the group
+* `?eiod_age_sex_group`, `?eiod_as_sex_factor`

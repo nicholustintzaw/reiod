@@ -44,6 +44,49 @@ subset(eiod_cutoffs, value_source != "published",
 **These values may differ from the Intake guideline PDF as published today.**
 That is deliberate and on Intake's instruction, not an error in `reiod`.
 
+## The demo data moved to grams too
+
+`eiod_demo$eutroph_kgpo4e` is renamed **`eutroph_gpo4e`** and resimulated in
+grams, and `eiod_demo_map` follows it.
+
+This had to change. With the conversion gone, the shipped map pointed
+`eutroph` at a kilogram column, so
+`eiod_absolute_all(eiod_demo, grp, eiod_demo_map)` returned **100% below
+threshold** and the relative metric put every respondent in band 1 — the
+package's own demo demonstrating the 1000× mistake this release warns about.
+Nothing errored; it just quietly classified everything the same way.
+
+Two guards now exist so it cannot recur: `data-raw/build_data.R` refuses to
+save demo data whose median is more than 20× away from its indicator's median
+cut-off, and `tests/testthat/test-reference_values.R` asserts the same thing
+plus that no indicator comes out degenerate under the shipped map.
+
+## The documentation site is reorganised
+
+The home page and Get started page had both become catch-alls. They are now
+scoped, and the detail moved into articles rather than being dropped.
+
+* **Home** — what the package does, how to install it, what it does *not* do,
+  and five cautions to read before reporting results. Nothing else.
+* **Get started** — what is in the package, how to see the indicators it
+  knows, what the cut-offs are for each table, and survey weights. It no
+  longer teaches you to compute anything.
+* **Articles** — a dropdown in three groups, meant to be read in order:
+  *Before you compute* (`data-checks`, `demographic-groups`), *The metrics,
+  table by table* (`table3-absolute`, `table4-relative`,
+  `table5-composites`), and *Reference notes* (`precision`,
+  `troubleshooting`, `eutrophication`).
+
+Each metric article now works the same five ways through its table: **a single
+value, a column from a dataset, adding results to a data frame, all seven
+indicators at once, and only the indicators you have.** That last one was
+already supported and barely documented — `eiod_absolute_all()` and
+`eiod_relative_all()` have always accepted any subset of the seven.
+
+`vignette("relative-benchmarks")` is renamed **`vignette("table4-relative")`**
+for consistency with the other table articles. Four articles are new:
+`data-checks`, `demographic-groups`, `table3-absolute`, `table5-composites`.
+
 ## Also
 
 * `.eiod_to_cutoff_unit()` is **removed**. Nothing in the package rescales

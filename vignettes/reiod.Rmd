@@ -12,24 +12,33 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(reiod)
 ```
 
+This page is the map: what is in the package, what the cut-offs are, and one
+thing about survey weights that affects every number you report.
+
+**It deliberately does not teach you to compute anything.** Each metric family
+has its own article, with worked examples for a single value, a column, and
+adding results to a data frame. Links are at the bottom, and in the
+**Articles** menu above.
+
 ## What EIOF is
 
-Intake's **Environmental Impacts of Foods (EIOF)** database gives country-specific
-environmental impact values for more than 6,500 foods across seven impact areas
-spanning five domains of planetary health. What makes it unusual is not only its
-coverage but its adjustment factors: non-edible portion, processing and cooking
-yield, so that the *form of food consumed* in a dietary recall can be matched
-correctly to the *form of food* the impact data describes.
+Intake's **Environmental Impacts of Foods (EIOF)** database gives
+country-specific environmental impact values for more than 6,500 foods across
+seven impact areas spanning five domains of planetary health. What makes it
+unusual is not only its coverage but its adjustment factors: non-edible
+portion, processing and cooking yield, so that the *form of food consumed* in
+a dietary recall can be matched correctly to the *form of food* the impact
+data describes.
 
-Alongside the database, Intake published a set of **dietary environmental impact
-metrics** for use with food consumption survey data. These come in three
-families:
+Alongside the database, Intake published a set of **dietary environmental
+impact metrics** for use with food consumption survey data. These come in
+three families:
 
-| Family | Question it answers | Source |
-|---|---|---|
-| Absolute threshold | Is this diet below the per capita daily share of a planetary boundary? | Table 3 |
-| Relative benchmark | Where does this diet sit in a global reference distribution? | Tables 4a–4g |
-| Composite | Is this diet both healthy and environmentally sound? | Tables 5a, 5b |
+| Family | Question it answers | Source | Article |
+|---|---|---|---|
+| Absolute threshold | Is this diet below the per capita daily share of a planetary boundary? | Table 3 | `vignette("table3-absolute")` |
+| Relative benchmark | Where does this diet sit in a global reference distribution? | Tables 4a–4g | `vignette("table4-relative")` |
+| Composite | Is this diet both healthy and environmentally sound? | Tables 5a, 5b | `vignette("table5-composites")` |
 
 All of them are age- and sex-specific, because average dietary energy
 requirement differs across groups.
@@ -38,12 +47,12 @@ requirement differs across groups.
 
 `reiod` implements those metrics in R.
 
-**It does not contain the EIOF database.** It ships the published *cut-offs* and
-applies them to impact values you have already derived. The work of matching
-food items to impact factors, applying the adjustment factors, and summing to
-the respondent-day happens upstream; `reiod` starts where that ends. It also
-does not calculate the Global Diet Quality Score — the composite metrics take a
-GDQS value as an input.
+**It does not contain the EIOF database.** It ships the published *cut-offs*
+and applies them to impact values you have already derived. The work of
+matching food items to impact factors, applying the adjustment factors, and
+summing to the respondent-day happens upstream; `reiod` starts where that
+ends. It also does not calculate the Global Diet Quality Score — the composite
+metrics take a GDQS value as an input.
 
 So the input `reiod` expects is one row per respondent-day, with the impact
 totals already summed:
@@ -52,309 +61,121 @@ totals already summed:
 head(eiod_demo, 3)
 ```
 
-The package has **no dependencies at all**. The practical consequence is a plain
-vector API: you pass `df$biodiv`, not `biodiv`.
+The package has **no dependencies at all**. The practical consequence is a
+plain vector API: you pass `df$biodiv_pdf`, not `biodiv_pdf`.
+
+## What is in the package
+
+```{r}
+ls("package:reiod")
+```
+
+| Group | Functions |
+|---|---|
+| Demographic group | `eiod_age_sex_group()`, `eiod_as_sex_factor()` |
+| Metrics | `eiod_absolute_threshold()`, `eiod_relative_band()`, `eiod_hesd()`, `eiod_hdlei()` |
+| Several indicators at once | `eiod_absolute_all()`, `eiod_relative_all()` |
+| Decomposed sub-indicators | `eiod_healthy_diet()`, `eiod_sustainable_diet()`, `eiod_low_impact()` |
+| Data quality checks | `eiod_check_data()` and five component checks |
+| Reference lookups | `eiod_list_indicators()`, `eiod_lookup_cutoff()` |
+| Shipped data | `eiod_cutoffs`, `eiod_indicators`, `eiod_demo`, `eiod_demo_map` |
 
 ## The seven indicators, and their units
 
 Units matter more here than in most analyses, because a unit error produces a
-confidently wrong answer rather than an obvious one.
+confidently wrong answer rather than an obvious one. This is the function to
+check what the package expects:
 
 ```{r}
 eiod_list_indicators()
 ```
 
-## Step 1 — the demographic group
+The **indicator key** in the first column is what you pass to every function.
+Your own column can be called anything — the two never have to match.
 
-Every cut-off is scaled to one of eight age/sex groups. This variable is
-required by everything else.
+## The cut-offs
 
-```{r}
-grp <- eiod_age_sex_group(age = eiod_demo$age, sex = eiod_demo$sex)
-table(factor(grp, 1:8, attr(grp, "labels")))
-```
-
-### Which type should `sex` be?
-
-**A factor is the recommended input**, and `eiod_demo$sex` is one. The levels
-carry the meaning, so the data documents itself, `table()` prints "male" and
-"female" rather than 1 and 2, and `reiod` can resolve it without being told
-anything further.
-
-Character works identically, and is what `read.csv()` gives you by default:
+All 616 published cut-offs ship as `eiod_cutoffs`, in long format:
 
 ```{r}
-eiod_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
-```
-
-**Numeric sex is deliberately refused** unless you say which code means male:
-
-```{r, error = TRUE}
-eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
-```
-
-This is not a missing feature. Survey data uses `1/2` and `0/1` about equally
-often, and the two are indistinguishable from the values alone — both are just
-two distinct numbers. If `reiod` guessed and guessed wrong, every result would
-be silently inverted: no error, nothing visibly odd, every male counted as
-female. Rather than carry that risk, it stops and asks.
-
-Say the codes and it works:
-
-```{r}
-eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0), male = 1, female = 0)
-```
-
-But the better habit is to convert once, near the top of your script, after
-which every later call is unambiguous:
-
-```{r}
-sex_f <- eiod_as_sex_factor(c(1, 0, 1, 0), male = 1, female = 0)
-sex_f
-```
-
-### A note on the age boundaries
-
-The paper prints the groups as "0-1.9", "2-4.9", "5-9.9" and "10+". `reiod`
-reads these as half-open intervals: `age < 2`, `2 <= age < 5`, `5 <= age < 10`,
-`age >= 10`. So a child aged 1.95 years is in the first group:
-
-```{r}
-eiod_age_sex_group(c(1.9, 1.95, 1.999, 2.0), rep("male", 4))
-```
-
-Testing `age <= 1.9` instead would leave everyone between 1.9 and 2.0
-unassigned, and they would then vanish from every metric with no error raised.
-
-## Step 2 — absolute threshold metrics (Table 3)
-
-```{r}
-ghg_ok <- eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg")
-table(ghg_ok, useNA = "ifany")
-```
-
-Read as: *"x% of one-day diets fall below the absolute per capita daily
-threshold established for greenhouse gas emissions."*
-
-The comparison is strict — the published cut-offs carry a `<` sign, so a diet
-sitting exactly on the threshold is coded `0`, not `1`.
-
-### The indicator key and your column name are different things
-
-Note what that call does **not** say. `"ghg"` is the indicator key reiod knows;
-`ghg_kgco2e` is what the column happens to be called in this dataset. reiod
-takes a vector, so your column can be called anything.
-
-This is worth stating because it is easy to conclude otherwise. The demo data
-used to have columns named `ghg`, `biodiv`, `landtotal` — the keys themselves —
-which made a tidy-looking loop possible and taught people that a rename was
-required. It never was. The columns were renamed in October 2026 for exactly
-that reason.
-
-State the mapping once and the rest follows:
-
-```{r}
-eiod_demo_map
+str(eiod_cutoffs)
 ```
 
 ```{r}
-abs_all <- eiod_absolute_all(eiod_demo, grp, eiod_demo_map)
-round(100 * colMeans(abs_all, na.rm = TRUE), 1)
+table(eiod_cutoffs$table, eiod_cutoffs$metric)
 ```
 
-For your own data the line is the same shape:
-
-```r
-my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
-```
-
-Supply any subset — there is no need to have all seven.
-
-### Which number was each respondent compared against?
+### Table 3 — one absolute threshold per group
 
 ```{r}
 eiod_lookup_cutoff("ghg", metric = "abs")
 ```
 
-Those are printed to 15 significant digits on purpose. The published cut-offs
-need up to 14, and R's default `options(digits = 7)` would show
-`1726.3821057877` as `1726.382`, which looks as though the package had rounded
-the guideline. It had not — only the display was short. The `as printed` column
-is the literal text transcribed from the paper, so you can check it character
-for character rather than trusting a rendering of a double.
+Printed to 15 significant digits on purpose: the published cut-offs need up to
+14, and R's default `options(digits = 7)` would make it look as though the
+package had rounded the guideline. The `as printed` column is the literal text
+transcribed from the paper, so you can check it character for character.
 
-Per observation, rather than per group:
+### Tables 4a–4g — nine decile cut-points per group
 
 ```{r}
-head(eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg", details = TRUE), 4)
+subset(eiod_cutoffs,
+       metric == "rel" & indicator == "ghg" & demogroup == 4 &
+         !is.na(percentile),
+       select = c(percentile, value))
 ```
 
-## Step 3 — relative benchmark metrics (Tables 4a–4g)
+### Tables 5a and 5b — no new cut-offs
 
-```{r}
-band <- eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv")
-table(band, useNA = "ifany")
-```
+The composites define none. HESD reuses the Table 3 biodiversity threshold;
+HDLEI reuses the Table 4g P30. Both obtain them by *calling* the metric
+functions, so there is no second copy in the code and nothing extra in the
+data.
 
-**This does not rank your respondents against each other.** The bands come from
-a fixed external reference distribution, the same for every analysis anywhere in
-the world. See `vignette("relative-benchmarks")` for what that distribution is,
-how it was built, and why `quantile()` is the wrong tool.
+### Eight values differ from the published PDF
 
-There is a batch form here too, and a `details` form that shows the decile
-boundaries each diet was placed between:
-
-```{r}
-head(eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv", details = TRUE), 4)
-```
-
-`cut_lower` is `NA` in band 1 and `cut_upper` is `NA` in band 10 — correctly,
-because nothing is published below P10 or above P90.
-
-## Step 4 — the composite metrics (Tables 5a, 5b)
-
-Both combine a diet quality criterion (GDQS ≥ 23) with an environmental one.
-They differ only in the environmental criterion: HESD uses the **absolute**
-biodiversity threshold, HDLEI the **relative** 30th percentile.
-
-```{r}
-table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
-```
-
-Each criterion is also available on its own, which is often what you want for
-reporting:
-
-```{r}
-parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
-head(parts, 4)
-```
-
-`healthy` and `env` are the two sub-indicators; `category` is the four-way
-Table 5a classification; `binary` is category 1 against everything else. The
-sub-indicators are produced by calling `eiod_healthy_diet()` and
-`eiod_sustainable_diet()` internally, so they cannot drift from the standalone
-functions.
-
-Note the message about respondents under 2 years. The methods paper restricts
-the composites to ages 2 and over, because the GDQS has not been validated below
-that age — Table 5a prints six demographic columns, not eight. If your sample
-includes under-twos, decide explicitly whether they belong in the denominator,
-because it changes every percentage you report.
-
-## Three things to know before reporting any of this
-
-### 1. Eight eutrophication cut-offs differ from the published PDF
-
-**On Intake's instruction, and the `value_source` column says which:**
+On Intake's instruction. The `value_source` column marks them:
 
 ```{r}
 subset(eiod_cutoffs, value_source != "published",
        c(demogroup_label, metric, unit, value))
 ```
 
-The paper prints these eight Table 3 cells in **kilograms** while Table 4f and
-the EIOF databases use **grams**. Intake confirmed in October 2026 that both
-tables are meant to be in grams and supplied the corrected values. They are the
-printed figures × 1000 — the same quantity, a different unit — so **no result
-changes**.
-
-Every other row is exactly what the paper prints.
-
-**What this means for you: supply eutrophication in grams, as the EIOF database
-gives it to you, and convert nothing.**
-
-```{r}
-grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
-eutr_g <- eiod_demo$eutroph_kgpo4e * 1000     # pretend these are grams
-table(eiod_absolute_threshold(eutr_g, grp, "eutroph"), useNA = "ifany")
-```
-
-If you wrote a script against an earlier version that divided eutrophication by
-1000, **remove the division**. `vignette("eutrophication")` has the full
-history.
-
-### 2. A low relative band is not evidence of sustainability
-
-The reference distribution describes diets as they are, not as they would need
-to be. Compare where each absolute threshold falls within it:
-
-```{r}
-for (ind in eiod_indicators$indicator) {
-  thr <- unname(eiod_lookup_cutoff(ind, 4, "abs"))
-  p   <- vapply(seq(10, 90, 10),
-                function(q) unname(eiod_lookup_cutoff(ind, 4, "rel", q)),
-                numeric(1))
-  k <- sum(thr >= p)
-  pos <- if (k == 0) "below P10" else if (k == 9) "at/above P90" else
-    sprintf("P%d-P%d", k * 10, (k + 1) * 10)
-  cat(sprintf("%-12s %s\n", ind, pos))
-}
-```
-
-For greenhouse gases the planetary-boundary threshold lies **below the 10th
-percentile**: a diet in band 1, the lowest band, still exceeds the boundary. For
-water it lies **above the 90th**, so essentially every diet passes. The two
-metric families answer different questions and will not agree. Report them
-together; never use one as a proxy for the other.
-
-### 3. HDLEI is nested inside HESD
-
-```{r}
-h <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
-d <- eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
-table(HESD = h, HDLEI = d, useNA = "ifany")
-```
-
-The empty cell is structural, not a quirk of this sample. For biodiversity the
-relative P30 cut-off sits below the absolute threshold in every demographic
-group, by the same constant factor:
-
-```{r}
-vapply(1:8, function(g) {
-  unname(eiod_lookup_cutoff("biodiv", g, "abs")) /
-    unname(eiod_lookup_cutoff("biodiv", g, "rel", 30))
-}, numeric(1))
-```
-
-Both are the same all-population figure scaled by the same energy-requirement
-weight, so the ratio is constant by construction. Every HDLEI diet is therefore
-also a HESD diet, and HESD prevalence can never fall below HDLEI prevalence.
-Reporting both is still informative — the gap between them is the share of diets
-sitting between the two cut-offs — but they are not two independent dimensions
-and must not be presented as a 2×2.
-
-## Before you compute anything: check the data
-
-Everything above assumes your impact values are the right type, the right unit
-and the right precision. They very often are not, and the failures are quiet.
-
-```{r}
-report <- eiod_check_data(
-  eiod_demo,
-  impacts = c(biodiv = "biodiv_pdf", ghg = "ghg_kgco2e"),
-  age = "age", sex = "sex", gdqs = "gdqs"
-)
-summary(report)
-```
-
-**These checks are not run for you.** Only one test is on the default path:
-the metric functions refuse an integer impact vector, because
-`is.numeric(1L)` is `TRUE` and nothing else would catch it. Everything else —
-sign, zeros, unit magnitude, retained significant digits, cut-off proximity —
-happens only if you call `eiod_check_data()`.
-
-Two vignettes cover it:
-
-* `vignette("precision")` — the pre-flight precision check, and how to decide
-  whether lost digits matter for *your* data. Run this before you generate any
-  indicator.
-* `vignette("troubleshooting")` — a deliberately broken dataset, the errors it
-  produces, and how to fix each one.
+**Supply eutrophication in grams and convert nothing.**
+`vignette("eutrophication")` has the whole story.
 
 ## Survey weights
 
-`reiod` returns respondent-level indicator vectors and nothing else. It applies
-no survey design. Every prevalence you report should come from a design-aware
-estimator — the **survey** package, or whatever your analysis uses — or both
-your point estimates and your standard errors will be wrong for a complex
-design.
+`reiod` returns respondent-level indicator vectors and nothing else. **It
+applies no survey design.**
+
+Every prevalence you report should come from a design-aware estimator — the
+**survey** package, or whatever your analysis uses — or both your point
+estimates and your standard errors will be wrong for a complex design. The
+percentages printed throughout these articles are unweighted, because they are
+demonstrating code rather than reporting results.
+
+```r
+library(survey)
+des <- svydesign(ids = ~psu, strata = ~stratum, weights = ~wt, data = d)
+svymean(~abs_ghg, des, na.rm = TRUE)
+svyby(~abs_ghg, ~group, des, svymean, na.rm = TRUE)
+```
+
+## Where to go next
+
+Read them in this order the first time:
+
+1. **`vignette("data-checks")`** — what to run before computing anything, and
+   why only one check is automatic
+2. **`vignette("demographic-groups")`** — the eight age × sex cells every
+   cut-off is scaled by
+3. **`vignette("table3-absolute")`** — Table 3
+4. **`vignette("table4-relative")`** — Tables 4a–4g
+5. **`vignette("table5-composites")`** — Tables 5a and 5b
+
+Then as needed:
+
+* `vignette("precision")` — the precision pre-flight check in depth
+* `vignette("troubleshooting")` — a broken dataset, fault by fault
+* `vignette("eutrophication")` — the one indicator with a unit history
