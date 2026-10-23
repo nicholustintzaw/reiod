@@ -75,64 +75,15 @@
 
 #' The unit string for one indicator
 #'
-#' This is the unit the USER supplies. It is not always the unit a given
-#' cut-off table is printed in - see [.eiod_to_cutoff_unit()].
+#' This is the unit the user supplies, and since the October 2026 correction to
+#' the eutrophication thresholds it is also the unit every cut-off table is
+#' printed in. No indicator needs converting any more; the helper that did so
+#' was removed.
 #'
 #' @noRd
 .eiod_unit <- function(indicator) {
   ind <- .eiod_data("eiod_indicators")
   ind$unit[match(indicator, ind$indicator)]
-}
-
-#' Put the user's values on the unit the cut-off table is printed in
-#'
-#' The ONE place in the package where a unit conversion happens, so there is
-#' exactly one rule to find, read and check.
-#'
-#' Six of the seven indicators need nothing: the EIOF database, the methods
-#' paper and both cut-off tables all agree. **Eutrophication does not.**
-#'
-#' \itemize{
-#'   \item the EIOF country databases report it as `Eutr. (g PO43-e/kg)`, so a
-#'     respondent total built from them is in **grams**;
-#'   \item Table 4f is printed in grams, so the relative metric needs nothing;
-#'   \item Table 3 is printed in **kilograms** - the methods paper states this
-#'     explicitly on p.29 - so the absolute metric needs the user's value
-#'     divided by 1000.
-#' }
-#'
-#' The conversion is applied to the USER'S VALUE, never to the published
-#' cut-off. `eiod_cutoffs` therefore holds exactly what the paper prints, for
-#' all 616 rows, and can be checked line by line against the PDF. That was a
-#' deliberate change on 2026-10-14; before it, the 80 Table 4f rows were stored
-#' pre-divided and matched nothing in the source document.
-#'
-#' @param value The user's impact vector.
-#' @param indicator Indicator key.
-#' @param metric `"abs"` or `"rel"`.
-#' @param quiet Suppress the message. Used when a caller has already reported
-#'   the conversion, so it is not announced twice.
-#'
-#' @return A list with `value` (possibly converted), `factor` (the multiplier
-#'   applied, 1 when none) and `note` (a one-line description, or `NULL`).
-#' @noRd
-.eiod_to_cutoff_unit <- function(value, indicator, metric, quiet = FALSE) {
-
-  out <- list(value = value, factor = 1, note = NULL)
-
-  if (identical(indicator, "eutroph") && identical(metric, "abs")) {
-    out$factor <- 1e-3
-    out$value  <- value * 1e-3
-    out$note   <- paste0(
-      "eutrophication: your values were divided by 1000 (g -> kg PO4(3-)eq) ",
-      "to match Table 3, which the methods paper prints in kilograms. ",
-      "Supply this indicator in GRAMS, as the EIOF database reports it. ",
-      "Table 4f is printed in grams and needs no conversion. ",
-      "See vignette(\"eutrophication\").")
-    if (!quiet) message(out$note)
-  }
-
-  out
 }
 
 #' Validate a demographic group vector

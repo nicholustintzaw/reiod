@@ -121,13 +121,14 @@ eiod_as_sex_factor(c(1, 0), male = 1, female = 0)
 
 ## Three things to know before reporting results
 
-1. **Eutrophication is printed in two different units.** Table 3 is in kg
-   PO₄³⁻eq, Table 4f is in grams. **Supply your data in grams**, as the EIOF
-   database gives it to you (`Eutr. (g PO43-e/kg)`);
-   `eiod_absolute_threshold()` converts for you and says so. No published
-   cut-off is ever adjusted — `eiod_cutoffs` matches the PDF on every one of
-   its 616 rows. The unit reading is an inference Intake has not yet
-   confirmed; see `vignette("eutrophication")`.
+1. **Eight eutrophication cut-offs differ from the published PDF, on Intake's
+   instruction.** The paper prints the Table 3 eutrophication row in kilograms
+   while Table 4f and the EIOF databases use grams; Intake confirmed in October
+   2026 that both tables are meant to be in grams and supplied corrected
+   values. They are the printed figures × 1000 — same quantity, different unit
+   — so no result changes, and the `value_source` column marks the eight rows.
+   **Supply eutrophication in grams and convert nothing.** See
+   `vignette("eutrophication")`.
 2. **A low relative band is not evidence of sustainability.** For greenhouse
    gases even band 1 exceeds the planetary boundary; for water even band 10 is
    below it.

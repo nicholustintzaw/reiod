@@ -243,40 +243,35 @@ because it changes every percentage you report.
 
 ## Three things to know before reporting any of this
 
-### 1. Eutrophication is printed in two different units
+### 1. Eight eutrophication cut-offs differ from the published PDF
 
-**Table 3 prints it in kilograms; Table 4f prints it in grams.** Both values
-below are exactly what the methods paper has:
+**On Intake's instruction, and the `value_source` column says which:**
 
 ```{r}
-c(table_3  = as.numeric(eiod_lookup_cutoff("eutroph", 4, "abs")),
-  table_4f = as.numeric(eiod_lookup_cutoff("eutroph", 4, "rel", 10)))
+subset(eiod_cutoffs, value_source != "published",
+       c(demogroup_label, metric, unit, value))
 ```
 
-The ratio is about 690, and it is a unit difference rather than a difference in
-environmental standard.
+The paper prints these eight Table 3 cells in **kilograms** while Table 4f and
+the EIOF databases use **grams**. Intake confirmed in October 2026 that both
+tables are meant to be in grams and supplied the corrected values. They are the
+printed figures × 1000 — the same quantity, a different unit — so **no result
+changes**.
 
-**What you have to do: supply your data in grams**, which is what the EIOF
-database already gives you — it reports `Eutr. (g PO43-e/kg)`, while every
-other indicator matches the paper's unit. `eiod_relative_band()` then needs no
-conversion, and `eiod_absolute_threshold()` divides by 1000 for you and says
-so:
+Every other row is exactly what the paper prints.
+
+**What this means for you: supply eutrophication in grams, as the EIOF database
+gives it to you, and convert nothing.**
 
 ```{r}
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 eutr_g <- eiod_demo$eutroph_kgpo4e * 1000     # pretend these are grams
-x <- eiod_absolute_threshold(eutr_g, grp, "eutroph")
+table(eiod_absolute_threshold(eutr_g, grp, "eutroph"), useNA = "ifany")
 ```
 
-**No published cut-off is ever adjusted.** `eiod_cutoffs` holds exactly what
-the paper prints, for all 616 rows, so you can check any of them against the
-PDF. The conversion is applied to your data, in one place, for this one
-indicator and this one table.
-
-**The unit reading is an inference and Intake has not confirmed it.**
-`vignette("eutrophication")` sets out the four lines of evidence, the
-eight-group check, and what changes if the answer comes back differently.
-Confirm before publishing any eutrophication result.
+If you wrote a script against an earlier version that divided eutrophication by
+1000, **remove the division**. `vignette("eutrophication")` has the full
+history.
 
 ### 2. A low relative band is not evidence of sustainability
 

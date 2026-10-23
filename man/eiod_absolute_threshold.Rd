@@ -29,10 +29,9 @@ An integer vector: `1` below the threshold, `0` at or above it, `NA`
   columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
   threshold applied to that row, so a reader can audit the comparison without
   opening the reference table. (Equivalent to `threshvar()` in the companion
-  Stata command.) For `indicator = "eutroph"` an extra `value_kg`
-  column appears, holding the value after the g-to-kg conversion described
-  below, so the whole chain - value in grams, value in kilograms, published
-  cut-off, result - can be read off one table.
+  Stata command.) The columns are the same for every indicator; an extra
+  `value_kg` column existed only while eutrophication needed converting,
+  and is gone.
 }
 \description{
 Codes a one-day diet `1` if its per capita environmental impact falls below
@@ -65,22 +64,19 @@ coerced can turn missing data into an apparent threshold breach. Here the
 guard is explicit.
 }
 
-\section{Eutrophication is converted, and nothing else is}{
+\section{No unit conversion happens here, for any indicator}{
 
-Table 3 prints eutrophication in **kg** PO4(3-)eq while Table 4f prints it
-in **grams** - and the EIOF database, which is where your values come from,
-reports `Eutr. (g PO43-e/kg)`. So you supply grams, and this function
-divides by 1000 before comparing against Table 3. It emits a message when it
-does; wrap the call in `suppressMessages()` if you are looping and already
-know.
+Between July and October 2026 this function divided eutrophication values
+by 1000, because the methods paper printed the Table 3 eutrophication row
+in kilograms while Table 4f and the EIOF database used grams.
 
-**The published cut-off is never altered.** `eiod_cutoffs` holds exactly
-what the paper prints for all 616 rows; the adjustment is applied to your
-data at the point of comparison, in one place, and only for this one
-indicator and this one table. [eiod_relative_band()] needs no conversion.
+**Intake confirmed in October 2026 that both tables are in grams** and
+supplied corrected Table 3 thresholds. They are in [eiod_cutoffs], flagged
+by its `value_source` column, and every indicator now compares directly.
 
-See `vignette("eutrophication")` for the evidence, and note that the unit
-reading is an inference not yet confirmed by Intake.
+**Supply eutrophication in grams and convert nothing.** If you are
+revisiting a script that divided by 1000 for this function, remove the
+division. See `vignette("eutrophication")`.
 }
 
 \section{Storage type is checked here, not only in the check suite}{

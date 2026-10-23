@@ -3,27 +3,26 @@
 #' Prints the indicator names the `eiod_*` functions accept, with their labels
 #' and the units your impact values must be in.
 #'
-#' @section If your data comes from the EIOF database, read this:
-#' The EIOF country databases report six of the seven indicators in the unit
-#' this package expects - `Land (m2/kg)`, `GHG (kg CO2e/kg)`, `Water Use
-#' (L/kg)` and so on. **Eutrophication is the exception.** It is stored as
-#' `Eutr. (g PO43-e/kg)` - in **grams**, while the methods paper and this
-#' package work in **kilograms**.
-#'
-#' So the obvious pipeline gives you the wrong unit for one indicator:
+#' @section If your data comes from the EIOF database:
+#' **Supply it as it comes - nothing needs converting.** The units in this
+#' table are the EIOF database's own: `Land (m2/kg)`, `GHG (kg CO2e/kg)`,
+#' `Eutr. (g PO43-e/kg)`, `Water Use (L/kg)`. Multiply by kilograms of food
+#' consumed, sum to the respondent-day, and pass the result straight in.
 #'
 #' ```
-#' kg food consumed  x  g PO4e per kg food  =  GRAMS PO4e per person per day
+#' kg food consumed  x  EIOF intensity per kg  =  the value this package wants
 #' ```
 #'
-#' Divide that total by 1000 before passing it to [eiod_absolute_threshold()]
-#' or [eiod_relative_band()], or every eutrophication result will be wrong by a
-#' factor of a thousand. No other indicator needs this.
+#' **This changed in October 2026.** Eutrophication used to be the exception:
+#' the methods paper printed its Table 3 threshold in kilograms while the
+#' database reported grams, so a conversion was needed and this package applied
+#' one. Intake has since confirmed that both cut-off tables are in grams and
+#' supplied corrected Table 3 values. Every indicator is now on a single unit
+#' and no conversion happens anywhere.
 #'
-#' [eiod_check_magnitude()] detects it - a eutrophication column 1000x too
-#' large is reported as a likely gram/kilogram error - but that check is
-#' opt-in. See `vignette("precision")` and the `?eiod_cutoffs` section on the
-#' eutrophication rescaling.
+#' If you are revisiting a script written before that change and it divides
+#' eutrophication by 1000, **remove the division** - the package no longer
+#' expects it. `?eiod_cutoffs` has the detail.
 #'
 #' @section Values must be summed over ALL consumed foods - including any the
 #'   EIOF database cannot cost:
@@ -69,10 +68,11 @@ eiod_list_indicators <- function(quiet = FALSE) {
   cat("\nValues must already be summed across everything the respondent\n")
   cat("consumed that day. reiod does not compute impacts from food items.\n")
   cat("\n")
-  cat("NOTE on eutrophication, if your impacts come from the EIOF database:\n")
-  cat("  EIOF stores it as `Eutr. (g PO43-e/kg)` - in GRAMS - while this\n")
-  cat("  package expects kg PO4(3-)eq. Divide your summed total by 1000.\n")
-  cat("  No other indicator needs converting. See ?eiod_list_indicators.\n")
+  cat("These are the EIOF database's own units. Supply your totals as they\n")
+  cat("come - no indicator needs converting.\n")
+  cat("  Changed Oct 2026: eutrophication used to need a /1000 step, because\n")
+  cat("  the paper printed its Table 3 threshold in kg. Intake has corrected\n")
+  cat("  that row to grams. Remove the division from older scripts.\n")
   invisible(ind)
 }
 
@@ -192,7 +192,8 @@ eiod_lookup_cutoff <- function(indicator, group = NULL,
     unit            = s$unit[1],
     metric          = metric,
     percentile      = percentile,
-    published_str   = s$value_published_str
+    published_str   = s$value_published_str,
+    corrected       = s$value_source != "published"
   )
 }
 
@@ -207,8 +208,9 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
 
   metric <- attr(x, "metric")
   pct    <- attr(x, "percentile")
-  pstr   <- attr(x, "published_str")
-  ind    <- attr(x, "indicator")
+  pstr      <- attr(x, "published_str")
+  ind       <- attr(x, "indicator")
+  corrected <- attr(x, "corrected")
 
   head_txt <- if (identical(metric, "abs")) {
     "Table 3 absolute threshold"
@@ -237,16 +239,15 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
 
   cat("\n  printed at ", digits, " significant digits.\n", sep = "")
   if (show_pub) {
-    cat("  Every value above is EXACTLY as printed in the methods paper -\n")
-    cat("  nothing in this package rescales a published cut-off. `as printed`\n")
-    cat("  is the literal text, which has never been through a numeric type.\n")
+    cat("  `as printed` is the literal text this package ships, which has\n")
+    cat("  never been through a numeric type. Nothing is rescaled here.\n")
   }
-  if (identical(ind, "eutroph")) {
-    cat("\n  NOTE: eutrophication is printed in different units in the two\n")
-    cat("  tables. Table 3 is in kg PO4(3-)eq; Table 4f is in g PO4(3-)eq.\n")
-    cat("  Supply your data in GRAMS, as the EIOF database reports it;\n")
-    cat("  eiod_absolute_threshold() converts to kg for you and says so.\n")
-    cat("  See vignette(\"eutrophication\").\n")
+  if (!is.null(corrected) && any(corrected)) {
+    cat("\n  NOTE: these values were CORRECTED BY INTAKE in October 2026 and\n")
+    cat("  DIFFER FROM THE CURRENTLY PUBLISHED PDF, which prints the Table 3\n")
+    cat("  eutrophication row in kilograms. Both Table 3 and Table 4f are in\n")
+    cat("  grams; the corrected values are the printed ones x1000, so no\n")
+    cat("  result changes. See vignette(\"eutrophication\") and ?eiod_cutoffs.\n")
   }
   invisible(x)
 }

@@ -285,12 +285,11 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
       what <- paste0("the P", percentile, " benchmark")
     }
 
-    # Put the value on the same unit as the cut-off before measuring the
-    # distance between them. Only eutrophication/abs is affected; quiet,
-    # because a check function reports through its findings, not by messaging.
-    cmp <- .eiod_to_cutoff_unit(value, indicator, metric, quiet = TRUE)$value
-
-    rel_dist <- abs(cmp - cuts) / cuts
+    # Values and cut-offs are on the same unit for every indicator, so the
+    # distance is measured directly. Until October 2026 eutrophication needed
+    # converting first, because Table 3 was printed in kg; Intake's corrected
+    # thresholds removed that.
+    rel_dist <- abs(value - cuts) / cuts
     near <- which(!is.na(rel_dist) & rel_dist < tolerance)
 
     if (length(near)) {

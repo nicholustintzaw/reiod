@@ -16,28 +16,27 @@ A data frame of indicator, label and unit, invisibly when printing.
 Prints the indicator names the `eiod_*` functions accept, with their labels
 and the units your impact values must be in.
 }
-\section{If your data comes from the EIOF database, read this}{
+\section{If your data comes from the EIOF database}{
 
-The EIOF country databases report six of the seven indicators in the unit
-this package expects - `Land (m2/kg)`, `GHG (kg CO2e/kg)`, `Water Use
-(L/kg)` and so on. **Eutrophication is the exception.** It is stored as
-`Eutr. (g PO43-e/kg)` - in **grams**, while the methods paper and this
-package work in **kilograms**.
-
-So the obvious pipeline gives you the wrong unit for one indicator:
+**Supply it as it comes - nothing needs converting.** The units in this
+table are the EIOF database's own: `Land (m2/kg)`, `GHG (kg CO2e/kg)`,
+`Eutr. (g PO43-e/kg)`, `Water Use (L/kg)`. Multiply by kilograms of food
+consumed, sum to the respondent-day, and pass the result straight in.
 
 \preformatted{
-kg food consumed  x  g PO4e per kg food  =  GRAMS PO4e per person per day
+kg food consumed  x  EIOF intensity per kg  =  the value this package wants
 }
 
-Divide that total by 1000 before passing it to [eiod_absolute_threshold()]
-or [eiod_relative_band()], or every eutrophication result will be wrong by a
-factor of a thousand. No other indicator needs this.
+**This changed in October 2026.** Eutrophication used to be the exception:
+the methods paper printed its Table 3 threshold in kilograms while the
+database reported grams, so a conversion was needed and this package applied
+one. Intake has since confirmed that both cut-off tables are in grams and
+supplied corrected Table 3 values. Every indicator is now on a single unit
+and no conversion happens anywhere.
 
-[eiod_check_magnitude()] detects it - a eutrophication column 1000x too
-large is reported as a likely gram/kilogram error - but that check is
-opt-in. See `vignette("precision")` and the `?eiod_cutoffs` section on the
-eutrophication rescaling.
+If you are revisiting a script written before that change and it divides
+eutrophication by 1000, **remove the division** - the package no longer
+expects it. `?eiod_cutoffs` has the detail.
 }
 
 \section{Values must be summed over ALL consumed foods - including any the

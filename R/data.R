@@ -10,78 +10,47 @@
 #' could drift from the first.
 #'
 #' @section Nothing here is rescaled:
-#' **`value` is the cut-off exactly as printed in the methods paper, for all
-#' 616 rows**, and `value_published_str` is the same number as the literal text
-#' that was transcribed. You can check any row against the PDF and expect a
-#' character-for-character match. That is the whole purpose of shipping this
-#' dataset rather than hard-coding the numbers.
+#' **`value` is the cut-off exactly as this package received it, for all 616
+#' rows**, and `value_published_str` is the same number as literal text. The
+#' package applies no conversion to a cut-off and none to your data.
 #'
-#' Until October 2026 the 80 relative eutrophication rows were stored
-#' pre-divided by 1000, so that every cut-off sat on one internal unit scale.
-#' It was documented and arithmetically sound, but it meant 80 of the shipped
-#' numbers could not be found anywhere in the source document. The adjustment
-#' now happens in the command instead, applied to the user's value at the
-#' moment of comparison. See the next section, and
-#' `vignette("eutrophication")`.
+#' For 608 rows "as received" means "as printed in the methods paper", and you
+#' can check them against the PDF character for character. The remaining eight
+#' are described in the next section.
 #'
-#' @section Eutrophication is printed in two different units:
-#' The `unit` column records what each table is actually printed in, and for
-#' **eutrophication the two tables differ**:
+#' @section Eight rows differ from the published PDF, on Intake's instruction:
+#' The **Table 3 eutrophication thresholds** in `eiod_cutoffs` are **not** the
+#' numbers the currently published paper prints. They are corrections supplied
+#' by Intake in October 2026, and the `value_source` column marks them:
 #'
-#' \tabular{lll}{
-#'   Table 3 (`metric == "abs"`)  \tab 0.0077 - 0.0267 \tab **kg** PO4(3-)eq \cr
-#'   Table 4f (`metric == "rel"`) \tab 5.3 - 48.7      \tab **g** PO4(3-)eq
-#' }
+#' ```r
+#' subset(eiod_cutoffs, value_source != "published",
+#'        c(demogroup_label, unit, value, value_source))
+#' ```
 #'
-#' Every other indicator uses one unit across both tables.
+#' **What was wrong.** The paper prints those eight cells in **kilograms**
+#' PO4(3-)eq while Table 4f, and the EIOF food databases, use **grams**. Intake
+#' confirmed by email that both tables are intended to be in grams, and
+#' supplied the corrected Table 3 values.
 #'
-#' **Supply your data in grams**, which is what the EIOF database gives you
-#' (`Eutr. (g PO43-e/kg)` x kg food = g). [eiod_relative_band()] then needs no
-#' conversion, and [eiod_absolute_threshold()] divides by 1000 for you and says
-#' so in a message.
+#' **What changed, and what did not.** The corrected values are the printed
+#' ones multiplied by 1000, carried to full precision - the quantity is
+#' identical, only the unit it is expressed in has changed. Dividing any
+#' corrected value by 1000 reproduces the printed figure to the ten decimals
+#' the PDF gives, and `data-raw/build_data.R` asserts exactly that. **No
+#' classification moves**: tested on 400,000 simulated gram-scale values, old
+#' and new behaviour agreed everywhere except within about one unit in the last
+#' place of a cut-off, where the new path is the more exact of the two because
+#' it no longer divides before comparing.
 #'
-#' The methods paper states on p.29 that eutrophication potential "is measured
-#' in kilograms of phosphate equivalents (kg PO4(3-)eq)". That statement sits in
-#' the section describing how the **EIOF database** was built, and the Table 3
-#' absolute thresholds are consistent with it, at 0.0077 to 0.0267.
+#' **Consequence for you: supply eutrophication in grams**, which is what the
+#' EIOF databases give you (`Eutr. (g PO43-e/kg)` x kg food = g). Every
+#' indicator now uses one unit across both tables, and nothing is converted
+#' anywhere. Between July and October 2026 this package divided eutrophication
+#' values by 1000 on your behalf; that step is gone.
 #'
-#' **The Table 4f relative benchmarks are not.** For Male 10+ they run from
-#' 18.44 to 48.72 - about 690 times the Table 3 threshold for the same group.
-#' The paper never states a unit for the Table 4 series.
-#'
-#' Four things point the same way:
-#'
-#' \itemize{
-#'   \item **The EIOF database itself reports eutrophication in grams.** The
-#'     country databases store it as `Eutr. (g PO43-e/kg)` - checked across the
-#'     Burkina Faso, Ethiopia, Ghana and Viet Nam files - while every other
-#'     indicator matches the paper's unit (`m2/kg`, `kg CO2e/kg`, `L/kg`).
-#'     Eutrophication is the one place where Intake's operational unit and the
-#'     paper's stated unit disagree.
-#'   \item **The kilogram reading is physically impossible.** A 10th-percentile
-#'     adult diet would emit 18.4 kg PO4(3-)eq *per person per day* - 6.7 tonnes
-#'     a year, far more than the total mass of food a person eats.
-#'   \item **The gram reading reconciles the two tables in all eight
-#'     demographic groups.** Rescaled, the Table 3 threshold lands between the
-#'     40th and 50th percentile of Table 4f in **8 of 8** groups, across a 3.5x
-#'     spread of threshold values - which is where the total-land and
-#'     pasture-land thresholds also sit. Unscaled it falls below the 10th
-#'     percentile, which only greenhouse gases do.
-#'   \item **The two tables have different sources.** Table 3 derives from the
-#'     planetary-boundary work of Moberg et al. (2020) and Hallstrom et al.
-#'     (2022), who work in kg; Tables 4a-4g are decile averages from the WWF
-#'     Planet-Based Diets Database. Two independent upstreams is a plausible
-#'     route to one unharmonised unit.
-#' }
-#'
-#' **If your impacts come from the EIOF database**, your summed eutrophication
-#' total is therefore in grams and must be divided by 1000 before use here. See
-#' [eiod_list_indicators()].
-#'
-#' **It remains an inference, not a documented conversion**, because the paper
-#' does not state the unit of Table 4f either way. Confirm with Intake before
-#' publishing any eutrophication result. Every other indicator reconciles
-#' between the two tables without adjustment.
+#' See `vignette("eutrophication")` for the full history, including the
+#' evidence that led to the question being raised.
 #'
 #' @section Checking a value against the printed table:
 #' Two columns carry the same number in two forms, so that a reader can check
@@ -109,7 +78,7 @@
 #' value in full: 15 of the 616 need 14 significant digits.
 #' [eiod_lookup_cutoff()] prints at full precision for this reason.
 #'
-#' @format A data frame with 616 rows and 14 columns:
+#' @format A data frame with 616 rows and 15 columns:
 #' \describe{
 #'   \item{metric}{`"abs"` for Table 3, `"rel"` for Tables 4a-4g}
 #'   \item{table}{Source table: `"3"`, `"4a"` ... `"4g"`}
@@ -125,11 +94,16 @@
 #'   \item{row_order}{Position in the source table}
 #'   \item{percentile}{10-90 for relative rows 1-9; `NA` for absolute rows and
 #'     for row 10, which repeats P90 as a lower bound}
-#'   \item{value}{**The cut-off exactly as printed in the paper**, and what the
-#'     metric functions compare against. Nothing is rescaled}
+#'   \item{value}{**The cut-off the metric functions compare against.** Nothing
+#'     is rescaled: for 608 rows this is exactly what the paper prints, and for
+#'     the other eight it is exactly what Intake supplied}
 #'   \item{value_published_str}{The same value as a character string, exactly as
-#'     transcribed. Shipped so the published figure can be compared character
-#'     for character, not as a rendering of a double}
+#'     received. Shipped so the figure can be compared character for character,
+#'     not as a rendering of a double}
+#'   \item{value_source}{`"published"` for the 608 rows transcribed from the
+#'     paper; `"intake correction 2026-10"` for the eight Table 3
+#'     eutrophication thresholds Intake corrected. **Those eight do not match
+#'     the currently published PDF** - see the section above}
 #' }
 #'
 #' @source Intake-EIOD-Methods-Paper-Jan2026-Final.pdf, Tables 3 and 4a-4g

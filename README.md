@@ -93,7 +93,6 @@ Several indicators at once, with the same mapping:
 ``` r
 round(100 * colMeans(eiod_absolute_all(eiod_demo, grp, eiod_demo_map),
                      na.rm = TRUE), 1)
-#> eutrophication: your values were divided by 1000 (g -> kg PO4(3-)eq) to match Table 3, which the methods paper prints in kilograms. Supply this indicator in GRAMS, as the EIOF database reports it. Table 4f is printed in grams and needs no conversion. See vignette("eutrophication").
 #>   abs_landtotal  abs_landarable abs_landpasture         abs_ghg     abs_eutroph 
 #>            70.2            80.8            68.7            22.2           100.0 
 #>       abs_water      abs_biodiv 
@@ -141,13 +140,14 @@ eiod_as_sex_factor(c(1, 0), male = 1, female = 0)
 
 ## Three things to know before reporting results
 
-1.  **Eutrophication is printed in two different units.** Table 3 is in
-    kg PO₄³⁻eq, Table 4f is in grams. **Supply your data in grams**, as
-    the EIOF database gives it to you (`Eutr. (g PO43-e/kg)`);
-    `eiod_absolute_threshold()` converts for you and says so. No
-    published cut-off is ever adjusted — `eiod_cutoffs` matches the PDF
-    on every one of its 616 rows. The unit reading is an inference
-    Intake has not yet confirmed; see `vignette("eutrophication")`.
+1.  **Eight eutrophication cut-offs differ from the published PDF, on
+    Intake’s instruction.** The paper prints the Table 3 eutrophication
+    row in kilograms while Table 4f and the EIOF databases use grams;
+    Intake confirmed in October 2026 that both tables are meant to be in
+    grams and supplied corrected values. They are the printed figures ×
+    1000 — same quantity, different unit — so no result changes, and the
+    `value_source` column marks the eight rows. **Supply eutrophication
+    in grams and convert nothing.** See `vignette("eutrophication")`.
 2.  **A low relative band is not evidence of sustainability.** For
     greenhouse gases even band 1 exceeds the planetary boundary; for
     water even band 10 is below it.

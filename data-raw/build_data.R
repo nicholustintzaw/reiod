@@ -93,13 +93,20 @@ rm(.published_digits, .roundtrip_ok)
 # whole point of shipping this dataset is that a reader can check it line by
 # line against the PDF.
 #
-# The adjustment now happens where it belongs: in the command, at the moment of
-# comparison, applied to the USER'S value, announced in a message, and
-# documented in its own vignette section. See .eiod_to_cutoff_unit() in R/utils.R.
+# RESOLVED 2026-10-22. Intake confirmed by email that BOTH Table 3 and Table 4f
+# are in grams PO4(3-)eq, and supplied corrected Table 3 eutrophication
+# thresholds - the published PDF prints those eight cells in kilograms.
 #
-# Consequence: `value` is the cut-off exactly as printed, for all 616 rows, and
-# the `unit` column now records what each table is actually printed in -
-# kg PO4(3-)eq for Table 3 eutrophication, g PO4(3-)eq for Table 4f.
+# The corrected values are the published ones x1000, carrying seven more
+# significant digits; the build asserts that below. So the quantities never
+# changed, only the unit they are expressed in. No classification moves.
+#
+# Those eight rows are therefore the ONLY rows in this dataset that do not
+# match the currently published PDF. They are flagged in `value_source` so the
+# difference is visible in the data and not only in the documentation.
+#
+# The conversion the commands used to apply is gone, and so is the helper that
+# did it.
 raw$value <- raw$value_published
 
 eiod_cutoffs <- data.frame(
@@ -118,6 +125,7 @@ eiod_cutoffs <- data.frame(
   percentile       = as.integer(raw$percentile),
   value               = raw$value,
   value_published_str = value_published_str,
+  value_source        = raw$value_source,
   stringsAsFactors = FALSE
 )
 
@@ -166,18 +174,37 @@ stopifnot(
   !"scale_to_db_unit" %in% names(eiod_cutoffs)
 )
 
-# the unit column must say what each table actually prints. Eutrophication is
-# the only indicator where the two tables differ - see R/utils.R.
+# EVERY indicator now uses one unit across both tables. Eutrophication was the
+# exception until Intake's October 2026 correction; if this assertion ever
+# fails again, the CSV has regressed.
 stopifnot(
-  all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph" &
-                        eiod_cutoffs$metric == "abs"] == "kg PO4(3-)eq"),
-  all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph" &
-                        eiod_cutoffs$metric == "rel"] == "g PO4(3-)eq"),
-  # and every other indicator uses one unit across both tables
-  all(vapply(setdiff(unique(eiod_cutoffs$indicator), "eutroph"),
+  all(vapply(unique(eiod_cutoffs$indicator),
              function(i) length(unique(eiod_cutoffs$unit[
-               eiod_cutoffs$indicator == i])) == 1L, logical(1)))
+               eiod_cutoffs$indicator == i])) == 1L, logical(1))),
+  all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph"] == "g PO4(3-)eq")
 )
+
+# provenance: exactly eight rows differ from the published PDF, and they are
+# the Table 3 eutrophication thresholds Intake corrected
+stopifnot(
+  "value_source" %in% names(eiod_cutoffs),
+  sum(eiod_cutoffs$value_source != "published") == 8L,
+  all(eiod_cutoffs$value_source[eiod_cutoffs$indicator == "eutroph" &
+                                eiod_cutoffs$metric == "abs"] ==
+      "intake correction 2026-10")
+)
+
+# and the correction is a change of unit, not of quantity: each corrected value
+# divided by 1000 must reproduce the figure the PDF prints, to its 10 decimals
+.pub_kg <- c(0.0076827204, 0.0119198764, 0.0164158298, 0.0267453228,
+             0.0074439228, 0.0110398856, 0.0150718438, 0.0215133770)
+.corr <- eiod_cutoffs$value[eiod_cutoffs$indicator == "eutroph" &
+                            eiod_cutoffs$metric == "abs"]
+.corr <- .corr[order(eiod_cutoffs$demogroup[eiod_cutoffs$indicator == "eutroph" &
+                                            eiod_cutoffs$metric == "abs"])]
+stopifnot(identical(sprintf("%.10f", .corr / 1000), sprintf("%.10f", .pub_kg)))
+rm(.pub_kg, .corr)
+message("eiod_cutoffs: the 8 corrected thresholds reproduce the printed PDF values x1000")
 
 # spot-checks against values hand-typed from the printed tables
 stopifnot(
@@ -196,15 +223,10 @@ stopifnot(
 message("eiod_cutoffs: all structural checks passed")
 
 # ---- 4. indicator lookup ---------------------------------------------------- #
-# `unit` here is the unit the USER must supply, which is not always the unit a
-# given cut-off table is printed in. For six indicators the two coincide. For
-# eutrophication they do not: the user supplies grams (because that is what the
-# EIOF database reports, `Eutr. (g PO43-e/kg)`), Table 4f is printed in grams,
-# and Table 3 is printed in kilograms. The commands reconcile the last of those
-# at the point of comparison - see .eiod_to_cutoff_unit() in R/utils.R.
-#
-# Built from the RELATIVE rows, because those are the ones printed in the input
-# unit for all seven indicators.
+# `unit` here is the unit the USER must supply. Since Intake corrected the
+# Table 3 eutrophication thresholds in October 2026 it is also the unit both
+# cut-off tables are printed in, for every indicator, so there is no longer any
+# distinction to make. Built from the relative rows; the absolute rows agree.
 ind <- unique(eiod_cutoffs[eiod_cutoffs$metric == "rel",
                            c("indicator", "indicator_label", "unit")])
 ind <- ind[order(match(ind$indicator,

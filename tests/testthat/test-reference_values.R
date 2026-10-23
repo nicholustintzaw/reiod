@@ -95,7 +95,10 @@ test_that("Table 3 values match the printed table exactly", {
   expect_identical(abs_val("landarable",  4), 5.5735931918)
   expect_identical(abs_val("landpasture", 8), 6.9692717624)
   expect_identical(abs_val("ghg",         6), 0.8845537944)
-  expect_identical(abs_val("eutroph",     4), 0.0267453228)
+  # NOT 0.0267453228 — that is the figure the PDF prints, in kilograms. Intake
+  # corrected the Table 3 eutrophication row to grams in October 2026; see the
+  # dedicated test below.
+  expect_equal(abs_val("eutroph",         4), 26.745322780673799)
   expect_identical(abs_val("water",       8), 1726.3821057877)
   expect_published_biodiv(
     abs_val("biodiv", 4),
@@ -147,39 +150,75 @@ test_that("relative eutrophication carries the documented rescaling", {
                as.numeric(eiod_cutoffs$value_published_str))
 })
 
-test_that("eutrophication is the only indicator printed in two units", {
-  u <- unique(eiod_cutoffs[c("indicator", "metric", "unit")])
-  eu <- u[u$indicator == "eutroph", ]
-  expect_equal(eu$unit[eu$metric == "abs"], "kg PO4(3-)eq")
-  expect_equal(eu$unit[eu$metric == "rel"], "g PO4(3-)eq")
-
-  for (ind in setdiff(unique(eiod_cutoffs$indicator), "eutroph")) {
+test_that("every indicator now uses one unit across both tables", {
+  # Eutrophication was the exception until Intake's October 2026 correction.
+  # If this fails again, the reference CSV has regressed.
+  for (ind in unique(eiod_cutoffs$indicator)) {
     expect_length(unique(eiod_cutoffs$unit[eiod_cutoffs$indicator == ind]), 1L)
   }
-
-  # the INPUT unit advertised to the user is grams, matching the EIOF database
+  expect_true(all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph"] ==
+                  "g PO4(3-)eq"))
   expect_equal(eiod_indicators$unit[eiod_indicators$indicator == "eutroph"],
                "g PO4(3-)eq")
 })
 
-test_that("the absolute metric converts eutrophication g -> kg, and says so", {
-  # Table 3 Male 10+ is 0.0267453228 kg = 26.7453228 g.
-  thr_g <- 0.0267453228 * 1000
-  v <- c(thr_g * 0.5, thr_g * (1 - 1e-9), thr_g, thr_g * 2)   # grams
+test_that("the corrected Table 3 eutrophication thresholds are shipped", {
+  # Intake confirmed by email (October 2026) that Tables 3 and 4f are both in
+  # grams, and supplied corrected Table 3 values. These EIGHT rows are the only
+  # ones in the dataset that do not match the currently published PDF.
+  expect_true("value_source" %in% names(eiod_cutoffs))
+  expect_equal(sum(eiod_cutoffs$value_source != "published"), 8L)
 
-  expect_message(
-    got <- eiod_absolute_threshold(v, rep(4L, 4), "eutroph"),
-    "divided by 1000")
+  corrected <- eiod_cutoffs[eiod_cutoffs$indicator == "eutroph" &
+                            eiod_cutoffs$metric == "abs", ]
+  corrected <- corrected[order(corrected$demogroup), ]
+  expect_true(all(corrected$value_source == "intake correction 2026-10"))
+  expect_equal(corrected$value,
+               c(7.6827203674384066, 11.919876448673117, 16.415829847434384,
+                 26.745322780673799, 7.4439228426109629, 11.039885569912013,
+                 15.071843778053791, 21.51337701058506))
+
+  # The correction is a change of UNIT, not of quantity: each value divided by
+  # 1000 reproduces what the PDF prints, to the 10 decimals it prints.
+  published_kg <- c(0.0076827204, 0.0119198764, 0.0164158298, 0.0267453228,
+                    0.0074439228, 0.0110398856, 0.0150718438, 0.0215133770)
+  expect_identical(sprintf("%.10f", corrected$value / 1000),
+                   sprintf("%.10f", published_kg))
+})
+
+test_that("no indicator is converted on the way in any more", {
+  # The g -> kg conversion that eutrophication needed between July and
+  # October 2026 is gone. Nothing is announced, and the comparison is direct.
+  thr <- as.numeric(eiod_lookup_cutoff("eutroph", 4, "abs"))
+  v <- c(thr * 0.5, thr * (1 - 1e-9), thr, thr * 2)
+
+  expect_silent(got <- eiod_absolute_threshold(v, rep(4L, 4), "eutroph"))
   expect_equal(got, c(1L, 1L, 0L, 0L))
+  expect_equal(got, as.integer(v < thr))
 
-  # equivalent to doing the conversion by hand against the published kg value
-  by_hand <- as.integer(v / 1000 <
-    as.numeric(eiod_lookup_cutoff("eutroph", 4, "abs")))
-  expect_equal(got, by_hand)
-
-  # no other indicator is touched, and nothing is announced for them
   expect_silent(eiod_absolute_threshold(c(1, 2), rep(4L, 2), "ghg"))
   expect_silent(eiod_relative_band(v, rep(4L, 4), "eutroph"))
+})
+
+test_that("the correction leaves every realistic classification unchanged", {
+  # Old behaviour: divide the user's grams by 1000, compare with the PDF's kg.
+  # New behaviour: compare grams directly with the corrected gram thresholds.
+  # These agree everywhere except within ~1 ULP of a cut-off, where the new
+  # path is the more exact of the two because it does not divide first.
+  published_kg <- c(0.0076827204, 0.0119198764, 0.0164158298, 0.0267453228,
+                    0.0074439228, 0.0110398856, 0.0150718438, 0.0215133770)
+  set.seed(42)
+  v <- c(eiod_demo$eutroph_kgpo4e * 1000, stats::rlnorm(5000, log(20), 1))
+  g <- c(eiod_age_sex_group(eiod_demo$age, eiod_demo$sex),
+         sample(1:8, 5000, replace = TRUE))
+
+  new <- eiod_absolute_threshold(v, g, "eutroph")
+  old <- rep(NA_integer_, length(v))
+  for (k in 1:8) {
+    i <- which(g == k & !is.na(v))
+    old[i] <- as.integer(v[i] / 1000 < published_kg[k])
+  }
+  expect_equal(new, old)
 })
 
 test_that("the relative metric leaves eutrophication alone", {
@@ -190,18 +229,17 @@ test_that("the relative metric leaves eutrophication alone", {
   expect_equal(eiod_relative_band(v, rep(4L, 10), "eutroph"), 1:10)
 })
 
-test_that("details = TRUE exposes the eutrophication conversion", {
+test_that("details = TRUE has the same four columns for every indicator", {
+  # The extra `value_kg` column existed only while eutrophication needed
+  # converting. With Intake's corrected thresholds there is nothing to show.
   v <- c(30, 20)
-  d <- suppressMessages(
-    eiod_absolute_threshold(v, c(4L, 4L), "eutroph", details = TRUE))
-  expect_named(d, c("value", "value_kg", "group", "cutoff", "below"))
-  expect_equal(d$value, v)                 # as supplied, in grams
-  expect_equal(d$value_kg, v / 1000) # what was actually compared, in kg
-  expect_equal(d$cutoff, rep(0.0267453228, 2))
+  d <- eiod_absolute_threshold(v, c(4L, 4L), "eutroph", details = TRUE)
+  expect_named(d, c("value", "group", "cutoff", "below"))
+  expect_equal(d$value, v)
+  expect_equal(d$cutoff, rep(26.745322780673799, 2))
   expect_equal(d$below, c(0L, 1L))
-  expect_match(attr(d, "conversion"), "divided by 1000")
+  expect_null(attr(d, "conversion"))
 
-  # and the extra column appears only where a conversion happened
   d2 <- eiod_absolute_threshold(c(1, 2), c(4L, 4L), "ghg", details = TRUE)
   expect_named(d2, c("value", "group", "cutoff", "below"))
 })
@@ -353,7 +391,12 @@ test_that("every shipped double reproduces its published digits", {
     eiod_cutoffs$value, nd)
 
   expect_equal(as.numeric(back), as.numeric(eiod_cutoffs$value_published_str))
-  expect_equal(max(nd), 14L)   # the widest cut-off in the tables
+
+  # 14 across the values transcribed from the PDF; the eight Intake-corrected
+  # eutrophication thresholds were supplied at full double precision and need
+  # more.
+  expect_equal(max(nd[eiod_cutoffs$value_source == "published"]), 14L)
+  expect_lte(max(nd), 17L)
 })
 
 test_that("re-parsing the published text agrees to within a few ULP", {
@@ -400,18 +443,19 @@ test_that("eutrophication cut-offs print exactly as the paper has them", {
   expect_match(out, "8.3451357297", fixed = TRUE)
   expect_equal(unname(as.numeric(x))[2], 8.3451357297)   # NOT 0.00834...
 
-  # the print method warns that the two tables use different units
-  expect_match(out, "different units")
-  expect_match(out, "GRAMS")
-
   # `published` is retained but no longer does anything
   y <- eiod_lookup_cutoff("eutroph", metric = "rel", percentile = 20,
                           published = TRUE)
   expect_equal(as.numeric(y), as.numeric(x))
 
-  # Table 3 prints in kg, and prints what the paper prints
+  # Table 3 is now in grams too, and carries the corrected value
   z <- eiod_lookup_cutoff("eutroph", group = 4, metric = "abs")
-  expect_equal(unname(as.numeric(z)), 0.0267453228)
-  expect_match(paste(utils::capture.output(print(z)), collapse = " "),
-               "kg PO4(3-)eq", fixed = TRUE)
+  zout <- paste(utils::capture.output(print(z)), collapse = " ")
+  expect_equal(unname(as.numeric(z)), 26.745322780673799)
+  expect_match(zout, "g PO4(3-)eq", fixed = TRUE)
+  expect_false(grepl("kg PO4(3-)eq", zout, fixed = TRUE))
+
+  # and the print method flags that these eight rows differ from the PDF
+  expect_match(zout, "CORRECTED BY INTAKE")
+  expect_match(zout, "DIFFER FROM THE CURRENTLY PUBLISHED PDF")
 })

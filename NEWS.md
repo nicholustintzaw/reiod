@@ -1,3 +1,57 @@
+# reiod 0.1.0
+
+Intake corrected the Table 3 eutrophication thresholds. 2026-10-22.
+
+## Breaking: remove any `/1000` you apply to eutrophication
+
+Intake confirmed by email that **both** Table 3 and Table 4f are expressed in
+grams PO4(3-)eq, and supplied corrected Table 3 thresholds. The published PDF
+prints those eight cells in kilograms.
+
+Between July and October 2026 `eiod_absolute_threshold()` divided your
+eutrophication values by 1000 to match the printed kilograms. **It no longer
+does.** Supply grams — which is what the EIOF databases give you — and convert
+nothing. Dividing now would make results wrong by a factor of a thousand in
+the other direction.
+
+Every other indicator is unaffected; there never was a conversion for any of
+them.
+
+## The quantity did not change, and no classification moves
+
+The corrected values are the printed ones × 1000, carried to full precision:
+divide any of them by 1000 and you recover the figure in the PDF to its ten
+decimals. `data-raw/build_data.R` and `tests/testthat/test-reference_values.R`
+both assert that, so the two can never silently part company.
+
+Tested on 400,000 simulated gram-scale values, the old behaviour (divide the
+value, compare against the PDF's kilograms) and the new one (compare grams
+directly) agreed everywhere. They can differ only within about one ULP of a
+cut-off, and there the new path is the more exact, because it no longer
+divides before comparing.
+
+## Eight rows of `eiod_cutoffs` no longer match the paper
+
+They are the only eight of the 616 that do not, and a new **`value_source`**
+column marks them — `"published"` for 608, `"intake correction 2026-10"` for
+these. `eiod_cutoff()` reports it, and `?eiod_cutoffs` documents it.
+
+```r
+subset(eiod_cutoffs, value_source != "published",
+       select = c(demogroup_label, value, value_source))
+```
+
+**These values may differ from the Intake guideline PDF as published today.**
+That is deliberate and on Intake's instruction, not an error in `reiod`.
+
+## Also
+
+* `.eiod_to_cutoff_unit()` is **removed**. Nothing in the package rescales
+  anything now, for any indicator.
+* `details = TRUE` on `eiod_absolute_threshold()` returns **four** columns.
+  The `value_kg` column is gone; there is no converted value to show.
+* `vignette("eutrophication")` rewritten around the correction.
+
 # reiod 0.0.0.9006
 
 Documentation only. No computed result changes. 2026-10-15.
