@@ -45,9 +45,11 @@ that otherwise produce confidently wrong numbers.
 \section{Three things to know before reporting results}{
 
 \enumerate{
-  \item The relative benchmark cut-offs for **eutrophication** carry an
-    inferred rescaling that Intake has not confirmed. See
-    `vignette("reiod")`.
+  \item **Eutrophication is in grams PO4(3-)eq in every table.** Intake
+    confirmed this in October 2026 and supplied corrected Table 3
+    thresholds, so eight rows of [eiod_cutoffs] differ from the published
+    PDF (marked by its `value_source` column). Supply grams and convert
+    nothing. See `vignette("eutrophication")`.
   \item A **low relative band is not evidence of sustainability**. For
     greenhouse gases even band 1 exceeds the planetary boundary; for water
     even band 10 is below it.
@@ -58,9 +60,31 @@ that otherwise produce confidently wrong numbers.
 
 \section{Dependencies}{
 
-None. `reiod` imports nothing, so it installs with no dependency tree. The
+None beyond base R. `reiod` imports only `stats` and `utils`, which ship
+with every R installation, so it installs with no dependency tree. The
 consequence is a plain vector API rather than tidy evaluation: pass
 `df$biodiv`, not `biodiv`.
+}
+
+\examples{
+# one row per respondent-day, impact totals already summed
+d <- eiod_demo
+d$grp <- eiod_age_sex_group(d$age, d$sex)
+
+# check the inputs before computing anything
+summary(eiod_check_data(d, impacts = eiod_demo_map,
+                        age = "age", sex = "sex", gdqs = "gdqs"))
+
+# Table 3: share of diets below each absolute threshold, \%
+abs7 <- eiod_absolute_all(d, d$grp, eiod_demo_map)
+round(100 * colMeans(abs7, na.rm = TRUE), 1)
+
+# Tables 4a-4g: relative band for one indicator
+table(eiod_relative_band(d$ghg_kgco2e, d$grp, "ghg"))
+
+# Tables 5a and 5b: composites
+table(eiod_hesd(d$biodiv_pdf, d$gdqs, d$grp))
+table(eiod_hdlei(d$biodiv_pdf, d$gdqs, d$grp))
 }
 
 \seealso{

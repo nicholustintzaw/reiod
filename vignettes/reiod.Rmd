@@ -12,13 +12,13 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 library(reiod)
 ```
 
-This page is the map: what is in the package, what the cut-offs are, and one
-thing about survey weights that affects every number you report.
+This page is the map: what is in the package, what the cut-offs are, one
+complete run from raw columns to every metric, and one thing about survey
+weights that affects every number you report.
 
-**It deliberately does not teach you to compute anything.** Each metric family
-has its own article, with worked examples for a single value, a column, and
-adding results to a data frame. Links are at the bottom, and in the
-**Articles** menu above.
+The run is deliberately brief. Each metric family has its own article, with
+worked examples for a single value, a column, and adding results to a data
+frame. Links are at the bottom, and in the **Articles** menu above.
 
 ## What EIOF is
 
@@ -61,8 +61,68 @@ totals already summed:
 head(eiod_demo, 3)
 ```
 
-The package has **no dependencies at all**. The practical consequence is a
+The package has **no dependencies beyond base R**: it imports only `stats` and
+`utils`, which ship with every R installation. The practical consequence is a
 plain vector API: you pass `df$biodiv_pdf`, not `biodiv_pdf`.
+
+## A first run, start to finish
+
+Every step below is covered in depth in its own article. This is the whole
+workflow on the demo data, so you can see how the pieces fit before reading
+them one at a time.
+
+**1. The demographic group.** Every cut-off is age- and sex-specific, so this
+comes first (`vignette("demographic-groups")`):
+
+```{r}
+d <- eiod_demo
+d$grp <- eiod_age_sex_group(d$age, d$sex)
+table(d$grp)
+```
+
+**2. Check the inputs** (`vignette("data-checks")`). Your columns can be named
+anything; `eiod_demo_map` states which column holds which indicator:
+
+```{r}
+eiod_demo_map
+summary(eiod_check_data(d, impacts = eiod_demo_map,
+                        age = "age", sex = "sex", gdqs = "gdqs"))
+```
+
+**3. Table 3, absolute thresholds** (`vignette("table3-absolute")`). One 0/1
+column per indicator, `1` meaning below the threshold:
+
+```{r}
+abs7 <- eiod_absolute_all(d, d$grp, eiod_demo_map)
+round(100 * colMeans(abs7, na.rm = TRUE), 1)
+```
+
+**4. Tables 4a–4g, relative bands** (`vignette("table4-relative")`). Bands 1–10
+against the fixed global reference distribution:
+
+```{r}
+band7 <- eiod_relative_all(d, d$grp, eiod_demo_map)
+table(band7$band_ghg)
+```
+
+**5. Tables 5a and 5b, composites** (`vignette("table5-composites")`). The
+under-twos are set to `NA`, and a message says so:
+
+```{r}
+d$hesd  <- eiod_hesd(d$biodiv_pdf, d$gdqs, d$grp, form = "binary")
+d$hdlei <- eiod_hdlei(d$biodiv_pdf, d$gdqs, d$grp, form = "binary")
+```
+
+**6. Put the results back in your data**, one row per respondent-day:
+
+```{r}
+d <- cbind(d, abs7, band7)
+head(d[, c("id", "grp", "abs_ghg", "band_ghg", "hesd", "hdlei")])
+```
+
+These percentages are unweighted, on synthetic data. They demonstrate the code,
+not a finding; see [Survey weights](#survey-weights) before reporting real
+prevalences.
 
 ## What is in the package
 

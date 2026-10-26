@@ -11,7 +11,7 @@ home:
     Implements the absolute threshold, relative benchmark and composite dietary
     environmental impact metrics defined in Intake's Environmental Impacts of
     Foods methods paper. Age- and sex-specific cut-offs, a data quality check
-    suite, and no dependencies.
+    suite, and no dependencies beyond base R.
 
 navbar:
   structure:

@@ -1,25 +1,30 @@
 # ---------------------------------------------------------------------------- #
-# tools/build.R - one-time setup and the regular rebuild loop.
+# tools/build.R - the maintainer's rebuild loop. Not part of the package.
 #
-# RUN THIS FIRST. man/ and NAMESPACE were written by hand because roxygen2 was
-# not available in the offline environment where the package was assembled.
-# The roxygen comments in R/ are the source of truth; this regenerates the
-# documentation from them.
+# The roxygen comments in R/ are the source of truth for man/ and NAMESPACE;
+# never edit those by hand. README.md is knitted from README.Rmd. The datasets
+# in data/ are built from data-raw/. Run the steps you need, top to bottom.
 # ---------------------------------------------------------------------------- #
 
-## 1. one-time: install the development tooling
-# install.packages(c("devtools", "roxygen2", "pkgdown"))
+## 0. one-time: install the development tooling
+# install.packages(c("devtools", "roxygen2", "pkgdown", "covr"))
 
-## 2. regenerate man/ and NAMESPACE from the roxygen comments in R/
+## 1. after editing roxygen comments in R/: regenerate man/ and NAMESPACE
 # devtools::document()
 
-## 3. rebuild the datasets from data-raw/eiod_cutoffs.csv
-#    (only needed if the CSV changes, e.g. if Intake issues a correction)
+## 2. after editing README.Rmd: re-knit README.md (it runs the example code)
+# devtools::build_readme()
+
+## 3. only if data-raw/eiod_cutoffs.csv changes (e.g. an Intake correction):
+#    rebuild the datasets. The script stops if any cut-off fails to round-trip
+#    to its published digits.
 # source("data-raw/build_data.R")
 
-## 4. test and check
+## 4. test, measure coverage, and check
 # devtools::test()
+# covr::report(covr::package_coverage())   # rOpenSci expects at least 75%
 # devtools::check()
 
-## 5. build the website locally (CI also builds it on every push to main)
+## 5. build the website locally (CI also builds and deploys it on every push
+#    to main)
 # pkgdown::build_site()

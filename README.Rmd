@@ -41,13 +41,45 @@ age- and sex-specific, and ship with the package.
 pak::pak("nicholustintzaw/reiod")
 ```
 
-**No dependencies.** `reiod` imports nothing, so it installs with no
-dependency tree. The consequence is a plain vector API: pass `df$biodiv_pdf`,
-not `biodiv_pdf`.
+**No dependencies beyond base R.** `reiod` imports only `stats` and `utils`,
+which ship with every R installation, so it installs with no dependency tree.
+The consequence is a plain vector API: pass `df$biodiv_pdf`, not
+`biodiv_pdf`.
 
 Your columns can be called anything. `"biodiv"` is the indicator *key* reiod
 knows; what the column is named in your data is a separate matter, and the two
 never have to match.
+
+## Example
+
+`eiod_demo` is a synthetic dataset shipped with the package: 600
+respondent-days with age, sex, a GDQS score and the seven impact totals.
+`eiod_demo_map` says which of its columns holds which indicator.
+
+```{r example}
+library(reiod)
+
+d <- eiod_demo
+d$grp <- eiod_age_sex_group(d$age, d$sex)   # the eight age x sex groups
+
+# check the inputs before computing anything
+summary(eiod_check_data(d, impacts = eiod_demo_map,
+                        age = "age", sex = "sex", gdqs = "gdqs"))
+
+# Table 3 - % of diets below each absolute threshold
+abs7 <- eiod_absolute_all(d, d$grp, eiod_demo_map)
+round(100 * colMeans(abs7, na.rm = TRUE), 1)
+
+# Tables 4a-4g - relative band (1-10) for greenhouse gases
+table(eiod_relative_band(d$ghg_kgco2e, d$grp, "ghg"))
+
+# Table 5a - healthy and environmentally sustainable diet
+table(eiod_hesd(d$biodiv_pdf, d$gdqs, d$grp))
+```
+
+The percentages are unweighted and the data are synthetic: they demonstrate the
+code, not a result. With survey data, estimate prevalences with a design-aware
+estimator (see below).
 
 ## What it does not do
 

@@ -48,7 +48,8 @@ exactly on the threshold is coded `0`, not `1`.
 
 ## B. One vector (a column from your data)
 
-The ordinary case. `reiod` has no dependencies, so the API is plain vectors:
+The ordinary case. `reiod` has no dependencies beyond base R, so the API is
+plain vectors:
 you pass `df$column`, not `column`.
 
 ```{r}

@@ -10,3 +10,4 @@
 ^codecov\.yml$
 ^CITATION\.cff$
 ^\.lintr$
+^tools$
