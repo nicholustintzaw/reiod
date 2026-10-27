@@ -244,7 +244,8 @@ test_that("details = TRUE has the same four columns for every indicator", {
   d <- eiod_absolute_threshold(v, c(4L, 4L), "eutroph", details = TRUE)
   expect_named(d, c("value", "group", "cutoff", "below"))
   expect_identical(d$value, v)
-  expect_equal(d$cutoff, rep(26.745322780673799, 2))
+  # same stored value on both sides; the literal is checked in the Table 3 test
+  expect_identical(d$cutoff, rep(abs_val("eutroph", 4), 2))
   expect_identical(d$below, c(0L, 1L))
   expect_null(attr(d, "conversion"))
 

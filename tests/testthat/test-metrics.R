@@ -155,9 +155,12 @@ test_that("the *_all helpers take a map and allow a partial one", {
                "unknown indicator key")
   expect_error(eiod_absolute_all(eiod_demo, grp, c(ghg = "not_a_column")),
                "not in `data`")
+  # The duplicated name is the input under test.
+  # nolint start: duplicate_argument_linter.
   expect_error(eiod_absolute_all(eiod_demo, grp,
                                  c(ghg = "ghg_kgco2e", ghg = "water_litres")),
                "more than once")
+  # nolint end
 })
 
 test_that("bad arguments are rejected clearly", {

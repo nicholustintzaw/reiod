@@ -67,9 +67,9 @@ test_that("composites are NA below age 2", {
 
 test_that("missing inputs propagate to a missing category", {
   grp <- rep(4L, 3)
-  suppressMessages(
-    got <- eiod_hesd(c(abs4 / 2, NA, abs4 / 2), c(30, 30, NA), grp,
-                     form = "binary"))
+  got <- suppressMessages(
+    eiod_hesd(c(abs4 / 2, NA, abs4 / 2), c(30, 30, NA), grp,
+              form = "binary"))
   expect_identical(got, c(1L, NA, NA))
 })
 
@@ -113,9 +113,9 @@ test_that("a non-default percentile is flagged as a sensitivity analysis", {
 
 test_that("components form returns all four pieces", {
   grp <- rep(4L, 4)
-  suppressMessages(
-    x <- eiod_hesd(c(abs4 / 2, abs4 / 2, abs4 * 2, abs4 * 2),
-                   c(30, 10, 30, 10), grp, form = "components"))
+  x <- suppressMessages(
+    eiod_hesd(c(abs4 / 2, abs4 / 2, abs4 * 2, abs4 * 2),
+              c(30, 10, 30, 10), grp, form = "components"))
   expect_s3_class(x, "data.frame")
   expect_named(x, c("healthy", "env", "category", "binary"))
   expect_identical(nrow(x), 4L)
