@@ -84,11 +84,31 @@ test_that("the magnitude check names a unit error", {
   bad <- eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp,
                               name = "ghg")
   expect_true(has_level(bad, "warning", "magnitude"))
-  expect_match(bad$message[1], "g <-> kg")
+  expect_match(bad$message[1], "values in g where kg is expected",
+               fixed = TRUE)
+
+  # tonnes: the same factor as kg -> g once shadowed this label
+  badt <- eiod_check_magnitude(eiod_demo$ghg_kgco2e / 1000, "ghg", grp)
+  expect_match(badt$message[1], "values in t where kg is expected",
+               fixed = TRUE)
+
+  # eutrophication is expected in grams (Intake correction, October 2026)
+  okn <- eiod_check_magnitude(eiod_demo$eutroph_gpo4e, "eutroph", grp)
+  expect_false(has_level(okn, "warning"))
+  badkg <- eiod_check_magnitude(eiod_demo$eutroph_gpo4e / 1000, "eutroph",
+                                grp)
+  expect_match(badkg$message[1], "values in kg where g is expected",
+               fixed = TRUE)
+  badmg <- eiod_check_magnitude(eiod_demo$eutroph_gpo4e * 1000, "eutroph",
+                                grp)
+  expect_match(badmg$message[1], "values in mg where g is expected",
+               fixed = TRUE)
 
   # litres given as cubic metres
   badw <- eiod_check_magnitude(eiod_demo$water_litres / 1000, "water", grp)
   expect_true(has_level(badw, "warning", "magnitude"))
+  expect_match(badw$message[1], "values in m3 where L is expected",
+               fixed = TRUE)
 })
 
 test_that("demographic checks report rather than stop", {

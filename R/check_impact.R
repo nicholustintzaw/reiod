@@ -381,17 +381,23 @@ eiod_check_magnitude <- function(value, indicator, group = NULL,
   observed <- stats::median(value, na.rm = TRUE)
   ratio <- observed / expected
 
-  # candidate unit confusions, by indicator
+  # candidate unit confusions, by indicator. Each factor is observed /
+  # expected, so above 1 means the values are too large; the expected units
+  # are those of the published tables (eutrophication in grams since the
+  # October 2026 correction). One label per factor, so every one is reachable.
   cand <- switch(indicator,
     landtotal   = , landarable = , landpasture =
-      c("m2 <-> ha" = 1e4, "ha <-> m2" = 1e-4),
-    ghg         = c("g <-> kg" = 1e3, "kg <-> g" = 1e-3,
-                    "mg <-> kg" = 1e6, "t <-> kg" = 1e-3),
-    eutroph     = c("g <-> kg" = 1e3, "kg <-> g" = 1e-3,
-                    "mg <-> kg" = 1e6),
-    water       = c("L <-> m3" = 1e3, "m3 <-> L" = 1e-3,
-                    "mL <-> L" = 1e3),
-    biodiv      = c("factor of 1000" = 1e3, "factor of 1000" = 1e-3),
+      c("values 10,000 times too large (m2 and ha mixed up)" = 1e4,
+        "values in ha where m2 is expected" = 1e-4),
+    ghg         = c("values in g where kg is expected" = 1e3,
+                    "values in mg where kg is expected" = 1e6,
+                    "values in t where kg is expected" = 1e-3),
+    eutroph     = c("values in mg where g is expected" = 1e3,
+                    "values in kg where g is expected" = 1e-3),
+    water       = c("values in mL where L is expected" = 1e3,
+                    "values in m3 where L is expected" = 1e-3),
+    biodiv      = c("values 1000 times too large" = 1e3,
+                    "values 1000 times too small" = 1e-3),
     numeric(0)
   )
 
@@ -413,7 +419,7 @@ eiod_check_magnitude <- function(value, indicator, group = NULL,
                  else "(unweighted: no usable demographic group)",
                  ratio)
   if (!is.null(hit)) {
-    msg <- paste0(msg, " Consistent with a ", hit, " unit error. ",
+    msg <- paste0(msg, " Consistent with a unit error: ", hit, ". ",
                   "Expected unit: ", .eiod_unit(indicator), ".")
   } else if (lvl == "warning") {
     msg <- paste0(msg, " Unusual but not a recognised unit factor. ",
