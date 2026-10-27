@@ -5,40 +5,40 @@ test_that("half-open age boundaries assign correctly", {
   age  <- c(0, 1.9, 1.95, 1.999, 2, 4.9, 4.999, 5, 9.999, 10, 85)
   want <- c(1, 1,   1,    1,     2, 2,   2,     3, 3,     4,  4)
   got  <- eiod_age_sex_group(age, rep("male", length(age)))
-  expect_equal(as.integer(got), as.integer(want))
+  expect_identical(as.integer(got), as.integer(want))
 })
 
 test_that("female groups are the male groups plus four", {
   age <- c(1.5, 3, 7, 40)
   m <- eiod_age_sex_group(age, rep("male", 4))
   f <- eiod_age_sex_group(age, rep("female", 4))
-  expect_equal(as.integer(f), as.integer(m) + 4L)
-  expect_equal(as.integer(m), 1:4)
+  expect_identical(as.integer(f), as.integer(m) + 4L)
+  expect_identical(as.integer(m), 1:4)
 })
 
 test_that("age in months converts correctly", {
   agem <- c(23, 24, 59, 60, 119, 120)
   want <- c(1,  2,  2,  3,  3,   4)
   got  <- eiod_age_sex_group(agem, rep("male", 6), age_units = "months")
-  expect_equal(as.integer(got), as.integer(want))
+  expect_identical(as.integer(got), as.integer(want))
 })
 
 test_that("a factor is accepted and is the recommended input", {
   s <- factor(c("male", "female"), levels = c("male", "female"))
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), s)), c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), s)), c(4L, 8L))
 
   # level order must not matter
   s2 <- factor(c("male", "female"), levels = c("female", "male"))
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), s2)), c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), s2)), c(4L, 8L))
 })
 
 test_that("character sex is matched case- and space-insensitively", {
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), c("M", "F"))),
-               c(4L, 8L))
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), c("MALE", "female"))),
-               c(4L, 8L))
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), c(" male ", "Girl"))),
-               c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c("M", "F"))),
+                   c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c("MALE", "female"))),
+                   c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c(" male ", "Girl"))),
+                   c(4L, 8L))
 })
 
 test_that("numeric sex is refused unless the codes are stated", {
@@ -52,12 +52,12 @@ test_that("numeric sex is refused unless the codes are stated", {
 
   # stated explicitly, it works - and the two codings give opposite answers,
   # which is exactly why guessing is not acceptable
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), c(1, 0),
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c(1, 0),
                                              male = 1, female = 0)),
-               c(4L, 8L))
-  expect_equal(as.integer(eiod_age_sex_group(c(40, 40), c(1, 0),
+                   c(4L, 8L))
+  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c(1, 0),
                                              male = 0, female = 1)),
-               c(8L, 4L))
+                   c(8L, 4L))
 })
 
 test_that("unrecognised sex values error rather than being dropped", {
@@ -66,7 +66,7 @@ test_that("unrecognised sex values error rather than being dropped", {
   expect_error(eiod_age_sex_group(c(40, 40), c(1, 9), male = 1, female = 2),
                "match neither")
   # explicit labels let an unusual coding through
-  expect_equal(
+  expect_identical(
     as.integer(eiod_age_sex_group(c(40, 40), c("H", "M"),
                                   male = "H", female = "M")),
     c(4L, 8L))
@@ -74,7 +74,7 @@ test_that("unrecognised sex values error rather than being dropped", {
 
 test_that("missing age or sex gives a missing group", {
   g <- eiod_age_sex_group(c(40, NA, 40), c("male", "male", NA))
-  expect_equal(as.integer(g), c(4L, NA, NA))
+  expect_identical(as.integer(g), c(4L, NA, NA))
 })
 
 test_that("bad input is rejected", {
@@ -89,12 +89,12 @@ test_that("bad input is rejected", {
 test_that("eiod_as_sex_factor converts and refuses to guess", {
   f <- eiod_as_sex_factor(c(1, 2, 2, NA), male = 1, female = 2)
   expect_s3_class(f, "factor")
-  expect_equal(levels(f), c("male", "female"))
-  expect_equal(as.character(f), c("male", "female", "female", NA))
+  expect_identical(levels(f), c("male", "female"))
+  expect_identical(as.character(f), c("male", "female", "female", NA))
 
   # the opposite coding, same function
   f2 <- eiod_as_sex_factor(c(0, 1), male = 1, female = 0)
-  expect_equal(as.character(f2), c("female", "male"))
+  expect_identical(as.character(f2), c("female", "male"))
 
   expect_error(eiod_as_sex_factor(c(1, 2)), "both required")
   expect_error(eiod_as_sex_factor(c(1, 2, 7), male = 1, female = 2),
@@ -103,7 +103,7 @@ test_that("eiod_as_sex_factor converts and refuses to guess", {
   # round trip: converting then grouping equals grouping with explicit codes
   s <- c(1, 2, 1, 2)
   a <- c(40, 40, 3, 3)
-  expect_equal(
+  expect_identical(
     as.integer(eiod_age_sex_group(a, eiod_as_sex_factor(s, 1, 2))),
     as.integer(eiod_age_sex_group(a, s, male = 1, female = 2)))
 })

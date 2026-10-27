@@ -5,19 +5,19 @@ test_that("HESD produces the four categories of Table 5a", {
   bio  <- c(abs4 / 2, abs4 / 2, abs4 * 2, abs4 * 2)
   gdqs <- c(30,       10,       30,       10)
   got <- eiod_hesd(bio, gdqs, rep(4L, 4))
-  expect_equal(as.integer(got), 1:4)
-  expect_equal(levels(got)[1], "Healthy and env. sustainable")
+  expect_identical(as.integer(got), 1:4)
+  expect_identical(levels(got)[1], "Healthy and env. sustainable")
 })
 
 test_that("HDLEI produces the four categories of Table 5b", {
   bio  <- c(p30 / 2, p30 / 2, p30 * 50, p30 * 50)
   gdqs <- c(30,      10,      30,       10)
   got <- eiod_hdlei(bio, gdqs, rep(4L, 4))
-  expect_equal(as.integer(got), 1:4)
+  expect_identical(as.integer(got), 1:4)
 })
 
 test_that("a GDQS of exactly 23 counts as healthy", {
-  expect_equal(eiod_healthy_diet(c(22.999, 23, 23.001)), c(0L, 1L, 1L))
+  expect_identical(eiod_healthy_diet(c(22.999, 23, 23.001)), c(0L, 1L, 1L))
 })
 
 test_that("the binary form is exactly category 1", {
@@ -26,7 +26,7 @@ test_that("the binary form is exactly category 1", {
     cat4 <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "category")
     bin  <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
   })
-  expect_equal(bin, ifelse(is.na(cat4), NA_integer_,
+  expect_identical(bin, ifelse(is.na(cat4), NA_integer_,
                            as.integer(as.integer(cat4) == 1L)))
 })
 
@@ -43,10 +43,10 @@ test_that("sub-indicators equal the standalone functions", {
   standalone_sust    <- eiod_sustainable_diet(eiod_demo$biodiv_pdf, grp)
   standalone_low     <- eiod_low_impact(eiod_demo$biodiv_pdf, grp)
 
-  expect_equal(h$healthy[eligible], standalone_healthy[eligible])
-  expect_equal(h$env[eligible],     standalone_sust[eligible])
-  expect_equal(d$env[eligible],     standalone_low[eligible])
-  expect_equal(h$healthy, d$healthy)
+  expect_identical(h$healthy[eligible], standalone_healthy[eligible])
+  expect_identical(h$env[eligible],     standalone_sust[eligible])
+  expect_identical(d$env[eligible],     standalone_low[eligible])
+  expect_identical(h$healthy, d$healthy)
 })
 
 test_that("composites are NA below age 2", {
@@ -57,8 +57,8 @@ test_that("composites are NA below age 2", {
     h <- eiod_hesd(bio, gdqs, grp, form = "binary")
     d <- eiod_hdlei(bio, gdqs, grp, form = "binary")
   })
-  expect_equal(h, c(NA, NA, 1L, 1L))
-  expect_equal(d, c(NA, NA, 1L, 1L))
+  expect_identical(h, c(NA, NA, 1L, 1L))
+  expect_identical(d, c(NA, NA, 1L, 1L))
 })
 
 test_that("missing inputs propagate to a missing category", {
@@ -66,7 +66,7 @@ test_that("missing inputs propagate to a missing category", {
   suppressMessages(
     got <- eiod_hesd(c(abs4 / 2, NA, abs4 / 2), c(30, 30, NA), grp,
                      form = "binary"))
-  expect_equal(got, c(1L, NA, NA))
+  expect_identical(got, c(1L, NA, NA))
 })
 
 test_that("HDLEI is nested inside HESD", {
@@ -114,5 +114,5 @@ test_that("components form returns all four pieces", {
                    c(30, 10, 30, 10), grp, form = "components"))
   expect_s3_class(x, "data.frame")
   expect_named(x, c("healthy", "env", "category", "binary"))
-  expect_equal(nrow(x), 4L)
+  expect_identical(nrow(x), 4L)
 })

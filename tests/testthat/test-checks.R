@@ -62,7 +62,7 @@ test_that("cut-off proximity reports the rows that could flip", {
   v <- c(thr * (1 + 1e-9), 1e-14, 1e-11)     # first sits on the cut-off
   r <- eiod_check_precision(v, rep(4L, 3), "biodiv", name = "biodiv")
   expect_true(has_level(r, "warning", "proximity"))
-  expect_equal(r$n[r$check == "proximity"], 1L)
+  expect_identical(r$n[r$check == "proximity"], 1L)
 
   # comfortably clear of it, so no warning
   r2 <- eiod_check_precision(c(1e-14, 1e-11), rep(4L, 2), "biodiv")

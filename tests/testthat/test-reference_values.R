@@ -13,10 +13,10 @@
 # No rounding is applied to the package data.
 
 test_that("the cut-off dataset has the expected shape", {
-  expect_equal(nrow(eiod_cutoffs), 616L)
-  expect_equal(sum(eiod_cutoffs$metric == "abs"), 56L)
-  expect_equal(sum(eiod_cutoffs$metric == "rel"), 560L)
-  expect_equal(length(unique(eiod_cutoffs$indicator)), 7L)
+  expect_identical(nrow(eiod_cutoffs), 616L)
+  expect_identical(sum(eiod_cutoffs$metric == "abs"), 56L)
+  expect_identical(sum(eiod_cutoffs$metric == "rel"), 560L)
+  expect_identical(length(unique(eiod_cutoffs$indicator)), 7L)
   expect_true(all(eiod_cutoffs$demogroup %in% 1:8))
   expect_false(anyNA(eiod_cutoffs$value))
   expect_true(all(eiod_cutoffs$value > 0))
@@ -146,8 +146,12 @@ test_that("relative eutrophication carries the documented rescaling", {
 
   # no rescaling column survives, and no value differs from its printed text
   expect_false("scale_to_db_unit" %in% names(eiod_cutoffs))
+  # expect_equal() on purpose: build-machine doubles vs test-machine parse,
+  # the structure that failed on macOS arm64 (see expect_published_biodiv()).
+  # nolint start: expect_identical_linter.
   expect_equal(eiod_cutoffs$value,
                as.numeric(eiod_cutoffs$value_published_str))
+  # nolint end
 })
 
 test_that("every indicator now uses one unit across both tables", {
@@ -158,8 +162,8 @@ test_that("every indicator now uses one unit across both tables", {
   }
   expect_true(all(eiod_cutoffs$unit[eiod_cutoffs$indicator == "eutroph"] ==
                   "g PO4(3-)eq"))
-  expect_equal(eiod_indicators$unit[eiod_indicators$indicator == "eutroph"],
-               "g PO4(3-)eq")
+  expect_identical(eiod_indicators$unit[eiod_indicators$indicator == "eutroph"],
+                   "g PO4(3-)eq")
 })
 
 test_that("the corrected Table 3 eutrophication thresholds are shipped", {
@@ -167,16 +171,20 @@ test_that("the corrected Table 3 eutrophication thresholds are shipped", {
   # grams, and supplied corrected Table 3 values. These EIGHT rows are the only
   # ones in the dataset that do not match the currently published PDF.
   expect_true("value_source" %in% names(eiod_cutoffs))
-  expect_equal(sum(eiod_cutoffs$value_source != "published"), 8L)
+  expect_identical(sum(eiod_cutoffs$value_source != "published"), 8L)
 
   corrected <- eiod_cutoffs[eiod_cutoffs$indicator == "eutroph" &
                             eiod_cutoffs$metric == "abs", ]
   corrected <- corrected[order(corrected$demogroup), ]
   expect_true(all(corrected$value_source == "intake correction 2026-10"))
+  # expect_equal() on purpose: build-machine doubles vs test-machine literals.
+  # Exactness is enforced by the round-trip guard in data-raw/build_data.R.
+  # nolint start: expect_identical_linter.
   expect_equal(corrected$value,
                c(7.6827203674384066, 11.919876448673117, 16.415829847434384,
                  26.745322780673799, 7.4439228426109629, 11.039885569912013,
                  15.071843778053791, 21.51337701058506))
+  # nolint end
 
   # The correction is a change of UNIT, not of quantity: each value divided by
   # 1000 reproduces what the PDF prints, to the 10 decimals it prints.
@@ -193,8 +201,8 @@ test_that("no indicator is converted on the way in any more", {
   v <- c(thr * 0.5, thr * (1 - 1e-9), thr, thr * 2)
 
   expect_silent(got <- eiod_absolute_threshold(v, rep(4L, 4), "eutroph"))
-  expect_equal(got, c(1L, 1L, 0L, 0L))
-  expect_equal(got, as.integer(v < thr))
+  expect_identical(got, c(1L, 1L, 0L, 0L))
+  expect_identical(got, as.integer(v < thr))
 
   expect_silent(eiod_absolute_threshold(c(1, 2), rep(4L, 2), "ghg"))
   expect_silent(eiod_relative_band(v, rep(4L, 4), "eutroph"))
@@ -218,7 +226,7 @@ test_that("the correction leaves every realistic classification unchanged", {
     i <- which(g == k & !is.na(v))
     old[i] <- as.integer(v[i] / 1000 < published_kg[k])
   }
-  expect_equal(new, old)
+  expect_identical(new, old)
 })
 
 test_that("the relative metric leaves eutrophication alone", {
@@ -226,7 +234,7 @@ test_that("the relative metric leaves eutrophication alone", {
   p <- vapply(seq(10, 90, 10), function(q)
     as.numeric(eiod_lookup_cutoff("eutroph", 4, "rel", q)), numeric(1))
   v <- c(p[1] * 0.5, (p[-9] + p[-1]) / 2, p[9] * 1.5)
-  expect_equal(eiod_relative_band(v, rep(4L, 10), "eutroph"), 1:10)
+  expect_identical(eiod_relative_band(v, rep(4L, 10), "eutroph"), 1:10)
 })
 
 test_that("details = TRUE has the same four columns for every indicator", {
@@ -235,9 +243,9 @@ test_that("details = TRUE has the same four columns for every indicator", {
   v <- c(30, 20)
   d <- eiod_absolute_threshold(v, c(4L, 4L), "eutroph", details = TRUE)
   expect_named(d, c("value", "group", "cutoff", "below"))
-  expect_equal(d$value, v)
+  expect_identical(d$value, v)
   expect_equal(d$cutoff, rep(26.745322780673799, 2))
-  expect_equal(d$below, c(0L, 1L))
+  expect_identical(d$below, c(0L, 1L))
   expect_null(attr(d, "conversion"))
 
   d2 <- eiod_absolute_threshold(c(1, 2), c(4L, 4L), "ghg", details = TRUE)
@@ -247,12 +255,12 @@ test_that("details = TRUE has the same four columns for every indicator", {
 test_that("relative cut-points are strictly increasing, row 10 repeats P90", {
   rel <- eiod_cutoffs[eiod_cutoffs$metric == "rel", ]
   series <- split(rel, list(rel$indicator, rel$demogroup), drop = TRUE)
-  expect_equal(length(series), 56L)
+  expect_identical(length(series), 56L)
   for (s in series) {
     s <- s[order(s$row_order), ]
-    expect_equal(nrow(s), 10L)
+    expect_identical(nrow(s), 10L)
     expect_true(all(diff(s$value[1:9]) > 0))
-    expect_equal(s$value[10], s$value[9])
+    expect_identical(s$value[10], s$value[9])
   }
 })
 
@@ -390,12 +398,16 @@ test_that("every shipped double reproduces its published digits", {
     sprintf(paste0("%.", max(n - 1L, 0L), "e"), num),
     eiod_cutoffs$value, nd)
 
-  expect_equal(as.numeric(back), as.numeric(eiod_cutoffs$value_published_str))
+  # expect_equal() on purpose: build-machine doubles vs test-machine parse.
+  # nolint start: expect_identical_linter.
+  expect_equal(as.numeric(back),
+               as.numeric(eiod_cutoffs$value_published_str))
+  # nolint end
 
   # 14 across the values transcribed from the PDF; the eight Intake-corrected
   # eutrophication thresholds were supplied at full double precision and need
   # more.
-  expect_equal(max(nd[eiod_cutoffs$value_source == "published"]), 14L)
+  expect_identical(max(nd[eiod_cutoffs$value_source == "published"]), 14L)
   expect_lte(max(nd), 17L)
 })
 
@@ -446,7 +458,7 @@ test_that("eutrophication cut-offs print exactly as the paper has them", {
   # `published` is retained but no longer does anything
   y <- eiod_lookup_cutoff("eutroph", metric = "rel", percentile = 20,
                           published = TRUE)
-  expect_equal(as.numeric(y), as.numeric(x))
+  expect_identical(as.numeric(y), as.numeric(x))
 
   # Table 3 is now in grams too, and carries the corrected value
   z <- eiod_lookup_cutoff("eutroph", group = 4, metric = "abs")

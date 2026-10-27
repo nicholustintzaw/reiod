@@ -6,7 +6,7 @@ test_that("the absolute comparison is strict", {
   # published cut-offs carry a "<" sign: exactly on the threshold is not below
   v <- c(abs4 * (1 - 1e-9), abs4, abs4 * (1 + 1e-9))
   got <- eiod_absolute_threshold(v, rep(4L, 3), "biodiv")
-  expect_equal(got, c(1L, 0L, 0L))
+  expect_identical(got, c(1L, 0L, 0L))
 })
 
 test_that("missing impacts and groups stay missing", {
@@ -14,8 +14,8 @@ test_that("missing impacts and groups stay missing", {
   # into an apparent threshold breach. These must be NA, never 0 or band 10.
   v <- c(abs4 / 2, NA, abs4 / 2)
   g <- c(4L, 4L, NA)
-  expect_equal(eiod_absolute_threshold(v, g, "biodiv"), c(1L, NA, NA))
-  expect_equal(eiod_relative_band(v, g, "biodiv"), c(1L, NA, NA))
+  expect_identical(eiod_absolute_threshold(v, g, "biodiv"), c(1L, NA, NA))
+  expect_identical(eiod_relative_band(v, g, "biodiv"), c(1L, NA, NA))
 })
 
 test_that("every band is reachable for every demographic group", {
@@ -31,16 +31,16 @@ test_that("every band is reachable for every demographic group", {
            (p[-9] + p[-1]) / 2,              # bands 2-9
            p[9] * 1.5)                       # band 10
     got <- eiod_relative_band(v, rep(g, 10), "biodiv")
-    expect_equal(got, 1:10, info = paste("group", g))
+    expect_identical(got, 1:10, info = paste("group", g))
   }
 })
 
 test_that("a value exactly on a cut-point falls in the higher band", {
   p <- vapply(seq(10, 90, 10), function(q)
     unname(eiod_lookup_cutoff("biodiv", 4, "rel", percentile = q)), numeric(1))
-  expect_equal(eiod_relative_band(p[1] * (1 - 1e-9), 4L, "biodiv"), 1L)
-  expect_equal(eiod_relative_band(p[1], 4L, "biodiv"), 2L)   # on P10 -> band 2
-  expect_equal(eiod_relative_band(p[9], 4L, "biodiv"), 10L)  # on P90 -> band 10
+  expect_identical(eiod_relative_band(p[1] * (1 - 1e-9), 4L, "biodiv"), 1L)
+  expect_identical(eiod_relative_band(p[1], 4L, "biodiv"), 2L)   # on P10 -> band 2
+  expect_identical(eiod_relative_band(p[9], 4L, "biodiv"), 10L)  # on P90 -> band 10
 })
 
 test_that("bands are monotone in the impact", {
@@ -57,7 +57,7 @@ test_that("midpoint returns the band midpoint percentile", {
   m <- eiod_relative_band(eiod_demo$biodiv_pdf,
                           eiod_age_sex_group(eiod_demo$age, eiod_demo$sex),
                           "biodiv", midpoint = TRUE)
-  expect_equal(m, b * 10L - 5L)
+  expect_identical(m, b * 10L - 5L)
 })
 
 test_that("all seven indicators run and return sensible shapes", {
@@ -104,18 +104,18 @@ test_that("details = TRUE reports the cut-off that was applied", {
   d <- eiod_absolute_threshold(v, grp, "biodiv", details = TRUE)
   expect_s3_class(d, "data.frame")
   expect_named(d, c("value", "group", "cutoff", "below"))
-  expect_equal(d$below, eiod_absolute_threshold(v, grp, "biodiv"))
+  expect_identical(d$below, eiod_absolute_threshold(v, grp, "biodiv"))
   # the cut-off must be the published one for that group
   ok <- !is.na(d$group)
-  expect_equal(d$cutoff[ok],
-               as.numeric(eiod_lookup_cutoff("biodiv"))[d$group[ok]])
+  expect_identical(d$cutoff[ok],
+                   as.numeric(eiod_lookup_cutoff("biodiv"))[d$group[ok]])
   # and it must agree with the result it produced
   fin <- ok & !is.na(d$value)
-  expect_equal(as.integer(d$value[fin] < d$cutoff[fin]), d$below[fin])
+  expect_identical(as.integer(d$value[fin] < d$cutoff[fin]), d$below[fin])
 
   r <- eiod_relative_band(v, grp, "biodiv", details = TRUE)
   expect_named(r, c("value", "group", "band", "cut_lower", "cut_upper"))
-  expect_equal(r$band, eiod_relative_band(v, grp, "biodiv"))
+  expect_identical(r$band, eiod_relative_band(v, grp, "biodiv"))
   # band 1 has no published lower bound; band 10 no upper
   expect_true(all(is.na(r$cut_lower[!is.na(r$band) & r$band == 1L])))
   expect_true(all(is.na(r$cut_upper[!is.na(r$band) & r$band == 10L])))
@@ -137,15 +137,15 @@ test_that("the *_all helpers take a map and allow a partial one", {
 
   all7 <- suppressMessages(eiod_absolute_all(eiod_demo, grp, eiod_demo_map))
   expect_named(all7, paste0("abs_", names(eiod_demo_map)))
-  expect_equal(nrow(all7), nrow(eiod_demo))
-  expect_equal(all7$abs_ghg,
-               eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg"))
+  expect_identical(nrow(all7), nrow(eiod_demo))
+  expect_identical(all7$abs_ghg,
+                   eiod_absolute_threshold(eiod_demo$ghg_kgco2e, grp, "ghg"))
 
   part <- eiod_relative_all(eiod_demo, grp,
                             c(biodiv = "biodiv_pdf", water = "water_litres"))
   expect_named(part, c("band_biodiv", "band_water"))
-  expect_equal(part$band_biodiv,
-               eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv"))
+  expect_identical(part$band_biodiv,
+                   eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv"))
 
   expect_error(eiod_absolute_all(eiod_demo, grp, c("ghg_kgco2e")),
                "must be named with an indicator key")
