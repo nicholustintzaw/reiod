@@ -64,13 +64,16 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
   }
 
   # ---- sex ----------------------------------------------------------------- #
+  # The handler returns the condition rather than recording the finding
+  # itself, so `f` is only ever modified in this frame.
   sex_code <- tryCatch(
     .eiod_resolve_sex(sex, male = male, female = female),
-    error = function(e) {
-      f[[length(f) + 1]] <<- .eiod_finding("sex", "sex", "error", n,
-        conditionMessage(e))
-      rep(NA_integer_, length(sex))
-    })
+    error = function(e) e)
+  if (inherits(sex_code, "error")) {
+    f[[length(f) + 1]] <- .eiod_finding("sex", "sex", "error", n,
+      conditionMessage(sex_code))
+    sex_code <- rep(NA_integer_, length(sex))
+  }
 
   if (is.numeric(sex) && !is.null(male)) {
     f[[length(f) + 1]] <- .eiod_finding("sex", "sex", "note", NA_integer_,

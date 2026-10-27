@@ -96,6 +96,10 @@ test_that("demographic checks report rather than stop", {
                                ifelse(eiod_demo$sex == "male", 1L, 0L))
   expect_s3_class(r, "eiod_check")
   expect_true(has_level(r, "error", "sex"))
+  # the finding carries the full count and the underlying error message
+  i <- as.character(r$level) == "error" & r$check == "sex"
+  expect_identical(r$n[i], nrow(eiod_demo))
+  expect_match(r$message[i], "cannot tell which code means male", fixed = TRUE)
 
   # a factor is noted as the recommended type
   r2 <- eiod_check_demographics(eiod_demo$age, eiod_demo$sex)
