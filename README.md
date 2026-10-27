@@ -191,3 +191,17 @@ cannot drift apart at the data layer.
 
 [`{riycf}`](https://github.com/nutriverse/riycf) — infant and young
 child feeding indicators, same dependency-free design.
+
+## Contributing
+
+Bug reports and suggestions are welcome at
+<https://github.com/nicholustintzaw/reiod/issues>. See the [contributing
+guide](https://github.com/nicholustintzaw/reiod/blob/main/.github/CONTRIBUTING.md)
+before opening a pull request. Note that the cut-off values change only
+on Intake’s instruction.
+
+## Code of Conduct
+
+Please note that this package is released with a [Contributor Code of
+Conduct](https://ropensci.org/code-of-conduct/). By contributing to this
+project, you agree to abide by its terms.
