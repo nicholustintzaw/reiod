@@ -160,7 +160,8 @@ print.eiod_check <- function(x, ...) {
 
   cat("reiod data quality report\n")
   if (!is.null(src) && !is.na(n_obs)) {
-    cat("  data: ", src, "   n = ", format(n_obs, big.mark = ","), "\n", sep = "")
+    cat("  data: ", src, "   n = ", format(n_obs, big.mark = ","), "\n",
+        sep = "")
   }
   cat("\n")
 

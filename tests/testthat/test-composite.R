@@ -23,11 +23,13 @@ test_that("a GDQS of exactly 23 counts as healthy", {
 test_that("the binary form is exactly category 1", {
   grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
   suppressMessages({
-    cat4 <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "category")
-    bin  <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "binary")
+    cat4 <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                      form = "category")
+    bin  <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                      form = "binary")
   })
   expect_identical(bin, ifelse(is.na(cat4), NA_integer_,
-                           as.integer(as.integer(cat4) == 1L)))
+                               as.integer(as.integer(cat4) == 1L)))
 })
 
 test_that("sub-indicators equal the standalone functions", {
@@ -35,8 +37,10 @@ test_that("sub-indicators equal the standalone functions", {
   eligible <- !(grp %in% c(1L, 5L))
 
   suppressMessages({
-    h <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
-    d <- eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
+    h <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                   form = "components")
+    d <- eiod_hdlei(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                    form = "components")
   })
 
   standalone_healthy <- eiod_healthy_diet(eiod_demo$gdqs)

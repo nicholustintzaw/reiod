@@ -24,7 +24,8 @@ test_that("every band is reachable for every demographic group", {
 
   for (g in 1:8) {
     p <- vapply(seq(10, 90, 10), function(q)
-      unname(eiod_lookup_cutoff("biodiv", g, "rel", percentile = q)), numeric(1))
+      unname(eiod_lookup_cutoff("biodiv", g, "rel", percentile = q)),
+      numeric(1))
 
     # a value inside each of the ten bands
     v <- c(p[1] * 0.5,                       # band 1
@@ -39,8 +40,9 @@ test_that("a value exactly on a cut-point falls in the higher band", {
   p <- vapply(seq(10, 90, 10), function(q)
     unname(eiod_lookup_cutoff("biodiv", 4, "rel", percentile = q)), numeric(1))
   expect_identical(eiod_relative_band(p[1] * (1 - 1e-9), 4L, "biodiv"), 1L)
-  expect_identical(eiod_relative_band(p[1], 4L, "biodiv"), 2L)   # on P10 -> band 2
-  expect_identical(eiod_relative_band(p[9], 4L, "biodiv"), 10L)  # on P90 -> band 10
+  # exactly on P10 -> band 2; exactly on P90 -> band 10
+  expect_identical(eiod_relative_band(p[1], 4L, "biodiv"), 2L)
+  expect_identical(eiod_relative_band(p[9], 4L, "biodiv"), 10L)
 })
 
 test_that("bands are monotone in the impact", {

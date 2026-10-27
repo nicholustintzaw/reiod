@@ -205,7 +205,8 @@ eiod_low_impact <- function(biodiversity, group, percentile = 30) {
 #' table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
 #'
 #' # everything at once
-#' parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
+#' parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+#'                    form = "components")
 #' head(parts)
 #'
 #' @export

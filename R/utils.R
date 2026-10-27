@@ -119,14 +119,14 @@
 .eiod_check_value <- function(value, arg = "value") {
   if (is.factor(value)) {
     stop("`", arg, "` is a factor. as.numeric() on a factor returns the level ",
-         "codes, not the values, so this would silently produce wrong results. ",
-         "Convert with as.numeric(as.character(x)), then re-check. ",
+         "codes, not the values, so this would silently produce wrong ",
+         "results. Convert with as.numeric(as.character(x)), then re-check. ",
          "See eiod_check_impact().", call. = FALSE)
   }
   if (is.character(value)) {
     stop("`", arg, "` is character, not numeric. This usually means the ",
-         "column failed to import: a stray symbol such as \"<0.001\", a decimal ",
-         "comma, or a thousands separator. See eiod_check_impact().",
+         "column failed to import: a stray symbol such as \"<0.001\", a ",
+         "decimal comma, or a thousands separator. See eiod_check_impact().",
          call. = FALSE)
   }
   if (is.integer(value)) {

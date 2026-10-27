@@ -114,8 +114,9 @@ eiod_list_indicators <- function(quiet = FALSE) {
 #' **your data** at the moment of comparison, is announced in a message, and is
 #' described in `vignette("eutrophication")`.
 #'
-#' The object is an ordinary named numeric underneath: `[`, `c()` and arithmetic
-#' all return plain numbers, so nothing downstream needs to know about the class.
+#' The object is an ordinary named numeric underneath: `[`, `c()` and
+#' arithmetic all return plain numbers, so nothing downstream needs to know
+#' about the class.
 #'
 #' @param indicator One of the seven indicator names.
 #' @param group Demographic group 1-8, or `NULL` for all eight.
@@ -247,7 +248,8 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
     cat("  DIFFER FROM THE CURRENTLY PUBLISHED PDF, which prints the Table 3\n")
     cat("  eutrophication row in kilograms. Both Table 3 and Table 4f are in\n")
     cat("  grams; the corrected values are the printed ones x1000, so no\n")
-    cat("  result changes. See vignette(\"eutrophication\") and ?eiod_cutoffs.\n")
+    cat("  result changes. See vignette(\"eutrophication\") and",
+        "?eiod_cutoffs.\n")
   }
   invisible(x)
 }

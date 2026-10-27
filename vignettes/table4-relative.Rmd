@@ -144,7 +144,8 @@ you get roughly 10% of observations in each band **by construction**:
 ```{r}
 # WRONG: ranks the sample against itself
 wrong <- cut(eiod_demo$biodiv_pdf,
-             breaks = quantile(eiod_demo$biodiv_pdf, seq(0, 1, 0.1), na.rm = TRUE),
+             breaks = quantile(eiod_demo$biodiv_pdf, seq(0, 1, 0.1),
+                               na.rm = TRUE),
              labels = 1:10, include.lowest = TRUE)
 table(wrong)
 ```

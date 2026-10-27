@@ -28,7 +28,8 @@ would catch it:
 
 ```{r, error = TRUE}
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
-eiod_absolute_threshold(as.integer(eiod_demo$land_arable_m2yr), grp, "landarable")
+eiod_absolute_threshold(as.integer(eiod_demo$land_arable_m2yr), grp,
+                        "landarable")
 ```
 
 Everything else — sign, zeros, unit magnitude, retained significant digits,
@@ -68,7 +69,8 @@ It compares your median against the published global reference and, when the
 ratio lands near a known conversion factor, names the conversion:
 
 ```{r}
-eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_in_grams")
+eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp,
+                     name = "ghg_in_grams")
 ```
 
 A factor of 1000 is the common one — grams where kilograms are expected, or
@@ -90,7 +92,8 @@ observations sit close enough to their own cut-off that the lost digits could
 flip the classification:
 
 ```{r}
-eiod_check_precision(eiod_demo$water_litres, grp, "water", name = "water_litres")
+eiod_check_precision(eiod_demo$water_litres, grp, "water",
+                     name = "water_litres")
 ```
 
 The companion Stata implementation measured this on 200,000 simulated

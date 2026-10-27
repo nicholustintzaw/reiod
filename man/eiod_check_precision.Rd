@@ -74,7 +74,8 @@ Nothing is repaired. Digits that were never read cannot be recovered.
 \examples{
 data(eiod_demo)
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
-eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
+eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv",
+                     name = "biodiv_pdf")
 
 # the same values after a single-precision round trip
 eiod_check_precision(signif(eiod_demo$biodiv_pdf, 7), grp, "biodiv",

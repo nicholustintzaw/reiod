@@ -46,8 +46,8 @@
 #'
 #' This is the only data-quality test on the default path. The fuller suite -
 #' sign, zeros, unit magnitude, retained significant digits, cut-off proximity -
-#' is in [eiod_check_data()] and [eiod_check_precision()], and is **not** run for
-#' you. Run it first; see `vignette("precision")`.
+#' is in [eiod_check_data()] and [eiod_check_precision()], and is **not** run
+#' for you. Run it first; see `vignette("precision")`.
 #'
 #' @param value Numeric vector of per capita daily impact, already summed
 #'   across everything the respondent consumed that day, in the unit shown by

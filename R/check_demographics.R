@@ -42,7 +42,8 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
     n_na <- sum(is.na(age_yr))
     if (n_na) {
       f[[length(f) + 1]] <- .eiod_finding("missing", "age", "note", n_na,
-        sprintf("%d missing (%.1f%%); these get no demographic group and so no metrics.",
+        sprintf(paste0("%d missing (%.1f%%); these get no demographic group ",
+                       "and so no metrics."),
                 n_na, 100 * n_na / n))
     }
     n_neg <- sum(!is.na(age_yr) & age_yr < 0)
@@ -58,7 +59,8 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
     }
     if (age_units == "years" && sum(!is.na(age_yr)) > 0 &&
         stats::median(age_yr, na.rm = TRUE) > 110) {
-      f[[length(f) + 1]] <- .eiod_finding("units", "age", "warning", NA_integer_,
+      f[[length(f) + 1]] <- .eiod_finding("units", "age", "warning",
+        NA_integer_,
         "median age is implausibly high for years; is this months?")
     }
   }
@@ -82,7 +84,8 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
              "call unambiguous."))
   } else if (is.character(sex)) {
     f[[length(f) + 1]] <- .eiod_finding("sex", "sex", "note", NA_integer_,
-      "sex is character; converting to a factor makes the data self-documenting.")
+      paste0("sex is character; converting to a factor makes the data ",
+             "self-documenting."))
   } else if (is.factor(sex)) {
     f[[length(f) + 1]] <- .eiod_finding("sex", "sex", "note", NA_integer_,
       paste0("sex is a factor with levels ",
@@ -121,9 +124,10 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
     n_u2 <- sum(grp %in% c(1L, 5L), na.rm = TRUE)
     if (n_u2) {
       f[[length(f) + 1]] <- .eiod_finding("coverage", "group", "note", n_u2,
-        sprintf(paste0("%d respondent(s) under 2 years. Tables 3 and 4 apply ",
-                       "to them; HESD and HDLEI do not, and will be NA. Decide ",
-                       "explicitly whether they belong in your denominator."),
+        sprintf(paste0("%d respondent(s) under 2 years. Tables 3 and 4 ",
+                       "apply to them; HESD and HDLEI do not, and will be NA. ",
+                       "Decide explicitly whether they belong in your ",
+                       "denominator."),
                 n_u2))
     }
   }
@@ -181,7 +185,8 @@ eiod_check_gdqs <- function(gdqs, cutoff = 23, max_score = 49) {
   if (max(fin) <= 1) {
     f[[length(f) + 1]] <- .eiod_finding("range", "gdqs", "warning", NA_integer_,
       paste0("all values are 1 or below. This looks like a proportion rather ",
-             "than a GDQS score; the cutoff of ", cutoff, " would never be met."))
+             "than a GDQS score; the cutoff of ", cutoff,
+             " would never be met."))
   }
 
   f[[length(f) + 1]] <- .eiod_finding("range", "gdqs", "note", NA_integer_,

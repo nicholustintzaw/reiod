@@ -35,10 +35,12 @@ test_that("a factor is accepted and is the recommended input", {
 test_that("character sex is matched case- and space-insensitively", {
   expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c("M", "F"))),
                    c(4L, 8L))
-  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c("MALE", "female"))),
-                   c(4L, 8L))
-  expect_identical(as.integer(eiod_age_sex_group(c(40, 40), c(" male ", "Girl"))),
-                   c(4L, 8L))
+  expect_identical(
+    as.integer(eiod_age_sex_group(c(40, 40), c("MALE", "female"))),
+    c(4L, 8L))
+  expect_identical(
+    as.integer(eiod_age_sex_group(c(40, 40), c(" male ", "Girl"))),
+    c(4L, 8L))
 })
 
 test_that("numeric sex is refused unless the codes are stated", {

@@ -336,7 +336,8 @@ test_that("eiod_lookup_cutoff returns the published values", {
     "8.4365094030e-13"
   )
   expect_length(eiod_lookup_cutoff("ghg", metric = "abs"), 8L)
-  expect_error(eiod_lookup_cutoff("ghg", metric = "rel"), "percentile.*required")
+  expect_error(eiod_lookup_cutoff("ghg", metric = "rel"),
+               "percentile.*required")
   expect_error(eiod_lookup_cutoff("nonsense", metric = "abs"), "must be one of")
 })
 

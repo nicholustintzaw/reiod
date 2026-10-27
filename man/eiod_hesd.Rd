@@ -69,7 +69,8 @@ grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 table(eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp))
 
 # everything at once
-parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp, form = "components")
+parts <- eiod_hesd(eiod_demo$biodiv_pdf, eiod_demo$gdqs, grp,
+                   form = "components")
 head(parts)
 
 }

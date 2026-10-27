@@ -76,8 +76,9 @@ exact decimal comparison against the PDF, compare against that, not against a
 rendering of a double. (The identical complaint, and the identical fix, arose
 in the companion Stata package in October 2026.)
 
-The object is an ordinary named numeric underneath: `[`, `c()` and arithmetic
-all return plain numbers, so nothing downstream needs to know about the class.
+The object is an ordinary named numeric underneath: `[`, `c()` and
+arithmetic all return plain numbers, so nothing downstream needs to know
+about the class.
 }
 
 \section{Nothing here is rescaled}{

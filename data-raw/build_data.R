@@ -9,19 +9,20 @@
 # SOURCE  data-raw/eiod_cutoffs.csv
 #         Transcribed programmatically from Tables 3 and 4a-4g of
 #         Intake-EIOD-Methods-Paper-Jan2026-Final.pdf (pages 16-19).
-#         https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf
+#         https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf # nolint: line_length_linter.
 #         This is the SAME file the companion Stata implementation reads, so
 #         the two implementations cannot drift apart at the data layer.
 #
 # Run with:  source("data-raw/build_data.R")
 # ---------------------------------------------------------------------------- #
 
-# ---- 1. read ---------------------------------------------------------------- #
+# ---- 1. read --------------------------------------------------------------- #
 # The cut-offs are printed to 11 significant digits. colClasses = "character"
 # on the value column then as.numeric() guarantees a double; letting read.csv
 # guess risks a narrower type and there is no way to recover lost digits later.
 
-# Use format() with high precision to ensure consistent conversion across platforms
+# Use format() with high precision to ensure consistent conversion across
+# platforms
 raw <- utils::read.csv(
   "data-raw/eiod_cutoffs.csv",
   stringsAsFactors = FALSE,
@@ -77,12 +78,12 @@ stopifnot(!anyNA(raw$value_published))
   raw$value_published
 )
 if (!all(.roundtrip_ok)) {
-  stop(sum(!.roundtrip_ok), " value(s) no longer round-trip to their published ",
-       "digits. Something is rounding the cut-offs; do not proceed.")
+  stop(sum(!.roundtrip_ok), " value(s) no longer round-trip to their ",
+       "published digits. Something is rounding the cut-offs; do not proceed.")
 }
 rm(.published_digits, .roundtrip_ok)
 
-# ---- 2. the shipped value is the published value, full stop ----------------- #
+# ---- 2. the shipped value is the published value, full stop ---------------- #
 #
 # NOTHING IS RESCALED HERE. Changed 2026-10-14, deliberately.
 #
@@ -134,7 +135,7 @@ eiod_cutoffs <- eiod_cutoffs[
         eiod_cutoffs$demogroup, eiod_cutoffs$row_order), ]
 rownames(eiod_cutoffs) <- NULL
 
-# ---- 3. structural validation ----------------------------------------------- #
+# ---- 3. structural validation ---------------------------------------------- #
 # The same checks the Stata build runs. If one fails the CSV is wrong; do not
 # relax the check.
 stopifnot(
@@ -147,7 +148,8 @@ stopifnot(
   !anyNA(eiod_cutoffs$value),
   all(eiod_cutoffs$value > 0),
   # complete grid, no duplicates
-  !anyDuplicated(eiod_cutoffs[c("metric", "indicator", "demogroup", "row_order")]),
+  !anyDuplicated(
+    eiod_cutoffs[c("metric", "indicator", "demogroup", "row_order")]),
   # the shipped text and the shipped double are the same number
   identical(as.numeric(eiod_cutoffs$value_published_str), eiod_cutoffs$value)
 )
@@ -198,13 +200,14 @@ stopifnot(
 # divided by 1000 must reproduce the figure the PDF prints, to its 10 decimals
 .pub_kg <- c(0.0076827204, 0.0119198764, 0.0164158298, 0.0267453228,
              0.0074439228, 0.0110398856, 0.0150718438, 0.0215133770)
-.corr <- eiod_cutoffs$value[eiod_cutoffs$indicator == "eutroph" &
-                            eiod_cutoffs$metric == "abs"]
-.corr <- .corr[order(eiod_cutoffs$demogroup[eiod_cutoffs$indicator == "eutroph" &
-                                            eiod_cutoffs$metric == "abs"])]
+.is_abs_eut <- eiod_cutoffs$indicator == "eutroph" &
+  eiod_cutoffs$metric == "abs"
+.corr <- eiod_cutoffs$value[.is_abs_eut]
+.corr <- .corr[order(eiod_cutoffs$demogroup[.is_abs_eut])]
 stopifnot(identical(sprintf("%.10f", .corr / 1000), sprintf("%.10f", .pub_kg)))
-rm(.pub_kg, .corr)
-message("eiod_cutoffs: the 8 corrected thresholds reproduce the printed PDF values x1000")
+rm(.pub_kg, .corr, .is_abs_eut)
+message("eiod_cutoffs: the 8 corrected thresholds reproduce the printed PDF ",
+        "values x1000")
 
 # spot-checks against values hand-typed from the printed tables
 stopifnot(
@@ -222,7 +225,7 @@ stopifnot(
 
 message("eiod_cutoffs: all structural checks passed")
 
-# ---- 4. indicator lookup ---------------------------------------------------- #
+# ---- 4. indicator lookup --------------------------------------------------- #
 # `unit` here is the unit the USER must supply. Since Intake corrected the
 # Table 3 eutrophication thresholds in October 2026 it is also the unit both
 # cut-off tables are printed in, for every indicator, so there is no longer any
@@ -240,7 +243,7 @@ stopifnot(
   eiod_indicators$unit[eiod_indicators$indicator == "eutroph"] == "g PO4(3-)eq"
 )
 
-# ---- 5. synthetic demonstration data ---------------------------------------- #
+# ---- 5. synthetic demonstration data --------------------------------------- #
 # Used in examples, vignettes and tests. NOT real survey data; no prevalence
 # computed from it carries any substantive meaning.
 #
@@ -351,7 +354,7 @@ local({
   message("demo data: all 7 columns are on the same scale as their thresholds")
 })
 
-# ---- 6. a deliberately broken copy, for the troubleshooting vignette -------- #
+# ---- 6. a deliberately broken copy, for the troubleshooting vignette ------- #
 # Five faults, one per failure mode the check suite is built to catch.
 eiod_broken <- eiod_demo
 
@@ -382,7 +385,7 @@ eiod_broken$land_arable_m2yr <- as.integer(eiod_broken$land_arable_m2yr)
 
 utils::write.csv(eiod_broken, "inst/extdata/eiod_broken.csv", row.names = FALSE)
 
-# ---- 7. save ---------------------------------------------------------------- #
+# ---- 7. save --------------------------------------------------------------- #
 save(eiod_cutoffs,    file = "data/eiod_cutoffs.rda",    compress = "xz")
 save(eiod_indicators, file = "data/eiod_indicators.rda", compress = "xz")
 save(eiod_demo,       file = "data/eiod_demo.rda",       compress = "xz")

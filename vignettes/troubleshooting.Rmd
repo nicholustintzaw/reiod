@@ -122,7 +122,8 @@ looks like a finding:
 
 ```{r}
 grp_tmp <- eiod_age_sex_group(broken$age, broken$sex, male = 1, female = 0)
-table(eiod_absolute_threshold(broken$ghg_kgco2e, grp_tmp, "ghg"), useNA = "ifany")
+table(eiod_absolute_threshold(broken$ghg_kgco2e, grp_tmp, "ghg"),
+      useNA = "ifany")
 ```
 
 Zero diets below the threshold. Nothing errored. You could put that in a report.
@@ -278,8 +279,10 @@ summary(report2)
 fixed$ghg_abs    <- eiod_absolute_threshold(fixed$ghg_kgco2e, grp, "ghg")
 fixed$biodiv_abs <- eiod_absolute_threshold(fixed$biodiv_pdf, grp, "biodiv")
 fixed$biodiv_bnd <- eiod_relative_band(fixed$biodiv_pdf, grp, "biodiv")
-fixed$hesd       <- eiod_hesd(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
-fixed$hdlei      <- eiod_hdlei(fixed$biodiv_pdf, fixed$gdqs, grp, form = "binary")
+fixed$hesd       <- eiod_hesd(fixed$biodiv_pdf, fixed$gdqs, grp,
+                              form = "binary")
+fixed$hdlei      <- eiod_hdlei(fixed$biodiv_pdf, fixed$gdqs, grp,
+                               form = "binary")
 
 round(100 * c(
   ghg_below_threshold    = mean(fixed$ghg_abs,    na.rm = TRUE),

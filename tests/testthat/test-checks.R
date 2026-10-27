@@ -81,7 +81,8 @@ test_that("the magnitude check names a unit error", {
   expect_false(has_level(ok, "warning"))
 
   # the same data in grams
-  bad <- eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg")
+  bad <- eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp,
+                              name = "ghg")
   expect_true(has_level(bad, "warning", "magnitude"))
   expect_match(bad$message[1], "g <-> kg")
 

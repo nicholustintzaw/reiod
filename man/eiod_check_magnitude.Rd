@@ -37,6 +37,7 @@ grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
 eiod_check_magnitude(eiod_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
 
 # the same data in grams
-eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
+eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp,
+                     name = "ghg_grams")
 
 }

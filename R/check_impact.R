@@ -138,9 +138,10 @@ eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
   n_zero <- sum(fin == 0)
   if (n_zero > 0) {
     f[[length(f) + 1]] <- .eiod_finding("zero", name, "warning", n_zero,
-      sprintf(paste0("%d value(s) are exactly zero. A diet that was consumed ",
-                     "cannot have zero impact; this usually means an unmatched ",
-                     "food item summed to 0 instead of NA."), n_zero))
+      sprintf(paste0("%d value(s) are exactly zero. A diet that was ",
+                     "consumed cannot have zero impact; this usually means an ",
+                     "unmatched food item summed to 0 instead of NA."),
+              n_zero))
   }
 
   if (!is.null(indicator) && indicator %in% .eiod_valid_indicators()) {
@@ -202,7 +203,8 @@ eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
 #' @examples
 #' data(eiod_demo)
 #' grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
-#' eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv", name = "biodiv_pdf")
+#' eiod_check_precision(eiod_demo$biodiv_pdf, grp, "biodiv",
+#'                      name = "biodiv_pdf")
 #'
 #' # the same values after a single-precision round trip
 #' eiod_check_precision(signif(eiod_demo$biodiv_pdf, 7), grp, "biodiv",
@@ -241,7 +243,8 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
     } else {
       f[[length(f) + 1]] <- .eiod_finding(
         "precision", name, "note", n_distinct,
-        sprintf("up to %d significant digits retained across %d distinct values.",
+        sprintf(paste0("up to %d significant digits retained across %d ",
+                       "distinct values."),
                 mx, n_distinct))
     }
   } else if (n_distinct > 0) {
@@ -257,12 +260,13 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
     if (n_sub > 0) {
       f[[length(f) + 1]] <- .eiod_finding(
         "underflow", name, "error", n_sub,
-        sprintf("%d value(s) are subnormal (below %.3g) and have lost precision.",
+        sprintf(paste0("%d value(s) are subnormal (below %.3g) and have ",
+                       "lost precision."),
                 n_sub, .Machine$double.xmin))
     }
   }
 
-  # ---- cut-off proximity ---------------------------------------------------- #
+  # ---- cut-off proximity --------------------------------------------------- #
   if (is.null(group) || is.null(indicator)) {
     f[[length(f) + 1]] <- .eiod_finding(
       "proximity", name, "note", NA_integer_,
@@ -298,8 +302,8 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
       f[[length(f) + 1]] <- .eiod_finding(
         "proximity", name, "warning", length(near),
         sprintf(paste0("%d observation(s) sit within %.0e (relative) of %s. ",
-                       "Their classification is not robust to the precision in ",
-                       "your input. Rows: %s"),
+                       "Their classification is not robust to the precision ",
+                       "in your input. Rows: %s"),
                 length(near), tolerance, what, ex))
     } else {
       f[[length(f) + 1]] <- .eiod_finding(
@@ -340,10 +344,12 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
 #' eiod_check_magnitude(eiod_demo$ghg_kgco2e, "ghg", grp, name = "ghg_kgco2e")
 #'
 #' # the same data in grams
-#' eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp, name = "ghg_grams")
+#' eiod_check_magnitude(eiod_demo$ghg_kgco2e * 1000, "ghg", grp,
+#'                      name = "ghg_grams")
 #'
 #' @export
-eiod_check_magnitude <- function(value, indicator, group = NULL, name = "impact") {
+eiod_check_magnitude <- function(value, indicator, group = NULL,
+                                 name = "impact") {
 
   .eiod_check_indicator(indicator)
   n <- length(value)
