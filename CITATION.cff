@@ -12,6 +12,7 @@ authors:
   - given-names: "Nicholus Tint"
     family-names: "Zaw"
     email: "nicholustintzaw@gmail.com"
+    orcid: "https://orcid.org/0009-0002-8082-401X"
 version: 0.1.0
 license: MIT
 repository-code: "https://github.com/nicholustintzaw/reiod"

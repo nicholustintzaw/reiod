@@ -5,7 +5,8 @@ Authors@R:
     person(given = c("Nicholus", "Tint"),
            family = "Zaw",
            email = "nicholustintzaw@gmail.com",
-           role = c("aut", "cre"))
+           role = c("aut", "cre"),
+           comment = c(ORCID = "0009-0002-8082-401X"))
 Description: Calculates the dietary environmental impact metrics defined in
     Intake's Environmental Impacts of Foods methods paper: absolute threshold
     metrics against per capita planetary boundary shares, relative benchmark

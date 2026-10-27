@@ -97,11 +97,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Nicholus Tint Zaw \email{nicholustintzaw@gmail.com}
+\strong{Maintainer}: Nicholus Tint Zaw \email{nicholustintzaw@gmail.com} (\href{https://orcid.org/0009-0002-8082-401X}{ORCID})
 
 Authors:
 \itemize{
-  \item Nicholus Tint Zaw \email{nicholustintzaw@gmail.com}
+  \item Nicholus Tint Zaw \email{nicholustintzaw@gmail.com} (\href{https://orcid.org/0009-0002-8082-401X}{ORCID})
 }
 
 }
