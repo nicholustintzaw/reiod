@@ -368,7 +368,7 @@ eiod_broken$biodiv_pdf[c(14, 221)] <- "<1e-14"
 eiod_broken$ghg_kgco2e <- eiod_broken$ghg_kgco2e * 1000
 
 #  (c) sex coded 0/1 with no labels, so male/female is ambiguous
-eiod_broken$sex <- ifelse(eiod_demo$sex == "male", 1L, 0L)
+eiod_broken$sex <- as.integer(eiod_demo$sex == "male")
 
 #  (d) water rounded to 4 significant digits, as an Excel re-save would.
 #      Deliberately 4 and not 3: signif(x, 3) on values around 600 yields whole

@@ -80,7 +80,7 @@ eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
     return(.eiod_report(f, n_obs = n))
   }
   if (is.character(value)) {
-    suppressWarnings(num <- as.numeric(value))
+    num <- suppressWarnings(as.numeric(value))
     bad <- which(is.na(num) & !is.na(value) & trimws(value) != "")
     msg <- paste0("column is character, not numeric.")
     if (length(bad)) {

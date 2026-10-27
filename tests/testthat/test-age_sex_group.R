@@ -81,9 +81,9 @@ test_that("missing age or sex gives a missing group", {
 
 test_that("bad input is rejected", {
   expect_error(eiod_age_sex_group(c(-1, 40), c("male", "male")), "negative")
-  expect_error(eiod_age_sex_group(c(40), c("male", "female")), "same length")
+  expect_error(eiod_age_sex_group(40, c("male", "female")), "same length")
   expect_error(eiod_age_sex_group(factor("40"), "male"), "factor")
-  expect_warning(eiod_age_sex_group(c(400), "male"), "exceed 120")
+  expect_warning(eiod_age_sex_group(400, "male"), "exceed 120")
   expect_error(eiod_age_sex_group(c(40, 40), c("m", "f"), male = "m"),
                "both `male` and `female`")
 })

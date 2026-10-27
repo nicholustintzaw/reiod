@@ -21,7 +21,7 @@
 #'
 #' # numeric sex with no codes given: reported, not guessed
 #' eiod_check_demographics(eiod_demo$age,
-#'                         ifelse(eiod_demo$sex == "male", 1L, 0L))
+#'                         as.integer(eiod_demo$sex == "male"))
 #'
 #' @export
 eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),

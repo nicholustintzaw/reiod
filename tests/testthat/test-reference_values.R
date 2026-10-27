@@ -16,7 +16,7 @@ test_that("the cut-off dataset has the expected shape", {
   expect_identical(nrow(eiod_cutoffs), 616L)
   expect_identical(sum(eiod_cutoffs$metric == "abs"), 56L)
   expect_identical(sum(eiod_cutoffs$metric == "rel"), 560L)
-  expect_identical(length(unique(eiod_cutoffs$indicator)), 7L)
+  expect_length(unique(eiod_cutoffs$indicator), 7L)
   expect_true(all(eiod_cutoffs$demogroup %in% 1:8))
   expect_false(anyNA(eiod_cutoffs$value))
   expect_true(all(eiod_cutoffs$value > 0))
@@ -200,7 +200,7 @@ test_that("no indicator is converted on the way in any more", {
   thr <- as.numeric(eiod_lookup_cutoff("eutroph", 4, "abs"))
   v <- c(thr * 0.5, thr * (1 - 1e-9), thr, thr * 2)
 
-  expect_silent(got <- eiod_absolute_threshold(v, rep(4L, 4), "eutroph"))
+  got <- expect_silent(eiod_absolute_threshold(v, rep(4L, 4), "eutroph"))
   expect_identical(got, c(1L, 1L, 0L, 0L))
   expect_identical(got, as.integer(v < thr))
 
@@ -255,7 +255,7 @@ test_that("details = TRUE has the same four columns for every indicator", {
 test_that("relative cut-points are strictly increasing, row 10 repeats P90", {
   rel <- eiod_cutoffs[eiod_cutoffs$metric == "rel", ]
   series <- split(rel, list(rel$indicator, rel$demogroup), drop = TRUE)
-  expect_identical(length(series), 56L)
+  expect_length(series, 56L)
   for (s in series) {
     s <- s[order(s$row_order), ]
     expect_identical(nrow(s), 10L)

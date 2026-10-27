@@ -114,7 +114,7 @@ test_that("the magnitude check names a unit error", {
 test_that("demographic checks report rather than stop", {
   # numeric sex with no codes: eiod_age_sex_group() errors, the check reports
   r <- eiod_check_demographics(eiod_demo$age,
-                               ifelse(eiod_demo$sex == "male", 1L, 0L))
+                               as.integer(eiod_demo$sex == "male"))
   expect_s3_class(r, "eiod_check")
   expect_true(has_level(r, "error", "sex"))
   # the finding carries the full count and the underlying error message
@@ -154,7 +154,7 @@ test_that("eiod_check_data catches every planted fault in the broken file", {
                                      landarable = "land_arable_m2yr"),
                          age = "age", sex = "sex", gdqs = "gdqs")
 
-  expect_true(summary(rep)$n_error > 0)
+  expect_gt(summary(rep)$n_error, 0)
   expect_false(summary(rep)$pass)
 
   msgs <- paste(rep$message, collapse = " | ")
@@ -171,7 +171,7 @@ test_that("missing columns are reported, not silently skipped", {
 test_that("an unknown indicator name is rejected", {
   expect_error(eiod_check_data(eiod_demo, impacts = c(wrong = "biodiv_pdf")),
                "unknown indicator")
-  expect_error(eiod_check_data(eiod_demo, impacts = c("biodiv_pdf")),
+  expect_error(eiod_check_data(eiod_demo, impacts = "biodiv_pdf"),
                "NAMED character vector")
 })
 

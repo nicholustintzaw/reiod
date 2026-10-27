@@ -83,7 +83,7 @@ test_that("the demo data cannot drift back to the indicator keys", {
   # The rename is the fix for the documentation trap; a future edit that
   # restored `eiod_demo$ghg` would silently restore the trap with it.
   expect_false(any(names(eiod_demo) %in% eiod_indicators$indicator))
-  expect_identical(names(eiod_demo_map), eiod_indicators$indicator)
+  expect_named(eiod_demo_map, eiod_indicators$indicator)
   expect_true(all(eiod_demo_map %in% names(eiod_demo)))
 })
 
@@ -149,7 +149,7 @@ test_that("the *_all helpers take a map and allow a partial one", {
   expect_identical(part$band_biodiv,
                    eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv"))
 
-  expect_error(eiod_absolute_all(eiod_demo, grp, c("ghg_kgco2e")),
+  expect_error(eiod_absolute_all(eiod_demo, grp, "ghg_kgco2e"),
                "must be named with an indicator key")
   expect_error(eiod_absolute_all(eiod_demo, grp, c(nope = "ghg_kgco2e")),
                "unknown indicator key")

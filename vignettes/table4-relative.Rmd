@@ -71,7 +71,7 @@ head(d[, c("id", "group", "biodiv_pdf", "band_biodiv", "band_water")], 5)
 
 ```{r}
 bands <- eiod_relative_all(eiod_demo, grp, eiod_demo_map)
-round(sapply(bands, mean, na.rm = TRUE), 2)
+round(vapply(bands, mean, numeric(1), na.rm = TRUE), 2)
 ```
 
 ## E. Only the indicators you have
@@ -84,7 +84,7 @@ two <- c(landtotal = "land_total_m2yr", water = "water_litres")
 res <- eiod_relative_all(eiod_demo, grp, map = two)
 
 str(res)
-round(sapply(res, mean, na.rm = TRUE), 2)
+round(vapply(res, mean, numeric(1), na.rm = TRUE), 2)
 ```
 
 Identical to calling the single-indicator form:
