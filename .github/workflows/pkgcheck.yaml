@@ -5,13 +5,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
+# Manual only for now: the action crashes while writing its markdown summary
+# (ropensci-review-tools/pkgcheck#444) whenever the other CI workflows pass.
+# pkgcheck-summary.yaml runs the same checks on every push meanwhile. Restore
+# the push trigger below once #444 is fixed.
 on:
   # Manually trigger the Action under Actions/pkgcheck
   workflow_dispatch:
-  # Run on every push to main
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
 
 jobs:
   pkgcheck:

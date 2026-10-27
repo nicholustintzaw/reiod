@@ -1,0 +1,101 @@
+# Runs pkgcheck and reports its results without the markdown conversion that
+# currently crashes ropensci-review-tools/pkgcheck-action
+# (ropensci-review-tools/pkgcheck#444: "can only write character objects").
+#
+# Prints, in the job log and on the run's summary page:
+#   1. the pkgcheck summary - the same ✔ / ✖ list the review bot posts;
+#   2. every lintr finding from pkgcheck's goodpractice run, with file and line.
+# The job fails if the summary contains a ✖.
+#
+# Once pkgcheck#444 is fixed, pkgcheck.yaml can go back to running on push and
+# this workflow can be removed.
+
+name: pkgcheck-summary
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: read-all
+
+jobs:
+  pkgcheck-summary:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - name: Install GNU global
+        run: sudo apt-get update && sudo apt-get install -y global
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            ropensci-review-tools/pkgcheck
+          needs: check
+
+      - name: Install ctags (as the pkgcheck action does)
+        run: Rscript -e 'pkgstats::ctags_install()'
+
+      - name: Run pkgcheck and report
+        shell: Rscript {0}
+        run: |
+          options(width = 200)
+          x <- pkgcheck::pkgcheck(".")
+          s <- utils::capture.output(summary(x))
+          cat(s, sep = "\n")
+
+          lints <- x$goodpractice$lintr
+          if (inherits(lints, "try-error")) {
+            cat("\nlintr did not run:\n", as.character(lints), "\n")
+            lints <- list()
+          }
+          field <- function(f) vapply(lints, function(i) as.character(i[[f]]),
+                                      character(1))
+          if (length(lints) > 0) {
+            d <- data.frame(file = field("filename"),
+                            line = field("line_number"),
+                            linter = field("linter"),
+                            message = sub("\\.\\s.*$", ".", field("message")))
+            d <- d[order(d$file, as.integer(d$line)), ]
+            cat("\n", nrow(d), " lintr finding(s):\n", sep = "")
+            print(d, row.names = FALSE, right = FALSE)
+          } else {
+            d <- NULL
+            cat("\nlintr: no findings.\n")
+          }
+
+          out <- Sys.getenv("GITHUB_STEP_SUMMARY")
+          if (nzchar(out)) {
+            md <- c("## pkgcheck summary", "", "```", s, "```", "")
+            if (is.null(d)) {
+              md <- c(md, "## lintr", "", "No findings.")
+            } else {
+              md <- c(md, sprintf("## lintr: %d finding(s)", nrow(d)), "",
+                      "| file | line | linter | message |",
+                      "|---|---:|---|---|",
+                      sprintf("| %s | %s | %s | %s |", d$file, d$line,
+                              d$linter, gsub("|", "\\|", d$message,
+                                             fixed = TRUE)))
+            }
+            cat(md, file = out, sep = "\n", append = TRUE)
+          }
+
+          if (any(grepl("✖", s))) {
+            stop("pkgcheck reports at least one failing (✖) check.")
+          }
