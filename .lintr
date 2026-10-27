@@ -1,0 +1,14 @@
+exclusions: list(
+    # A single URL; it cannot be wrapped without breaking the link.
+    "R/data.R" = list(line_length_linter = 111),
+    # Each stopifnot() sits under its own comment explaining a different
+    # structural rule of the published tables; merging them would separate
+    # the explanation from the check. data-raw/ is not installed.
+    "data-raw/build_data.R" = list(consecutive_assertion_linter = Inf),
+    # The vignette demonstrates that the published text parses to exactly the
+    # stored double; the string is the point of the example.
+    "vignettes/precision.Rmd" = list(literal_coercion_linter = 43),
+    # The vignette demonstrates a censored cell ("<1e-14") silently becoming
+    # NA on import; the coercion is the point of the example.
+    "vignettes/troubleshooting.Rmd" = list(literal_coercion_linter = 64)
+  )
