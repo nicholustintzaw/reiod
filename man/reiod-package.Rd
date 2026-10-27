@@ -97,11 +97,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Nicholus Tint Zaw \email{n.t.zaw@cgiar.org}
+\strong{Maintainer}: Nicholus Tint Zaw \email{nicholustintzaw@gmail.com}
 
 Authors:
 \itemize{
-  \item Nicholus Tint Zaw \email{n.t.zaw@cgiar.org}
+  \item Nicholus Tint Zaw \email{nicholustintzaw@gmail.com}
 }
 
 }

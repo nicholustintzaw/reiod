@@ -4,7 +4,7 @@ Version: 0.1.0
 Authors@R:
     person(given = c("Nicholus", "Tint"),
            family = "Zaw",
-           email = "n.t.zaw@cgiar.org",
+           email = "nicholustintzaw@gmail.com",
            role = c("aut", "cre"))
 Description: Calculates the dietary environmental impact metrics defined in
     Intake's Environmental Impacts of Foods methods paper: absolute threshold

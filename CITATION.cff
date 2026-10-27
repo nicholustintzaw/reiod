@@ -11,7 +11,7 @@ type: software
 authors:
   - given-names: "Nicholus Tint"
     family-names: "Zaw"
-    email: "n.t.zaw@cgiar.org"
+    email: "nicholustintzaw@gmail.com"
 version: 0.1.0
 license: MIT
 repository-code: "https://github.com/nicholustintzaw/reiod"
