@@ -23,28 +23,28 @@
          "  c(ghg = \"ghg_kgco2e\", biodiv = \"biodiv_pdf\")", call. = FALSE)
   }
   nm <- names(map)
-  if (is.null(nm) || any(is.na(nm)) || any(nm == "")) {
+  if (is.null(nm) || anyNA(nm) || any(nm == "")) {
     stop("every element of `", arg, "` must be named with an indicator key.\n",
          "  The NAME is the indicator (one of ",
-         paste(.eiod_valid_indicators(), collapse = ", "), ");\n",
+         toString(.eiod_valid_indicators()), ");\n",
          "  the VALUE is the column in your data holding that impact.",
          call. = FALSE)
   }
   bad <- setdiff(nm, .eiod_valid_indicators())
   if (length(bad)) {
     stop("unknown indicator key(s) in `", arg, "`: ",
-         paste(bad, collapse = ", "), ".\n  Valid keys: ",
-         paste(.eiod_valid_indicators(), collapse = ", "),
+         toString(bad), ".\n  Valid keys: ",
+         toString(.eiod_valid_indicators()),
          ".\n  See eiod_list_indicators().", call. = FALSE)
   }
   if (anyDuplicated(nm)) {
     stop("`", arg, "` names an indicator more than once: ",
-         paste(unique(nm[duplicated(nm)]), collapse = ", "), ".", call. = FALSE)
+         toString(unique(nm[duplicated(nm)])), ".", call. = FALSE)
   }
   missing_cols <- setdiff(map, names(data))
   if (length(missing_cols)) {
     stop(length(missing_cols), " column(s) named in `", arg,
-         "` are not in `data`: ", paste(missing_cols, collapse = ", "), ".",
+         "` are not in `data`: ", toString(missing_cols), ".",
          call. = FALSE)
   }
   invisible(TRUE)

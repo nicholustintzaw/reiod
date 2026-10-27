@@ -221,8 +221,7 @@ print.eiod_cutoff <- function(x, digits = 15, ...) {
   cat(head_txt, " - ", attr(x, "indicator_label"), "\n", sep = "")
   cat("  unit: ", attr(x, "unit"), " per capita per day\n\n", sep = "")
 
-  val <- vapply(as.numeric(x), function(v) format(v, digits = digits),
-                character(1))
+  val <- vapply(as.numeric(x), format, character(1), digits = digits)
   lab <- names(x)
   if (is.null(lab)) lab <- rep("", length(x))
 

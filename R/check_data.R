@@ -73,7 +73,7 @@ eiod_check_data <- function(data, impacts = NULL, age = NULL, sex = NULL,
   missing_cols <- setdiff(unname(unlist(wanted)), names(data))
   if (length(missing_cols)) {
     parts[[length(parts) + 1]] <- .eiod_report(list(.eiod_finding(
-      "structure", paste(missing_cols, collapse = ", "), "error", NA_integer_,
+      "structure", toString(missing_cols), "error", NA_integer_,
       paste0("column(s) not found in ", src, "."))), n_obs = n)
   }
 
@@ -101,9 +101,9 @@ eiod_check_data <- function(data, impacts = NULL, age = NULL, sex = NULL,
     bad_ind <- setdiff(names(impacts), .eiod_valid_indicators())
     if (length(bad_ind)) {
       stop("unknown indicator name(s) in `impacts`: ",
-           paste(bad_ind, collapse = ", "),
+           toString(bad_ind),
            ".\n  Valid names: ",
-           paste(.eiod_valid_indicators(), collapse = ", "), call. = FALSE)
+           toString(.eiod_valid_indicators()), call. = FALSE)
     }
 
     for (ind in names(impacts)) {

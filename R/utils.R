@@ -29,7 +29,7 @@
   }
   ok <- .eiod_valid_indicators()
   if (!indicator %in% ok) {
-    stop("`indicator` must be one of: ", paste(ok, collapse = ", "),
+    stop("`indicator` must be one of: ", toString(ok),
          ".\n  Got: \"", indicator, "\".",
          "\n  See eiod_list_indicators() for labels and units.",
          call. = FALSE)
@@ -245,7 +245,7 @@
     obs <- sort(unique(sex[!is.na(sex)]))
     if (is.null(male)) {
       stop("`sex` is numeric, so reiod cannot tell which code means male.\n",
-           "  Observed codes: ", paste(obs, collapse = ", "), "\n",
+           "  Observed codes: ", toString(obs), "\n",
            "  Survey data uses 1/2 and 0/1 about equally often, and guessing ",
            "wrong would invert every result without any error.\n",
            "  Either state the codes:\n",
@@ -271,7 +271,7 @@
     if (length(unmatched)) {
       stop("these values of `sex` match neither male = ", male,
            " nor female = ", female, ":\n  ",
-           paste(unmatched, collapse = ", "),
+           toString(unmatched),
            "\n  Recode them or set `male` and `female` to match your data. ",
            "They are not dropped silently.", call. = FALSE)
     }

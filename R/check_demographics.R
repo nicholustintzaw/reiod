@@ -57,7 +57,7 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
         sprintf(paste0("%d age(s) above 120 years. If age is recorded in ",
                        "months, set age_units = \"months\"."), n_old))
     }
-    if (age_units == "years" && sum(!is.na(age_yr)) > 0 &&
+    if (age_units == "years" && !all(is.na(age_yr)) &&
         stats::median(age_yr, na.rm = TRUE) > 110) {
       f[[length(f) + 1]] <- .eiod_finding("units", "age", "warning",
         NA_integer_,
@@ -117,7 +117,7 @@ eiod_check_demographics <- function(age, sex, age_units = c("years", "months"),
                 "Female 0-1.9", "Female 2-4.9", "Female 5-9.9", "Female 10+")
       f[[length(f) + 1]] <- .eiod_finding("coverage", "group", "note",
         length(empty),
-        paste0("no observations in: ", paste(labs[empty], collapse = ", "),
+        paste0("no observations in: ", toString(labs[empty]),
                ". Group-specific estimates are unavailable for these."))
     }
 

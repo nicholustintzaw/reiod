@@ -297,7 +297,7 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
     near <- which(!is.na(rel_dist) & rel_dist < tolerance)
 
     if (length(near)) {
-      ex <- paste(utils::head(near, 6), collapse = ", ")
+      ex <- toString(utils::head(near, 6))
       if (length(near) > 6) ex <- paste0(ex, ", ...")
       f[[length(f) + 1]] <- .eiod_finding(
         "proximity", name, "warning", length(near),

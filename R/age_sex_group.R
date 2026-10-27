@@ -193,7 +193,7 @@ eiod_as_sex_factor <- function(x, male, female,
   unmatched <- setdiff(unique(x[!is.na(x)]), c(male, female))
   if (length(unmatched)) {
     stop("these values match neither male nor female:\n  ",
-         paste(unmatched, collapse = ", "),
+         toString(unmatched),
          "\n  Recode them first. They are not dropped silently.",
          call. = FALSE)
   }
