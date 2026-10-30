@@ -24,9 +24,9 @@
 #' eutrophication by 1000, **remove the division** - the package no longer
 #' expects it. `?eiod_cutoffs` has the detail.
 #'
-#' @section Values must be summed over ALL consumed foods - including any the
-#'   EIOF database cannot cost:
-#' Not every food has an impact factor. The EIOF country databases mark foods
+#' @section Sum over ALL consumed foods, including uncosted ones:
+#' Values must be summed over every food consumed, including any the EIOF
+#' database cannot cost. Not every food has an impact factor. The EIOF country databases mark foods
 #' with no available estimate, and such a food contributes **nothing** to the
 #' day's total - so a respondent who ate one has an impact that is understated
 #' by an unknown amount.
