@@ -17,7 +17,8 @@ eiod_hesd(
 
 \item{gdqs}{Numeric vector of Global Diet Quality Score values.}
 
-\item{group}{Integer vector of demographic groups 1-8.}
+\item{group}{Integer vector of demographic groups 1-8, from
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
 \item{form}{What to return. \code{"category"} (default) gives the four categories
 of Table 5a as a factor; \code{"binary"} gives 1 for category 1 and 0

@@ -56,14 +56,14 @@
 #' quality suite remains opt-in; run `vignette("precision")` first.
 #'
 #' @param value Numeric vector of per capita daily impact.
-#' @param group Integer vector of demographic groups 1-8, from
-#'   [eiod_age_sex_group()].
 #' @param indicator One of the seven indicator names; see
 #'   [eiod_list_indicators()].
 #' @param midpoint If `TRUE`, return the band midpoint percentile (5, 15, ...
 #'   95) instead of the band number. Default `FALSE`.
 #' @param details If `TRUE`, return a data frame that also reports the band
 #'   boundaries each observation was placed between. Default `FALSE`.
+#'
+#' @inheritParams eiod_absolute_threshold
 #'
 #' @return An integer vector of bands 1-10, or of midpoints if
 #'   `midpoint = TRUE`. `NA` where the impact or the group is missing.

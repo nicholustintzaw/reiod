@@ -9,7 +9,8 @@ eiod_low_impact(biodiversity, group, percentile = 30)
 \arguments{
 \item{biodiversity}{Numeric vector of per capita daily biodiversity loss.}
 
-\item{group}{Integer vector of demographic groups 1-8.}
+\item{group}{Integer vector of demographic groups 1-8, from
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
 \item{percentile}{The relative cut-off. Default 30, as published. Any other
 value is a sensitivity analysis, not the HDLEI metric, and is labelled as

@@ -31,10 +31,10 @@
 #'   names, for example `c(biodiv = "biodiv_pdf", ghg = "ghg_kg")`. Names must
 #'   be among the seven in [eiod_list_indicators()].
 #' @param age,sex,gdqs Column names, or `NULL` to skip that check.
-#' @param age_units `"years"` (default) or `"months"`.
 #' @param male,female Optional sex codes; see [eiod_age_sex_group()].
-#' @param tolerance Relative distance from a cut-off below which a
-#'   classification is treated as not robust. Default `1e-6`.
+#'
+#' @inheritParams eiod_check_demographics
+#' @inheritParams eiod_check_precision
 #'
 #' @return An object of class `eiod_check`. Use `summary()` for a single
 #'   pass/fail, or treat it as a data frame to filter the findings.

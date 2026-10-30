@@ -4,9 +4,10 @@
 #' of 23 or more. Exported on its own so it can be reported separately from the
 #' composites.
 #'
-#' @param gdqs Numeric vector of Global Diet Quality Score values.
 #' @param cutoff The score at or above which a diet counts as healthy. Default
 #'   23, as published. Change only with a documented reason.
+#'
+#' @inheritParams eiod_hesd
 #'
 #' @return An integer vector: `1` healthy, `0` not, `NA` where `gdqs` is
 #'   missing.
@@ -42,7 +43,8 @@ eiod_healthy_diet <- function(gdqs, cutoff = 23) {
 #'
 #' @param biodiversity Numeric vector of per capita daily biodiversity loss
 #'   (`PDF*year`).
-#' @param group Integer vector of demographic groups 1-8.
+#'
+#' @inheritParams eiod_hesd
 #'
 #' @return An integer vector: `1` sustainable, `0` not, `NA` where missing.
 #'
@@ -77,11 +79,11 @@ eiod_sustainable_diet <- function(biodiversity, group) {
 #' meets the HESD one, and HESD prevalence can never fall below HDLEI
 #' prevalence. The two are nested, not independent.
 #'
-#' @param biodiversity Numeric vector of per capita daily biodiversity loss.
-#' @param group Integer vector of demographic groups 1-8.
 #' @param percentile The relative cut-off. Default 30, as published. Any other
 #'   value is a sensitivity analysis, not the HDLEI metric, and is labelled as
 #'   such by a message.
+#'
+#' @inheritParams eiod_hesd
 #'
 #' @return An integer vector: `1` low impact, `0` not, `NA` where missing.
 #'
@@ -188,12 +190,13 @@ eiod_low_impact <- function(biodiversity, group, percentile = 30) {
 #'
 #' @param biodiversity Numeric vector of per capita daily biodiversity loss.
 #' @param gdqs Numeric vector of Global Diet Quality Score values.
-#' @param group Integer vector of demographic groups 1-8.
 #' @param form What to return. `"category"` (default) gives the four categories
 #'   of Table 5a as a factor; `"binary"` gives 1 for category 1 and 0
 #'   otherwise; `"components"` gives a data frame with both sub-indicators and
 #'   both combined forms.
 #' @param gdqs_cutoff GDQS threshold, default 23.
+#'
+#' @inheritParams eiod_absolute_threshold
 #'
 #' @return A factor, integer vector, or data frame, depending on `form`.
 #'
@@ -261,12 +264,10 @@ eiod_hesd <- function(biodiversity, gdqs, group,
 #' @section Age restriction:
 #' As for HESD, results are `NA` for respondents under 2 years.
 #'
-#' @param biodiversity Numeric vector of per capita daily biodiversity loss.
-#' @param gdqs Numeric vector of Global Diet Quality Score values.
-#' @param group Integer vector of demographic groups 1-8.
 #' @param form `"category"`, `"binary"` or `"components"`; see [eiod_hesd()].
-#' @param gdqs_cutoff GDQS threshold, default 23.
 #' @param percentile Relative cut-off, default 30 as published.
+#'
+#' @inheritParams eiod_hesd
 #'
 #' @return A factor, integer vector, or data frame, depending on `form`.
 #'

@@ -10,7 +10,8 @@ eiod_sustainable_diet(biodiversity, group)
 \item{biodiversity}{Numeric vector of per capita daily biodiversity loss
 (\code{PDF*year}).}
 
-\item{group}{Integer vector of demographic groups 1-8.}
+\item{group}{Integer vector of demographic groups 1-8, from
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 }
 \value{
 An integer vector: \code{1} sustainable, \code{0} not, \code{NA} where missing.

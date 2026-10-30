@@ -18,7 +18,8 @@ eiod_hdlei(
 
 \item{gdqs}{Numeric vector of Global Diet Quality Score values.}
 
-\item{group}{Integer vector of demographic groups 1-8.}
+\item{group}{Integer vector of demographic groups 1-8, from
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
 \item{form}{\code{"category"}, \code{"binary"} or \code{"components"}; see \code{\link[=eiod_hesd]{eiod_hesd()}}.}
 

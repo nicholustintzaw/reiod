@@ -203,12 +203,13 @@ eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
 #' @param group Optional demographic groups 1-8. Required for the cut-off
 #'   proximity check.
 #' @param indicator Optional indicator name. Required for the proximity check.
-#' @param name A label for the variable, used in the report.
 #' @param tolerance Relative distance from a cut-off below which a
 #'   classification is treated as not robust. Default `1e-6`.
 #' @param metric Which cut-off to measure distance from: `"abs"` (default) or
 #'   `"rel"`.
 #' @param percentile Required when `metric = "rel"`.
+#'
+#' @inheritParams eiod_check_impact
 #'
 #' @return An object of class `eiod_check`.
 #'
@@ -359,10 +360,11 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
 #' reference and be reported as such, rather than quietly producing a result in
 #' which every diet exceeds every threshold.
 #'
-#' @param value Numeric vector of impact values.
 #' @param indicator The indicator name.
 #' @param group Demographic groups 1-8, used to weight the expected median.
-#' @param name A label for the variable, used in the report.
+#'
+#' @inheritParams eiod_check_precision
+#' @inheritParams eiod_check_impact
 #'
 #' @return An object of class `eiod_check`.
 #'

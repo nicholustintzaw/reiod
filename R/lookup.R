@@ -231,7 +231,7 @@ eiod_lookup_cutoff <- function(indicator, group = NULL,
 #' @param x An `eiod_cutoff` object.
 #' @param digits Significant digits to display. The default of 15 shows every
 #'   published digit; the widest cut-off in the tables needs 14.
-#' @param ... Ignored.
+#' @inheritParams eiod_check_data
 #' @rdname eiod_lookup_cutoff
 #' @export
 print.eiod_cutoff <- function(x, digits = 15, ...) {

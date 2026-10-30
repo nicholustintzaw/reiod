@@ -113,7 +113,6 @@ eiod_absolute_all <- function(data, group, map, prefix = "abs_") {
 #'
 #' @inheritSection eiod_absolute_all The map is the point
 #'
-#' @param data A data frame with one row per respondent-day.
 #' @param group Integer vector of demographic groups 1-8, of length
 #'   `nrow(data)`.
 #' @param map Named character vector: names are indicator keys, values are
@@ -122,6 +121,8 @@ eiod_absolute_all <- function(data, group, map, prefix = "abs_") {
 #'   numbers. See [eiod_relative_band()] for why a mean band is not a mean
 #'   impact.
 #' @param prefix Prefix for the returned column names. Default `"band_"`.
+#'
+#' @inheritParams eiod_absolute_all
 #'
 #' @return A data frame with `nrow(data)` rows and one integer column per
 #'   indicator in `map`.
