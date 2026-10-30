@@ -93,8 +93,16 @@ eiod_age_sex_group <- function(age, sex,
                                male = NULL, female = NULL) {
 
   age_units <- match.arg(age_units)
+  .eiod_check_age_input(age, sex)
+  age_yr <- .eiod_age_in_years(age, age_units)
+  sex_code <- .eiod_resolve_sex(sex, male = male, female = female)
+  .eiod_assign_group(age_yr, sex_code)
+}
 
-  # ---- validate age ------------------------------------------------------- #
+
+#' Stop unless `age` is numeric and the same length as `sex`
+#' @noRd
+.eiod_check_age_input <- function(age, sex) {
   if (is.factor(age)) {
     stop("`age` is a factor. as.numeric() on a factor returns level codes, ",
          "not ages. Convert with as.numeric(as.character(age)).", call. = FALSE)
@@ -106,7 +114,13 @@ eiod_age_sex_group <- function(age, sex,
     stop("`age` and `sex` must be the same length: ", length(age), " vs ",
          length(sex), ".", call. = FALSE)
   }
+  invisible(TRUE)
+}
 
+
+#' Age in years; stops on negative ages and warns on ages above 120
+#' @noRd
+.eiod_age_in_years <- function(age, age_units) {
   age_yr <- if (age_units == "months") age / 12 else age
 
   neg <- !is.na(age_yr) & age_yr < 0
@@ -119,12 +133,15 @@ eiod_age_sex_group <- function(age, sex,
             "If age is recorded in months, set age_units = \"months\".",
             call. = FALSE)
   }
+  age_yr
+}
 
-  # ---- resolve sex -------------------------------------------------------- #
-  sex_code <- .eiod_resolve_sex(sex, male = male, female = female)
 
-  # ---- assign ------------------------------------------------------------- #
-  # Half-open intervals; see the "Age boundaries" section above.
+#' The demographic group 1-8 from age in years and sex code (1 male, 2 female)
+#' @noRd
+.eiod_assign_group <- function(age_yr, sex_code) {
+  # Half-open intervals; see the "Age boundaries" section of
+  # ?eiod_age_sex_group.
   band <- rep(NA_integer_, length(age_yr))
   ok <- !is.na(age_yr)
   band[ok & age_yr <   2]                  <- 1L
