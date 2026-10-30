@@ -92,9 +92,8 @@ eiod_sustainable_diet <- function(biodiversity, group) {
 #'
 #' @export
 eiod_low_impact <- function(biodiversity, group, percentile = 30) {
-  if (!is.numeric(percentile) || length(percentile) != 1L ||
-      is.na(percentile) || percentile %% 10 != 0 ||
-      percentile < 10 || percentile > 90) {
+  # isTRUE(): an NA percentile gets this message, not R's "missing value" error
+  if (!isTRUE(.eiod_is_decile(percentile))) {
     stop("`percentile` must be a multiple of 10 between 10 and 90. ",
          "The published cut-points are deciles only.", call. = FALSE)
   }
