@@ -41,7 +41,7 @@ eiod_healthy_diet <- function(gdqs, cutoff = 23) {
 #' following the methods paper.
 #'
 #' @param biodiversity Numeric vector of per capita daily biodiversity loss
-#'   (PDF*year).
+#'   (`PDF*year`).
 #' @param group Integer vector of demographic groups 1-8.
 #'
 #' @return An integer vector: `1` sustainable, `0` not, `NA` where missing.

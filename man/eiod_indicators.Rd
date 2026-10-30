@@ -7,16 +7,16 @@
 \format{
 A data frame with 7 rows and 3 columns:
 \describe{
-  \item{indicator}{Short name, as passed to the `eiod_*` functions}
-  \item{indicator_label}{Human-readable name}
-  \item{unit}{Required unit, per capita per day}
+\item{indicator}{Short name, as passed to the \verb{eiod_*} functions}
+\item{indicator_label}{Human-readable name}
+\item{unit}{Required unit, per capita per day}
 }
 }
 \usage{
 eiod_indicators
 }
 \description{
-Indicator names accepted by the `eiod_*` functions, with their labels and
+Indicator names accepted by the \verb{eiod_*} functions, with their labels and
 the units your impact values must be in.
 }
 \examples{

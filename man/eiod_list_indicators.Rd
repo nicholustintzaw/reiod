@@ -7,27 +7,26 @@
 eiod_list_indicators(quiet = FALSE)
 }
 \arguments{
-\item{quiet}{If `TRUE`, return the table without printing it.}
+\item{quiet}{If \code{TRUE}, return the table without printing it.}
 }
 \value{
 A data frame of indicator, label and unit, invisibly when printing.
 }
 \description{
-Prints the indicator names the `eiod_*` functions accept, with their labels
+Prints the indicator names the \verb{eiod_*} functions accept, with their labels
 and the units your impact values must be in.
 }
 \section{If your data comes from the EIOF database}{
 
-**Supply it as it comes - nothing needs converting.** The units in this
-table are the EIOF database's own: `Land (m2/kg)`, `GHG (kg CO2e/kg)`,
-`Eutr. (g PO43-e/kg)`, `Water Use (L/kg)`. Multiply by kilograms of food
+\strong{Supply it as it comes - nothing needs converting.} The units in this
+table are the EIOF database's own: \code{Land (m2/kg)}, \verb{GHG (kg CO2e/kg)},
+\verb{Eutr. (g PO43-e/kg)}, \verb{Water Use (L/kg)}. Multiply by kilograms of food
 consumed, sum to the respondent-day, and pass the result straight in.
 
-\preformatted{
-kg food consumed  x  EIOF intensity per kg  =  the value this package wants
-}
+\if{html}{\out{<div class="sourceCode">}}\preformatted{kg food consumed  x  EIOF intensity per kg  =  the value this package wants
+}\if{html}{\out{</div>}}
 
-**This changed in October 2026.** Eutrophication used to be the exception:
+\strong{This changed in October 2026.} Eutrophication used to be the exception:
 the methods paper printed its Table 3 threshold in kilograms while the
 database reported grams, so a conversion was needed and this package applied
 one. Intake has since confirmed that both cut-off tables are in grams and
@@ -35,33 +34,33 @@ supplied corrected Table 3 values. Every indicator is now on a single unit
 and no conversion happens anywhere.
 
 If you are revisiting a script written before that change and it divides
-eutrophication by 1000, **remove the division** - the package no longer
-expects it. `?eiod_cutoffs` has the detail.
+eutrophication by 1000, \strong{remove the division} - the package no longer
+expects it. \code{?eiod_cutoffs} has the detail.
 }
 
 \section{Sum over ALL consumed foods, including uncosted ones}{
 
 Values must be summed over every food consumed, including any the EIOF
 database cannot cost. Not every food has an impact factor. The EIOF country databases mark foods
-with no available estimate, and such a food contributes **nothing** to the
+with no available estimate, and such a food contributes \strong{nothing} to the
 day's total - so a respondent who ate one has an impact that is understated
 by an unknown amount.
 
-**This package cannot detect that.** It receives one number per
+\strong{This package cannot detect that.} It receives one number per
 respondent-day; whether that number was summed over complete or incomplete
 coverage is not recoverable from the number itself. The only exception is
-the extreme case: if every food lacked a factor and the sum was coded `0`
-rather than `NA`, [eiod_check_impact()] flags the zero.
+the extreme case: if every food lacked a factor and the sum was coded \code{0}
+rather than \code{NA}, \code{\link[=eiod_check_impact]{eiod_check_impact()}} flags the zero.
 
 It matters more here than in most analyses because these metrics compare
-each respondent against a **fixed external cut-off** rather than against your
+each respondent against a \strong{fixed external cut-off} rather than against your
 sample, so uneven coverage shifts results with nothing in the output looking
 wrong.
 
 Count it where it is still visible - when you aggregate to the
-respondent-day - preferably as the **share of consumed weight** carrying a
+respondent-day - preferably as the \strong{share of consumed weight} carrying a
 factor rather than a count of items, and report it with any prevalence. See
-`vignette("troubleshooting")`.
+\code{vignette("troubleshooting")}.
 }
 
 \examples{

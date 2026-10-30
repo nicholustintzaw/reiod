@@ -178,13 +178,13 @@ NULL
 #'   \item{age}{Age in years, 0.5 to 65}
 #'   \item{sex}{Factor with levels `"male"` and `"female"`}
 #'   \item{land_total_m2yr, land_arable_m2yr, land_pasture_m2yr}{Land use,
-#'     m2*year}
+#'     `m2*year`}
 #'   \item{ghg_kgco2e}{Greenhouse gas emissions, kg CO2eq}
 #'   \item{eutroph_gpo4e}{Eutrophication potential, **g** PO4(3-)eq. Grams,
 #'     like the EIOF databases and both cut-off tables. Renamed from
 #'     `eutroph_kgpo4e` and rescaled in 0.1.0; see `vignette("eutrophication")`}
 #'   \item{water_litres}{Water use, litres}
-#'   \item{biodiv_pdf}{Biodiversity loss, PDF*year}
+#'   \item{biodiv_pdf}{Biodiversity loss, `PDF*year`}
 #'   \item{gdqs}{Global Diet Quality Score}
 #' }
 #'

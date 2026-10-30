@@ -20,24 +20,24 @@ eiod_hdlei(
 
 \item{group}{Integer vector of demographic groups 1-8.}
 
-\item{form}{`"category"`, `"binary"` or `"components"`; see [eiod_hesd()].}
+\item{form}{\code{"category"}, \code{"binary"} or \code{"components"}; see \code{\link[=eiod_hesd]{eiod_hesd()}}.}
 
 \item{gdqs_cutoff}{GDQS threshold, default 23.}
 
 \item{percentile}{Relative cut-off, default 30 as published.}
 }
 \value{
-A factor, integer vector, or data frame, depending on `form`.
+A factor, integer vector, or data frame, depending on \code{form}.
 }
 \description{
-Combines the same diet quality criterion as [eiod_hesd()] with a
-**relative** low-impact criterion.
+Combines the same diet quality criterion as \code{\link[=eiod_hesd]{eiod_hesd()}} with a
+\strong{relative} low-impact criterion.
 }
 \details{
 \itemize{
-  \item healthy: GDQS >= 23
-  \item low environmental impacts: biodiversity loss below the 30th
-    percentile of the Table 4g relative benchmark distribution
+\item healthy: GDQS >= 23
+\item low environmental impacts: biodiversity loss below the 30th
+percentile of the Table 4g relative benchmark distribution
 }
 
 The diet quality criterion is identical to HESD's. The only difference is
@@ -49,8 +49,8 @@ distribution.
 
 The HDLEI environmental cut-off is uniformly about 1.52 times stricter than
 the HESD one, in every demographic group, because both are the same
-all-population figure scaled by the same weight. So `eiod_hdlei(...) == 1`
-implies `eiod_hesd(...) == 1`, and HESD prevalence can never fall below
+all-population figure scaled by the same weight. So \code{eiod_hdlei(...) == 1}
+implies \code{eiod_hesd(...) == 1}, and HESD prevalence can never fall below
 HDLEI prevalence. Reporting both is still informative: the gap between them
 is the share of diets sitting between the two cut-offs. But they are not two
 independent dimensions.
@@ -58,7 +58,7 @@ independent dimensions.
 
 \section{Age restriction}{
 
-As for HESD, results are `NA` for respondents under 2 years.
+As for HESD, results are \code{NA} for respondents under 2 years.
 }
 
 \examples{

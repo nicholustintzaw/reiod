@@ -7,19 +7,18 @@
 \format{
 A data frame with 600 rows and 11 columns:
 \describe{
-  \item{id}{Row identifier}
-  \item{age}{Age in years, 0.5 to 65}
-  \item{sex}{Factor with levels `"male"` and `"female"`}
-  \item{land_total_m2yr, land_arable_m2yr, land_pasture_m2yr}{Land use,
-    m2*year}
-  \item{ghg_kgco2e}{Greenhouse gas emissions, kg CO2eq}
-  \item{eutroph_gpo4e}{Eutrophication potential, \strong{g} PO4(3-)eq. Grams,
-    like the EIOF databases and both cut-off tables. Renamed from
-    \code{eutroph_kgpo4e} and rescaled in 0.1.0; see
-    \code{vignette("eutrophication")}}
-  \item{water_litres}{Water use, litres}
-  \item{biodiv_pdf}{Biodiversity loss, PDF*year}
-  \item{gdqs}{Global Diet Quality Score}
+\item{id}{Row identifier}
+\item{age}{Age in years, 0.5 to 65}
+\item{sex}{Factor with levels \code{"male"} and \code{"female"}}
+\item{land_total_m2yr, land_arable_m2yr, land_pasture_m2yr}{Land use,
+\code{m2*year}}
+\item{ghg_kgco2e}{Greenhouse gas emissions, kg CO2eq}
+\item{eutroph_gpo4e}{Eutrophication potential, \strong{g} PO4(3-)eq. Grams,
+like the EIOF databases and both cut-off tables. Renamed from
+\code{eutroph_kgpo4e} and rescaled in 0.1.0; see \code{vignette("eutrophication")}}
+\item{water_litres}{Water use, litres}
+\item{biodiv_pdf}{Biodiversity loss, \code{PDF*year}}
+\item{gdqs}{Global Diet Quality Score}
 }
 }
 \usage{
@@ -30,25 +29,25 @@ Six hundred simulated respondent-days with age, sex, the seven impact totals
 and a GDQS score, for use in examples, vignettes and tests.
 }
 \details{
-**These are not real survey data.** The values were drawn from lognormal
+\strong{These are not real survey data.} The values were drawn from lognormal
 distributions chosen to be roughly plausible. No prevalence computed from
 this dataset carries any substantive meaning.
 
-A small amount of missingness is included in `biodiv_pdf` and `gdqs` so
+A small amount of missingness is included in \code{biodiv_pdf} and \code{gdqs} so
 examples show how it propagates.
 }
 \section{The column names are deliberately not the indicator keys}{
 
-Until October 2026 the impact columns were called `landtotal`, `ghg`,
-`biodiv` and so on - the same strings the `indicator` argument takes. That
+Until October 2026 the impact columns were called \code{landtotal}, \code{ghg},
+\code{biodiv} and so on - the same strings the \code{indicator} argument takes. That
 made the examples tidy and taught something false: a loop over
-`eiod_demo[[ind]]` works only because the columns happen to be named after
+\code{eiod_demo[[ind]]} works only because the columns happen to be named after
 the keys, and readers concluded that reiod required those names.
 
 It never did. reiod takes vectors, so any column name has always worked. The
 columns now carry survey-realistic names with their units, which forces every
 example to state the indicator-to-column mapping explicitly. See
-[eiod_demo_map] and [eiod_absolute_all()].
+\link{eiod_demo_map} and \code{\link[=eiod_absolute_all]{eiod_absolute_all()}}.
 }
 
 \examples{
@@ -56,9 +55,9 @@ data(eiod_demo)
 head(eiod_demo)
 }
 \seealso{
-[eiod_demo_map] for the indicator-to-column mapping. A deliberately
-  broken copy ships as
-  `system.file("extdata", "eiod_broken.csv", package = "reiod")` and is used
-  in `vignette("troubleshooting")`.
+\link{eiod_demo_map} for the indicator-to-column mapping. A deliberately
+broken copy ships as
+\code{system.file("extdata", "eiod_broken.csv", package = "reiod")} and is used
+in \code{vignette("troubleshooting")}.
 }
 \keyword{datasets}

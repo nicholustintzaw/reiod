@@ -16,16 +16,16 @@ value is a sensitivity analysis, not the HDLEI metric, and is labelled as
 such by a message.}
 }
 \value{
-An integer vector: `1` low impact, `0` not, `NA` where missing.
+An integer vector: \code{1} low impact, \code{0} not, \code{NA} where missing.
 }
 \description{
 The environmental half of the HDLEI metric: biodiversity loss below the
-30th percentile of the Table 4g **relative** benchmark distribution.
+30th percentile of the Table 4g \strong{relative} benchmark distribution.
 Exported on its own so it can be reported separately from the composite.
 }
 \section{Relationship to the HESD criterion}{
 
-This criterion is uniformly stricter than [eiod_sustainable_diet()]. For
+This criterion is uniformly stricter than \code{\link[=eiod_sustainable_diet]{eiod_sustainable_diet()}}. For
 biodiversity the relative P30 cut-off sits below the absolute threshold in
 every one of the eight demographic groups, by the same constant factor of
 about 1.52, because both are the same all-population figure scaled by the

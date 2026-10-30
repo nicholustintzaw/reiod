@@ -19,29 +19,29 @@ eiod_hesd(
 
 \item{group}{Integer vector of demographic groups 1-8.}
 
-\item{form}{What to return. `"category"` (default) gives the four categories
-of Table 5a as a factor; `"binary"` gives 1 for category 1 and 0
-otherwise; `"components"` gives a data frame with both sub-indicators and
+\item{form}{What to return. \code{"category"} (default) gives the four categories
+of Table 5a as a factor; \code{"binary"} gives 1 for category 1 and 0
+otherwise; \code{"components"} gives a data frame with both sub-indicators and
 both combined forms.}
 
 \item{gdqs_cutoff}{GDQS threshold, default 23.}
 }
 \value{
-A factor, integer vector, or data frame, depending on `form`.
+A factor, integer vector, or data frame, depending on \code{form}.
 }
 \description{
-Combines a diet quality criterion with an **absolute** environmental
+Combines a diet quality criterion with an \strong{absolute} environmental
 sustainability criterion.
 }
 \details{
 \itemize{
-  \item healthy: GDQS >= 23
-  \item environmentally sustainable: biodiversity loss below the Table 3
-    absolute threshold
+\item healthy: GDQS >= 23
+\item environmentally sustainable: biodiversity loss below the Table 3
+absolute threshold
 }
 
 Both criteria are also available on their own, as
-[eiod_healthy_diet()] and [eiod_sustainable_diet()]. This function calls
+\code{\link[=eiod_healthy_diet]{eiod_healthy_diet()}} and \code{\link[=eiod_sustainable_diet]{eiod_sustainable_diet()}}. This function calls
 those two rather than re-implementing them, so the sub-indicators and the
 composite cannot drift apart.
 }
@@ -50,15 +50,15 @@ composite cannot drift apart.
 The methods paper restricts the composite metrics to respondents aged 2
 years and older, because the GDQS has not been validated below that age.
 Table 5a prints six demographic columns, not eight. Results are therefore
-`NA` for groups 1 and 5, and a message reports how many observations that
+\code{NA} for groups 1 and 5, and a message reports how many observations that
 affects. If your sample includes under-twos, decide explicitly whether they
 belong in the analysis denominator at all.
 }
 
 \section{Relationship to HDLEI}{
 
-HESD and [eiod_hdlei()] are nested, not independent: every HDLEI diet is
-also a HESD diet. See [eiod_low_impact()] for why. Do not present them as
+HESD and \code{\link[=eiod_hdlei]{eiod_hdlei()}} are nested, not independent: every HDLEI diet is
+also a HESD diet. See \code{\link[=eiod_low_impact]{eiod_low_impact()}} for why. Do not present them as
 two dimensions of a 2x2.
 }
 

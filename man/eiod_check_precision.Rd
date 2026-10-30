@@ -25,15 +25,15 @@ proximity check.}
 \item{name}{A label for the variable, used in the report.}
 
 \item{tolerance}{Relative distance from a cut-off below which a
-classification is treated as not robust. Default `1e-6`.}
+classification is treated as not robust. Default \code{1e-6}.}
 
-\item{metric}{Which cut-off to measure distance from: `"abs"` (default) or
-`"rel"`.}
+\item{metric}{Which cut-off to measure distance from: \code{"abs"} (default) or
+\code{"rel"}.}
 
-\item{percentile}{Required when `metric = "rel"`.}
+\item{percentile}{Required when \code{metric = "rel"}.}
 }
 \value{
-An object of class `eiod_check`.
+An object of class \code{eiod_check}.
 }
 \description{
 Two related checks: how many significant digits the stored values actually
@@ -42,15 +42,15 @@ the classification could flip under rounding.
 }
 \section{The small exponent is not the problem}{
 
-R's `numeric` is an IEEE 754 double: around 15 to 17 significant decimal
+R's \code{numeric} is an IEEE 754 double: around 15 to 17 significant decimal
 digits, with an exponent range to about 1e+/-308. A biodiversity value of
-`3.6896e-13` is comfortably representable, and comparison with `<` is exact.
+\code{3.6896e-13} is comfortably representable, and comparison with \code{<} is exact.
 No epsilon is needed, provided both sides carry full precision.
 
-The real risk is **ingestion fidelity** - digits lost before R ever sees the
-number. Excel displays `3.69E-13` and can write back only what it displays;
-CSV exports written with a `%.6g`-style format truncate silently; Stata's
-`float` storage holds about 7 significant digits; database `REAL` columns are
+The real risk is \strong{ingestion fidelity} - digits lost before R ever sees the
+number. Excel displays \code{3.69E-13} and can write back only what it displays;
+CSV exports written with a \verb{\%.6g}-style format truncate silently; Stata's
+\code{float} storage holds about 7 significant digits; database \code{REAL} columns are
 single precision for the same reason.
 }
 
@@ -63,9 +63,9 @@ Measured on simulated data, full-precision values return 17, a
 single-precision round trip returns exactly 7, and an Excel three-digit
 re-save returns 3, so the cases separate cleanly.
 
-The second is the one that answers whether precision matters *here*. It
+The second is the one that answers whether precision matters \emph{here}. It
 computes, for each observation, the relative distance to the cut-off that
-applies to it, and counts those within `tolerance`. Usually the answer is
+applies to it, and counts those within \code{tolerance}. Usually the answer is
 zero and the worry can be set aside; when it is not, you get the row numbers.
 
 Nothing is repaired. Digits that were never read cannot be recovered.

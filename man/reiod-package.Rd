@@ -11,8 +11,8 @@ Environmental Impacts of Foods methods paper (January 2026).
 }
 \section{What this package is not}{
 
-`reiod` **does not contain the Environmental Impacts of Foods database.** It
-ships the published metric *cut-offs* and applies them to impact values you
+\code{reiod} \strong{does not contain the Environmental Impacts of Foods database.} It
+ships the published metric \emph{cut-offs} and applies them to impact values you
 have already derived. Matching food items to impact factors, applying
 edible-portion, processing and cooking-yield adjustments, and summing to the
 respondent-day is upstream work that this package starts after. It also does
@@ -23,21 +23,21 @@ GDQS value as input.
 \section{The three metric families}{
 
 \describe{
-  \item{Absolute threshold (Table 3)}{[eiod_absolute_threshold()] - is the
-    diet below the per capita daily share of a planetary boundary?}
-  \item{Relative benchmark (Tables 4a-4g)}{[eiod_relative_band()] - where
-    does the diet sit in a fixed global reference distribution?}
-  \item{Composite (Tables 5a, 5b)}{[eiod_hesd()] and [eiod_hdlei()] -
-    diet quality combined with environmental impact, each also returning its
-    two criteria as separate sub-indicators.}
+\item{Absolute threshold (Table 3)}{\code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}} - is the
+diet below the per capita daily share of a planetary boundary?}
+\item{Relative benchmark (Tables 4a-4g)}{\code{\link[=eiod_relative_band]{eiod_relative_band()}} - where
+does the diet sit in a fixed global reference distribution?}
+\item{Composite (Tables 5a, 5b)}{\code{\link[=eiod_hesd]{eiod_hesd()}} and \code{\link[=eiod_hdlei]{eiod_hdlei()}} -
+diet quality combined with environmental impact, each also returning its
+two criteria as separate sub-indicators.}
 }
 All of them need the eight-category demographic group from
-[eiod_age_sex_group()].
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.
 }
 
 \section{Check your data first}{
 
-[eiod_check_data()] covers variable type, plausibility, numerical precision
+\code{\link[=eiod_check_data]{eiod_check_data()}} covers variable type, plausibility, numerical precision
 and unit magnitude. Running it first is cheap and catches the failure modes
 that otherwise produce confidently wrong numbers.
 }
@@ -45,25 +45,25 @@ that otherwise produce confidently wrong numbers.
 \section{Three things to know before reporting results}{
 
 \enumerate{
-  \item **Eutrophication is in grams PO4(3-)eq in every table.** Intake
-    confirmed this in October 2026 and supplied corrected Table 3
-    thresholds, so eight rows of [eiod_cutoffs] differ from the published
-    PDF (marked by its `value_source` column). Supply grams and convert
-    nothing. See `vignette("eutrophication")`.
-  \item A **low relative band is not evidence of sustainability**. For
-    greenhouse gases even band 1 exceeds the planetary boundary; for water
-    even band 10 is below it.
-  \item **HDLEI is nested inside HESD** - every HDLEI diet is also a HESD
-    diet. They are not two independent dimensions.
+\item \strong{Eutrophication is in grams PO4(3-)eq in every table.} Intake
+confirmed this in October 2026 and supplied corrected Table 3
+thresholds, so eight rows of \link{eiod_cutoffs} differ from the published
+PDF (marked by its \code{value_source} column). Supply grams and convert
+nothing. See \code{vignette("eutrophication")}.
+\item A \strong{low relative band is not evidence of sustainability}. For
+greenhouse gases even band 1 exceeds the planetary boundary; for water
+even band 10 is below it.
+\item \strong{HDLEI is nested inside HESD} - every HDLEI diet is also a HESD
+diet. They are not two independent dimensions.
 }
 }
 
 \section{Dependencies}{
 
-None beyond base R. `reiod` imports only `stats` and `utils`, which ship
+None beyond base R. \code{reiod} imports only \code{stats} and \code{utils}, which ship
 with every R installation, so it installs with no dependency tree. The
 consequence is a plain vector API rather than tidy evaluation: pass
-`df$biodiv`, not `biodiv`.
+\code{df$biodiv}, not \code{biodiv}.
 }
 
 \examples{
@@ -85,8 +85,8 @@ table(eiod_relative_band(d$ghg_kgco2e, d$grp, "ghg"))
 # Tables 5a and 5b: composites
 table(eiod_hesd(d$biodiv_pdf, d$gdqs, d$grp))
 table(eiod_hdlei(d$biodiv_pdf, d$gdqs, d$grp))
-}
 
+}
 \seealso{
 Useful links:
 \itemize{

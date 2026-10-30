@@ -46,7 +46,7 @@
 #' midpoints (5, 15, ... 95) for that purpose, but note the limitation:
 #' averaging an ordinal band index treats the bands as equally spaced on the
 #' impact scale, and they are not. In Table 4c the P10-P20 gap is 0.002
-#' m2*year while the P80-P90 gap is 1.5 m2*year. A mean band is a summary of
+#' `m2*year` while the P80-P90 gap is 1.5 `m2*year`. A mean band is a summary of
 #' *position in the reference distribution*; it is not a summary of impact. For
 #' a mean impact, average the impact variable itself.
 #'

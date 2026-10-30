@@ -9,57 +9,57 @@ eiod_absolute_threshold(value, group, indicator, details = FALSE)
 \arguments{
 \item{value}{Numeric vector of per capita daily impact, already summed
 across everything the respondent consumed that day, in the unit shown by
-[eiod_list_indicators()].}
+\code{\link[=eiod_list_indicators]{eiod_list_indicators()}}.}
 
 \item{group}{Integer vector of demographic groups 1-8, from
-[eiod_age_sex_group()].}
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
-\item{indicator}{One of `"landtotal"`, `"landarable"`, `"landpasture"`,
-`"ghg"`, `"eutroph"`, `"water"`, `"biodiv"`.}
+\item{indicator}{One of \code{"landtotal"}, \code{"landarable"}, \code{"landpasture"},
+\code{"ghg"}, \code{"eutroph"}, \code{"water"}, \code{"biodiv"}.}
 
-\item{details}{If `TRUE`, return a data frame that also reports the threshold
+\item{details}{If \code{TRUE}, return a data frame that also reports the threshold
 each observation was actually compared against, rather than just the
-result. Default `FALSE`.}
+result. Default \code{FALSE}.}
 }
 \value{
-An integer vector: `1` below the threshold, `0` at or above it, `NA`
-  where the impact or the group is missing.
+An integer vector: \code{1} below the threshold, \code{0} at or above it, \code{NA}
+where the impact or the group is missing.
 
-  If `details = TRUE`, a data frame with one row per observation and the
-  columns `value`, `group`, `cutoff` and `below`. `cutoff` is the Table 3
-  threshold applied to that row, so a reader can audit the comparison without
-  opening the reference table. (Equivalent to `threshvar()` in the companion
-  Stata command.) The columns are the same for every indicator; an extra
-  `value_kg` column existed only while eutrophication needed converting,
-  and is gone.
+If \code{details = TRUE}, a data frame with one row per observation and the
+columns \code{value}, \code{group}, \code{cutoff} and \code{below}. \code{cutoff} is the Table 3
+threshold applied to that row, so a reader can audit the comparison without
+opening the reference table. (Equivalent to \code{threshvar()} in the companion
+Stata command.) The columns are the same for every indicator; an extra
+\code{value_kg} column existed only while eutrophication needed converting,
+and is gone.
 }
 \description{
-Codes a one-day diet `1` if its per capita environmental impact falls below
+Codes a one-day diet \code{1} if its per capita environmental impact falls below
 the demographic group's share of the per capita daily planetary boundary,
-and `0` if it does not.
+and \code{0} if it does not.
 }
 \section{Interpretation}{
 
 "x\% of one-day diets fall below the absolute per capita daily threshold
-established for \[indicator\]."
+established for [indicator]."
 
 This is a pass/fail against a planetary boundary share. It says nothing
 about how the diet compares with other diets; for that, see
-[eiod_relative_band()]. The two metric families answer different questions
+\code{\link[=eiod_relative_band]{eiod_relative_band()}}. The two metric families answer different questions
 and will not agree.
 }
 
 \section{The comparison is strict}{
 
-The published cut-offs carry a `<` sign, so a diet sitting exactly on the
-threshold is *not* below it and is coded `0`.
+The published cut-offs carry a \code{<} sign, so a diet sitting exactly on the
+threshold is \emph{not} below it and is coded \code{0}.
 }
 
 \section{Missing values}{
 
-A missing impact returns `NA`, not `0`. This matters more than it looks: in
-R, `NA < threshold` is `NA`, but a careless implementation using
-`ifelse(value < threshold, 1, 0)` on a comparison that has already been
+A missing impact returns \code{NA}, not \code{0}. This matters more than it looks: in
+R, \code{NA < threshold} is \code{NA}, but a careless implementation using
+\code{ifelse(value < threshold, 1, 0)} on a comparison that has already been
 coerced can turn missing data into an apparent threshold breach. Here the
 guard is explicit.
 }
@@ -70,27 +70,27 @@ Between July and October 2026 this function divided eutrophication values
 by 1000, because the methods paper printed the Table 3 eutrophication row
 in kilograms while Table 4f and the EIOF database used grams.
 
-**Intake confirmed in October 2026 that both tables are in grams** and
-supplied corrected Table 3 thresholds. They are in [eiod_cutoffs], flagged
-by its `value_source` column, and every indicator now compares directly.
+\strong{Intake confirmed in October 2026 that both tables are in grams} and
+supplied corrected Table 3 thresholds. They are in \link{eiod_cutoffs}, flagged
+by its \code{value_source} column, and every indicator now compares directly.
 
-**Supply eutrophication in grams and convert nothing.** If you are
+\strong{Supply eutrophication in grams and convert nothing.} If you are
 revisiting a script that divided by 1000 for this function, remove the
-division. See `vignette("eutrophication")`.
+division. See \code{vignette("eutrophication")}.
 }
 
 \section{Storage type is checked here, not only in the check suite}{
 
-An integer `value` is refused with an error. `is.numeric(1L)` is `TRUE`, so
+An integer \code{value} is refused with an error. \code{is.numeric(1L)} is \code{TRUE}, so
 an integer column would otherwise pass every guard and be compared against
 the threshold with its fractional part already truncated away. Measured on
 200,000 simulated respondent-days in the companion Stata implementation, that
-biased mean greenhouse gas emissions down by 13\%. Convert with `as.double()`.
+biased mean greenhouse gas emissions down by 13\%. Convert with \code{as.double()}.
 
 This is the only data-quality test on the default path. The fuller suite -
 sign, zeros, unit magnitude, retained significant digits, cut-off proximity -
-is in [eiod_check_data()] and [eiod_check_precision()], and is **not** run for
-you. Run it first; see `vignette("precision")`.
+is in \code{\link[=eiod_check_data]{eiod_check_data()}} and \code{\link[=eiod_check_precision]{eiod_check_precision()}}, and is \strong{not} run
+for you. Run it first; see \code{vignette("precision")}.
 }
 
 \examples{
@@ -111,6 +111,6 @@ eiod_absolute_all(eiod_demo, grp, eiod_demo_map)[1:3, ]
 
 }
 \seealso{
-[eiod_relative_band()], [eiod_absolute_all()],
-  [eiod_lookup_cutoff()], [eiod_check_data()]
+\code{\link[=eiod_relative_band]{eiod_relative_band()}}, \code{\link[=eiod_absolute_all]{eiod_absolute_all()}},
+\code{\link[=eiod_lookup_cutoff]{eiod_lookup_cutoff()}}, \code{\link[=eiod_check_data]{eiod_check_data()}}
 }

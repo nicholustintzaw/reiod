@@ -10,28 +10,28 @@ eiod_absolute_all(data, group, map, prefix = "abs_")
 \item{data}{A data frame with one row per respondent-day.}
 
 \item{group}{Integer vector of demographic groups 1-8, from
-[eiod_age_sex_group()], of length `nrow(data)`.}
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}, of length \code{nrow(data)}.}
 
 \item{map}{Named character vector: names are indicator keys, values are
-column names in `data`. See [eiod_demo_map] for the shape.}
+column names in \code{data}. See \link{eiod_demo_map} for the shape.}
 
-\item{prefix}{Prefix for the returned column names. Default `"abs_"`.}
+\item{prefix}{Prefix for the returned column names. Default \code{"abs_"}.}
 }
 \value{
-A data frame with `nrow(data)` rows and one integer column per
-  indicator in `map`, named `paste0(prefix, indicator)`.
+A data frame with \code{nrow(data)} rows and one integer column per
+indicator in \code{map}, named \code{paste0(prefix, indicator)}.
 }
 \description{
-Applies [eiod_absolute_threshold()] to several indicators in one call and
+Applies \code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}} to several indicators in one call and
 returns a data frame of results, one column per indicator.
 }
 \section{The map is the point}{
 
-`map` states, explicitly, which column of your data holds which indicator.
-The **name** is the indicator key reiod knows (`"ghg"`); the **value** is
-whatever your column is actually called (`"ghg_kgco2e"`). They are different
+\code{map} states, explicitly, which column of your data holds which indicator.
+The \strong{name} is the indicator key reiod knows (\code{"ghg"}); the \strong{value} is
+whatever your column is actually called (\code{"ghg_kgco2e"}). They are different
 things, and nothing in reiod has ever required them to match - the vector API
-means `eiod_absolute_threshold(d$anything, grp, "ghg")` works.
+means \code{eiod_absolute_threshold(d$anything, grp, "ghg")} works.
 
 Supply any subset. Indicators you do not name are simply absent from the
 result; there is no need to have all seven.
@@ -52,6 +52,6 @@ round(100 * colMeans(all7, na.rm = TRUE), 1)
 
 }
 \seealso{
-[eiod_absolute_threshold()] for the single-indicator form and the
-  full discussion of the metric; [eiod_relative_all()].
+\code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}} for the single-indicator form and the
+full discussion of the metric; \code{\link[=eiod_relative_all]{eiod_relative_all()}}.
 }

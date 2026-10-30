@@ -13,8 +13,8 @@ eiod_healthy_diet(gdqs, cutoff = 23)
 23, as published. Change only with a documented reason.}
 }
 \value{
-An integer vector: `1` healthy, `0` not, `NA` where `gdqs` is
-  missing.
+An integer vector: \code{1} healthy, \code{0} not, \code{NA} where \code{gdqs} is
+missing.
 }
 \description{
 The diet quality half of both composite metrics: a Global Diet Quality Score

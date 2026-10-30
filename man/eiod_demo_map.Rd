@@ -11,13 +11,13 @@ A named character vector of length 7.
 eiod_demo_map
 }
 \description{
-A named character vector in the shape every `*_all()` function expects: the
-**name** is the indicator key reiod knows, the **value** is the column in
-[eiod_demo] that holds it.
+A named character vector in the shape every \verb{*_all()} function expects: the
+\strong{name} is the indicator key reiod knows, the \strong{value} is the column in
+\link{eiod_demo} that holds it.
 }
 \details{
 It is shipped rather than retyped in each example, and it exists at all
-because [eiod_demo]'s columns are deliberately *not* named after the
+because \link{eiod_demo}'s columns are deliberately \emph{not} named after the
 indicator keys. Write the equivalent line for your own data once, near the
 top of your script, and every later call reads from it.
 }
@@ -29,6 +29,6 @@ eiod_demo_map
 # my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
 }
 \seealso{
-[eiod_absolute_all()], [eiod_relative_all()], [eiod_demo]
+\code{\link[=eiod_absolute_all]{eiod_absolute_all()}}, \code{\link[=eiod_relative_all]{eiod_relative_all()}}, \link{eiod_demo}
 }
 \keyword{datasets}

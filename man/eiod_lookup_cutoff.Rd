@@ -21,22 +21,22 @@ eiod_lookup_cutoff(
 \arguments{
 \item{indicator}{One of the seven indicator names.}
 
-\item{group}{Demographic group 1-8, or `NULL` for all eight.}
+\item{group}{Demographic group 1-8, or \code{NULL} for all eight.}
 
-\item{metric}{`"abs"` for the Table 3 absolute threshold, or `"rel"` for a
+\item{metric}{\code{"abs"} for the Table 3 absolute threshold, or \code{"rel"} for a
 Table 4 relative benchmark cut-point.}
 
-\item{percentile}{Required when `metric = "rel"`: a multiple of 10 from 10
+\item{percentile}{Required when \code{metric = "rel"}: a multiple of 10 from 10
 to 90.}
 
-\item{published}{**No longer has any effect**, and retained only so existing
+\item{published}{\strong{No longer has any effect}, and retained only so existing
 scripts keep working. Until October 2026 the package stored 80 relative
 eutrophication rows pre-rescaled, and this argument switched between the
-stored and the published figure. Nothing is rescaled any more - `value` is
+stored and the published figure. Nothing is rescaled any more - \code{value} is
 the published figure for all 616 rows - so both settings return the same
-thing. See `vignette("eutrophication")`.}
+thing. See \code{vignette("eutrophication")}.}
 
-\item{x}{An `eiod_cutoff` object.}
+\item{x}{An \code{eiod_cutoff} object.}
 
 \item{digits}{Significant digits to display. The default of 15 shows every
 published digit; the widest cut-off in the tables needs 14.}
@@ -46,9 +46,9 @@ published digit; the widest cut-off in the tables needs 14.}
 \item{e1, e2}{Operands.}
 }
 \value{
-A named numeric vector of class `eiod_cutoff`, named by demographic
-  group label. Use `print(x, digits = )` to change the displayed precision,
-  or `as.numeric(x)` to drop the class.
+A named numeric vector of class \code{eiod_cutoff}, named by demographic
+group label. Use \code{print(x, digits = )} to change the displayed precision,
+or \code{as.numeric(x)} to drop the class.
 }
 \description{
 Returns the cut-off itself, rather than applying it. Useful for reporting
@@ -57,41 +57,40 @@ package against the printed tables.
 }
 \section{Printing, and why it has its own method}{
 
-The published cut-offs need up to **14 significant digits** - `water` for
-Female 10+ is `1726.3821057877`, and 15 of the 616 values need all 14. R's
-default `options(digits = 7)` would print that as `1726.382`, which looks as
+The published cut-offs need up to \strong{14 significant digits} - \code{water} for
+Female 10+ is \code{1726.3821057877}, and 15 of the 616 values need all 14. R's
+default \code{options(digits = 7)} would print that as \code{1726.382}, which looks as
 though the package had rounded the guideline.
 
-Storage was never the problem; the default *display* was. The returned object
+Storage was never the problem; the default \emph{display} was. The returned object
 therefore carries a class and a print method that uses 15 significant digits
 and shows, alongside each value, the literal text transcribed from the paper:
 
-```
-  Male 10+ yr    14.2377570161    as printed 14.2377570161
-```
+\if{html}{\out{<div class="sourceCode">}}\preformatted{  Male 10+ yr    14.2377570161    as published 14.2377570161
+}\if{html}{\out{</div>}}
 
-The `as printed` column is `value_published_str` from [eiod_cutoffs] - a
+The \verb{as printed} column is \code{value_published_str} from \link{eiod_cutoffs} - a
 character string that has never been through a numeric type. If you need an
 exact decimal comparison against the PDF, compare against that, not against a
 rendering of a double. (The identical complaint, and the identical fix, arose
 in the companion Stata package in October 2026.)
-
-The object is an ordinary named numeric underneath: `[`, `c()` and
-arithmetic all return plain numbers, so nothing downstream needs to know
-about the class.
 }
 
 \section{Nothing here is rescaled}{
 
-**Every value this function returns is exactly what the methods paper
-prints**, for all 616 cut-offs. The package does not adjust a published
-number anywhere, so you can check any row of [eiod_cutoffs] against the PDF
+\strong{Every value this function returns is exactly what the methods paper
+prints}, for all 616 cut-offs. The package does not adjust a published
+number anywhere, so you can check any row of \link{eiod_cutoffs} against the PDF
 and expect a character-for-character match.
 
 Where the paper's own units need reconciling - which happens for
 eutrophication, and only for eutrophication - the adjustment is applied to
-**your data** at the moment of comparison, is announced in a message, and is
-described in `vignette("eutrophication")`.
+\strong{your data} at the moment of comparison, is announced in a message, and is
+described in \code{vignette("eutrophication")}.
+
+The object is an ordinary named numeric underneath: \code{[}, \code{c()} and
+arithmetic all return plain numbers, so nothing downstream needs to know
+about the class.
 }
 
 \examples{

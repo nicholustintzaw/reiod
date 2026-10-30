@@ -16,65 +16,65 @@ eiod_age_sex_group(
 \item{age}{Numeric vector of respondent ages.}
 
 \item{sex}{Factor, character or numeric vector of respondent sex. See
-"Which type should `sex` be?" above.}
+"Which type should \code{sex} be?" above.}
 
-\item{age_units}{Either `"years"` (the default) or `"months"`.}
+\item{age_units}{Either \code{"years"} (the default) or \code{"months"}.}
 
-\item{male, female}{Optional. The value of `sex` that means male and female
-respectively. Required when `sex` is numeric; optional for factor and
+\item{male, female}{Optional. The value of \code{sex} that means male and female
+respectively. Required when \code{sex} is numeric; optional for factor and
 character input, where they override the automatic label matching. Supply
 both or neither.}
 }
 \value{
-An integer vector of group codes 1 to 8, with `NA` where age or sex
-  is missing. The result carries a `"labels"` attribute giving the group
-  names, and can be turned into a labelled factor with
-  `factor(x, 1:8, attr(x, "labels"))`.
+An integer vector of group codes 1 to 8, with \code{NA} where age or sex
+is missing. The result carries a \code{"labels"} attribute giving the group
+names, and can be turned into a labelled factor with
+\code{factor(x, 1:8, attr(x, "labels"))}.
 }
 \description{
 Every cut-off in the Intake framework is scaled to one of eight age/sex
 groups, because average dietary energy requirement differs across them. This
-function builds that grouping variable, which all other `eiod_*` metric
+function builds that grouping variable, which all other \verb{eiod_*} metric
 functions require.
 }
 \section{The eight groups}{
 
 \tabular{rl}{
-  1 \tab Male 0-1.9 yr   \cr
-  2 \tab Male 2-4.9 yr   \cr
-  3 \tab Male 5-9.9 yr   \cr
-  4 \tab Male 10+ yr     \cr
-  5 \tab Female 0-1.9 yr \cr
-  6 \tab Female 2-4.9 yr \cr
-  7 \tab Female 5-9.9 yr \cr
-  8 \tab Female 10+ yr
+1 \tab Male 0-1.9 yr   \cr
+2 \tab Male 2-4.9 yr   \cr
+3 \tab Male 5-9.9 yr   \cr
+4 \tab Male 10+ yr     \cr
+5 \tab Female 0-1.9 yr \cr
+6 \tab Female 2-4.9 yr \cr
+7 \tab Female 5-9.9 yr \cr
+8 \tab Female 10+ yr
 }
 }
 
 \section{Age boundaries are half-open}{
 
 The paper prints the groups as "0-1.9", "2-4.9", "5-9.9" and "10+". These are
-read as half-open intervals: `age < 2`, `2 <= age < 5`, `5 <= age < 10`,
-`age >= 10`. A child aged 1.95 years therefore belongs in the first group.
-Testing `age <= 1.9` instead would leave everyone between 1.9 and 2.0
+read as half-open intervals: \code{age < 2}, \verb{2 <= age < 5}, \verb{5 <= age < 10},
+\code{age >= 10}. A child aged 1.95 years therefore belongs in the first group.
+Testing \code{age <= 1.9} instead would leave everyone between 1.9 and 2.0
 unassigned, and they would then drop out of every downstream metric without
 any error being raised.
 }
 
-\section{Which type should `sex` be?}{
+\section{Which type should \code{sex} be?}{
 
 All three common types are accepted, but they are not equally safe.
 
 \strong{A factor is the recommended input.} Its levels carry the meaning, so
-the data is self-documenting and no separate codebook is needed; `table()`
+the data is self-documenting and no separate codebook is needed; \code{table()}
 and model output print "male" and "female" rather than 1 and 2; and the
 function can resolve it without being told anything further.
 
-\strong{Character} works identically and is what `read.csv()` produces by
+\strong{Character} works identically and is what \code{read.csv()} produces by
 default in R 4.0 and later. Converting it to a factor costs nothing and is
 worth doing.
 
-\strong{Numeric requires `male` and `female` to be given explicitly.} This is
+\strong{Numeric requires \code{male} and \code{female} to be given explicitly.} This is
 a deliberate refusal rather than a missing feature. Survey data uses 1/2 and
 0/1 about equally often, and there is no way to tell them apart from the
 values alone: both are just two distinct numbers. If the function guessed and
@@ -83,13 +83,13 @@ nothing visibly odd in the output. Rather than carry that risk, numeric input
 errors until the codes are stated.
 
 The recommended route for numeric data is to convert once, near the top of
-the analysis, with [eiod_as_sex_factor()]. After that every downstream call
+the analysis, with \code{\link[=eiod_as_sex_factor]{eiod_as_sex_factor()}}. After that every downstream call
 is unambiguous.
 
 For factor and character input, these labels are recognised automatically,
-case-insensitively and ignoring surrounding spaces: `m`, `male`, `males`,
-`man`, `men`, `boy`, `boys`, and `f`, `female`, `females`, `woman`, `women`,
-`girl`, `girls`. Anything else raises an error listing the unrecognised
+case-insensitively and ignoring surrounding spaces: \code{m}, \code{male}, \code{males},
+\code{man}, \code{men}, \code{boy}, \code{boys}, and \code{f}, \code{female}, \code{females}, \code{woman}, \code{women},
+\code{girl}, \code{girls}. Anything else raises an error listing the unrecognised
 values; they are never dropped silently, because that would quietly shrink
 the analysis sample.
 }
@@ -111,5 +111,5 @@ eiod_age_sex_group(age = c(23, 24), sex = c("male", "male"),
 
 }
 \seealso{
-[eiod_as_sex_factor()] to convert a numeric sex code once.
+\code{\link[=eiod_as_sex_factor]{eiod_as_sex_factor()}} to convert a numeric sex code once.
 }

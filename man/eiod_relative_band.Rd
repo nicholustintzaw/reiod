@@ -10,27 +10,27 @@ eiod_relative_band(value, group, indicator, midpoint = FALSE, details = FALSE)
 \item{value}{Numeric vector of per capita daily impact.}
 
 \item{group}{Integer vector of demographic groups 1-8, from
-[eiod_age_sex_group()].}
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
 \item{indicator}{One of the seven indicator names; see
-[eiod_list_indicators()].}
+\code{\link[=eiod_list_indicators]{eiod_list_indicators()}}.}
 
-\item{midpoint}{If `TRUE`, return the band midpoint percentile (5, 15, ...
-95) instead of the band number. Default `FALSE`.}
+\item{midpoint}{If \code{TRUE}, return the band midpoint percentile (5, 15, ...
+95) instead of the band number. Default \code{FALSE}.}
 
-\item{details}{If `TRUE`, return a data frame that also reports the band
-boundaries each observation was placed between. Default `FALSE`.}
+\item{details}{If \code{TRUE}, return a data frame that also reports the band
+boundaries each observation was placed between. Default \code{FALSE}.}
 }
 \value{
 An integer vector of bands 1-10, or of midpoints if
-  `midpoint = TRUE`. `NA` where the impact or the group is missing.
+\code{midpoint = TRUE}. \code{NA} where the impact or the group is missing.
 
-  If `details = TRUE`, a data frame with one row per observation and the
-  columns `value`, `group`, `band`, `cut_lower` and `cut_upper`. `cut_lower`
-  is the highest published percentile the value cleared, and is `NA` in
-  band 1 - correctly, because nothing is published below P10. `cut_upper` is
-  `NA` in band 10 for the same reason. (Equivalent to `cutvar()` in the
-  companion Stata command.)
+If \code{details = TRUE}, a data frame with one row per observation and the
+columns \code{value}, \code{group}, \code{band}, \code{cut_lower} and \code{cut_upper}. \code{cut_lower}
+is the highest published percentile the value cleared, and is \code{NA} in
+band 1 - correctly, because nothing is published below P10. \code{cut_upper} is
+\code{NA} in band 10 for the same reason. (Equivalent to \code{cutvar()} in the
+companion Stata command.)
 }
 \description{
 Places a one-day diet in one of ten decile bands of a global reference
@@ -38,7 +38,7 @@ distribution of per capita daily dietary environmental impacts.
 }
 \section{What the comparison is against}{
 
-This does **not** rank respondents against each other in your survey. Each
+This does \strong{not} rank respondents against each other in your survey. Each
 diet is compared against a fixed external reference distribution that is the
 same for every analysis anywhere in the world. Intake built it by taking
 per-country average dietary impact per person per day at each decile from
@@ -46,9 +46,9 @@ the Planet-Based Diets Database, population-weighting to a global percentile
 distribution using 2010 country populations, and scaling the result to each
 demographic group by its share of average energy requirements.
 
-The practical consequence: **do not compute this with `quantile()`,
-`cut()` or `ntile()`**. Those rank your sample against itself and will place
-roughly 10% of observations in every band by construction. That is a
+The practical consequence: \strong{do not compute this with \code{quantile()},
+\code{cut()} or \code{ntile()}}. Those rank your sample against itself and will place
+roughly 10\% of observations in every band by construction. That is a
 different statistic with no cross-country meaning. The cut-points come from
 the published tables, not from your data.
 
@@ -61,9 +61,9 @@ countries and over time.
 
 The reference distribution describes diets as they are, not as they would
 need to be. For greenhouse gas emissions the Table 3 absolute
-planetary-boundary threshold lies *below* the 10th percentile of the
+planetary-boundary threshold lies \emph{below} the 10th percentile of the
 reference distribution, so a diet in band 1 still exceeds the planetary
-boundary. For water use the threshold sits *above* the 90th percentile, so
+boundary. For water use the threshold sits \emph{above} the 90th percentile, so
 essentially every diet passes. Report the two metric families together and
 never one as a proxy for the other.
 }
@@ -71,31 +71,31 @@ never one as a proxy for the other.
 \section{Band definitions}{
 
 \tabular{rl}{
-   1 \tab impact < P10         \cr
-   2 \tab P10 <= impact < P20  \cr
- ... \tab ...                  \cr
-   9 \tab P80 <= impact < P90  \cr
-  10 \tab impact >= P90
+1 \tab impact < P10         \cr
+2 \tab P10 <= impact < P20  \cr
+... \tab ...                  \cr
+9 \tab P80 <= impact < P90  \cr
+10 \tab impact >= P90
 }
 The inequality is strict, so a diet exactly on P10 belongs in band 2.
 }
 
 \section{Reporting a mean band}{
 
-The paper also reports a mean position. Use `midpoint = TRUE` to get band
+The paper also reports a mean position. Use \code{midpoint = TRUE} to get band
 midpoints (5, 15, ... 95) for that purpose, but note the limitation:
 averaging an ordinal band index treats the bands as equally spaced on the
 impact scale, and they are not. In Table 4c the P10-P20 gap is 0.002
-m2*year while the P80-P90 gap is 1.5 m2*year. A mean band is a summary of
-*position in the reference distribution*; it is not a summary of impact. For
+\code{m2*year} while the P80-P90 gap is 1.5 \code{m2*year}. A mean band is a summary of
+\emph{position in the reference distribution}; it is not a summary of impact. For
 a mean impact, average the impact variable itself.
 }
 
 \section{Storage type is checked here, not only in the check suite}{
 
-As for [eiod_absolute_threshold()], an integer `value` is refused. See that
-function for why `is.numeric()` alone is not enough. The rest of the data
-quality suite remains opt-in; run `vignette("precision")` first.
+As for \code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}}, an integer \code{value} is refused. See that
+function for why \code{is.numeric()} alone is not enough. The rest of the data
+quality suite remains opt-in; run \code{vignette("precision")} first.
 }
 
 \examples{
@@ -117,6 +117,6 @@ head(eiod_relative_band(eiod_demo$biodiv_pdf, grp, "biodiv",
 
 }
 \seealso{
-[eiod_absolute_threshold()], [eiod_relative_all()],
-  [eiod_low_impact()]
+\code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}}, \code{\link[=eiod_relative_all]{eiod_relative_all()}},
+\code{\link[=eiod_low_impact]{eiod_low_impact()}}
 }

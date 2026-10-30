@@ -15,7 +15,7 @@ eiod_check_impact(value, name = "impact", indicator = NULL)
 unit.}
 }
 \value{
-An object of class `eiod_check`.
+An object of class \code{eiod_check}.
 }
 \description{
 Structural and plausibility checks on one impact vector: storage type, sign,
@@ -27,14 +27,14 @@ Three import failures destroy impact data silently, and all three are common
 with the very small values biodiversity loss takes:
 
 \itemize{
-  \item A **factor** column. `as.numeric()` on a factor returns the level
-    codes, so `3.7e-13` becomes `1`. A plausible-looking number with no
-    warning is far worse than `NA`, because nothing downstream looks wrong.
-  \item A **character** column, usually caused by one stray cell such as
-    `"<0.001"` or a decimal comma. Coercion then yields `NA` with a warning
-    that is easy to miss.
-  \item An **integer** column. It cannot represent `1e-13` at all; the value
-    is already `0` by the time you see it.
+\item A \strong{factor} column. \code{as.numeric()} on a factor returns the level
+codes, so \code{3.7e-13} becomes \code{1}. A plausible-looking number with no
+warning is far worse than \code{NA}, because nothing downstream looks wrong.
+\item A \strong{character} column, usually caused by one stray cell such as
+\code{"<0.001"} or a decimal comma. Coercion then yields \code{NA} with a warning
+that is easy to miss.
+\item An \strong{integer} column. It cannot represent \code{1e-13} at all; the value
+is already \code{0} by the time you see it.
 }
 }
 

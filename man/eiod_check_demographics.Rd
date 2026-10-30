@@ -17,12 +17,12 @@ eiod_check_demographics(
 
 \item{sex}{Factor, character or numeric vector of sex.}
 
-\item{age_units}{`"years"` (default) or `"months"`.}
+\item{age_units}{\code{"years"} (default) or \code{"months"}.}
 
-\item{male, female}{Optional codes; see [eiod_age_sex_group()].}
+\item{male, female}{Optional codes; see \code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 }
 \value{
-An object of class `eiod_check`.
+An object of class \code{eiod_check}.
 }
 \description{
 Verifies that age and sex can be turned into the eight demographic groups,
@@ -31,7 +31,7 @@ age-2 floor that the composite metrics apply.
 }
 \details{
 Like the other check functions, this reports rather than stops. Where
-[eiod_age_sex_group()] would raise an error, this records it as a finding so
+\code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}} would raise an error, this records it as a finding so
 you can see every problem in one pass instead of one per run.
 }
 \examples{

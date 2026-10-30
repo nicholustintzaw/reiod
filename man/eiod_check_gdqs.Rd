@@ -15,7 +15,7 @@ eiod_check_gdqs(gdqs, cutoff = 23, max_score = 49)
 Default 49.}
 }
 \value{
-An object of class `eiod_check`.
+An object of class \code{eiod_check}.
 }
 \description{
 Check the Global Diet Quality Score variable

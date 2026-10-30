@@ -9,18 +9,18 @@ eiod_as_sex_factor(x, male, female, labels = c("male", "female"))
 \arguments{
 \item{x}{A numeric or character vector of sex codes.}
 
-\item{male, female}{The value of `x` that means male and female respectively.
-Both are required: see the discussion in [eiod_age_sex_group()] for why
+\item{male, female}{The value of \code{x} that means male and female respectively.
+Both are required: see the discussion in \code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}} for why
 this is not inferred.}
 
 \item{labels}{The two level labels to use, male first.}
 }
 \value{
-A factor with two levels, `NA` preserved.
+A factor with two levels, \code{NA} preserved.
 }
 \description{
 Turns a numeric or character sex variable into a two-level factor with the
-levels `"male"` and `"female"`. Doing this once near the top of an analysis
+levels \code{"male"} and \code{"female"}. Doing this once near the top of an analysis
 removes the 0/1 versus 1/2 ambiguity from every later call.
 }
 \examples{

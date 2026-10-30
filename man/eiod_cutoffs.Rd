@@ -7,38 +7,38 @@
 \format{
 A data frame with 616 rows and 15 columns:
 \describe{
-  \item{metric}{`"abs"` for Table 3, `"rel"` for Tables 4a-4g}
-  \item{table}{Source table: `"3"`, `"4a"` ... `"4g"`}
-  \item{indicator}{Short indicator name used by the `eiod_*` functions}
-  \item{indicator_label}{Human-readable indicator name}
-  \item{unit}{Unit **this table is printed in**, per capita per day. The
-    same for both tables for six indicators; for eutrophication, kg for
-    Table 3 and g for Table 4f}
-  \item{demogroup}{Demographic group, 1-8}
-  \item{demogroup_label}{Group name, e.g. "Male 10+ yr"}
-  \item{sex}{Factor, `"male"` or `"female"`}
-  \item{age_min, age_max}{Age bounds in years; 999 means no upper bound}
-  \item{row_order}{Position in the source table}
-  \item{percentile}{10-90 for relative rows 1-9; `NA` for absolute rows and
-    for row 10, which repeats P90 as a lower bound}
-  \item{value}{**The cut-off the metric functions compare against.** Nothing
-    is rescaled: for 608 rows this is exactly what the paper prints, and for
-    the other eight it is exactly what Intake supplied}
-  \item{value_published_str}{The same value as a character string, exactly as
-    received. Shipped so the figure can be compared character for character,
-    not as a rendering of a double}
-  \item{value_source}{`"published"` for the 608 rows transcribed from the
-    paper; `"intake correction 2026-10"` for the eight Table 3
-    eutrophication thresholds Intake corrected. **Those eight do not match
-    the currently published PDF** - see the section above}
+\item{metric}{\code{"abs"} for Table 3, \code{"rel"} for Tables 4a-4g}
+\item{table}{Source table: \code{"3"}, \code{"4a"} ... \code{"4g"}}
+\item{indicator}{Short indicator name used by the \verb{eiod_*} functions}
+\item{indicator_label}{Human-readable indicator name}
+\item{unit}{Unit \strong{this table is printed in}, per capita per day. The
+same for both tables for six indicators; for eutrophication, kg for
+Table 3 and g for Table 4f}
+\item{demogroup}{Demographic group, 1-8}
+\item{demogroup_label}{Group name, e.g. "Male 10+ yr"}
+\item{sex}{Factor, \code{"male"} or \code{"female"}}
+\item{age_min, age_max}{Age bounds in years; 999 means no upper bound}
+\item{row_order}{Position in the source table}
+\item{percentile}{10-90 for relative rows 1-9; \code{NA} for absolute rows and
+for row 10, which repeats P90 as a lower bound}
+\item{value}{\strong{The cut-off the metric functions compare against.} Nothing
+is rescaled: for 608 rows this is exactly what the paper prints, and for
+the other eight it is exactly what Intake supplied}
+\item{value_published_str}{The same value as a character string, exactly as
+received. Shipped so the figure can be compared character for character,
+not as a rendering of a double}
+\item{value_source}{\code{"published"} for the 608 rows transcribed from the
+paper; \code{"intake correction 2026-10"} for the eight Table 3
+eutrophication thresholds Intake corrected. \strong{Those eight do not match
+the currently published PDF} - see the section above}
 }
 }
 \source{
 Intake-EIOD-Methods-Paper-Jan2026-Final.pdf, Tables 3 and 4a-4g
-  (pages 16-19), available at
-  <https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf>.
-  Transcribed programmatically; see `data-raw/build_data.R`. The same source
-  file drives a companion Stata implementation.
+(pages 16-19), available at
+\url{https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf}.
+Transcribed programmatically; see \code{data-raw/build_data.R}. The same source
+file drives a companion Stata implementation.
 }
 \usage{
 eiod_cutoffs
@@ -48,16 +48,16 @@ Every cut-off in Tables 3 and 4a-4g of the Intake methods paper, in long
 format: one row per metric, indicator, demographic group and table row.
 }
 \details{
-Tables 5a and 5b are deliberately **not** stored here. They are composites
+Tables 5a and 5b are deliberately \strong{not} stored here. They are composites
 that reuse values already present - the HESD criterion is
-`metric == "abs" & indicator == "biodiv"`, and the HDLEI criterion is
-`metric == "rel" & indicator == "biodiv" & percentile == 30`. A second copy
+\code{metric == "abs" & indicator == "biodiv"}, and the HDLEI criterion is
+\code{metric == "rel" & indicator == "biodiv" & percentile == 30}. A second copy
 could drift from the first.
 }
 \section{Nothing here is rescaled}{
 
-**`value` is the cut-off exactly as this package received it, for all 616
-rows**, and `value_published_str` is the same number as literal text. The
+\strong{\code{value} is the cut-off exactly as this package received it, for all 616
+rows}, and \code{value_published_str} is the same number as literal text. The
 package applies no conversion to a cut-off and none to your data.
 
 For 608 rows "as received" means "as printed in the methods paper", and you
@@ -67,37 +67,36 @@ are described in the next section.
 
 \section{Eight rows differ from the published PDF, on Intake's instruction}{
 
-The **Table 3 eutrophication thresholds** in `eiod_cutoffs` are **not** the
+The \strong{Table 3 eutrophication thresholds} in \code{eiod_cutoffs} are \strong{not} the
 numbers the currently published paper prints. They are corrections supplied
-by Intake in October 2026, and the `value_source` column marks them:
+by Intake in October 2026, and the \code{value_source} column marks them:
 
-\preformatted{
-subset(eiod_cutoffs, value_source != "published",
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{subset(eiod_cutoffs, value_source != "published",
        c(demogroup_label, unit, value, value_source))
-}
+}\if{html}{\out{</div>}}
 
-**What was wrong.** The paper prints those eight cells in **kilograms**
-PO4(3-)eq while Table 4f, and the EIOF food databases, use **grams**. Intake
+\strong{What was wrong.} The paper prints those eight cells in \strong{kilograms}
+PO4(3-)eq while Table 4f, and the EIOF food databases, use \strong{grams}. Intake
 confirmed by email that both tables are intended to be in grams, and
 supplied the corrected Table 3 values.
 
-**What changed, and what did not.** The corrected values are the printed
+\strong{What changed, and what did not.} The corrected values are the printed
 ones multiplied by 1000, carried to full precision - the quantity is
 identical, only the unit it is expressed in has changed. Dividing any
 corrected value by 1000 reproduces the printed figure to the ten decimals
-the PDF gives, and `data-raw/build_data.R` asserts exactly that. **No
-classification moves**: tested on 400,000 simulated gram-scale values, old
+the PDF gives, and \code{data-raw/build_data.R} asserts exactly that. \strong{No
+classification moves}: tested on 400,000 simulated gram-scale values, old
 and new behaviour agreed everywhere except within about one unit in the last
 place of a cut-off, where the new path is the more exact of the two because
 it no longer divides before comparing.
 
-**Consequence for you: supply eutrophication in grams**, which is what the
-EIOF databases give you (`Eutr. (g PO43-e/kg)` x kg food = g). Every
+\strong{Consequence for you: supply eutrophication in grams}, which is what the
+EIOF databases give you (\verb{Eutr. (g PO43-e/kg)} x kg food = g). Every
 indicator now uses one unit across both tables, and nothing is converted
 anywhere. Between July and October 2026 this package divided eutrophication
 values by 1000 on your behalf; that step is gone.
 
-See `vignette("eutrophication")` for the full history, including the
+See \code{vignette("eutrophication")} for the full history, including the
 evidence that led to the question being raised.
 }
 
@@ -107,26 +106,26 @@ Two columns carry the same number in two forms, so that a reader can check
 the package without having to trust any numeric rendering:
 
 \tabular{ll}{
-  `value_published_str` \tab the literal characters from the paper, never
-    through a numeric type \cr
-  `value` \tab the nearest IEEE 754 double to that text - and what the
-    metric functions compare against
+\code{value_published_str} \tab the literal characters from the paper, never
+through a numeric type \cr
+\code{value} \tab the nearest IEEE 754 double to that text - and what the
+metric functions compare against
 }
 
-`data-raw/build_data.R` asserts that
-`as.numeric(value_published_str) == value` for all 616 rows, and that each
+\code{data-raw/build_data.R} asserts that
+\code{as.numeric(value_published_str) == value} for all 616 rows, and that each
 parsed value still prints back to exactly its published digits.
 
-A `double` cannot hold most decimal fractions exactly - that is true of every
+A \code{double} cannot hold most decimal fractions exactly - that is true of every
 statistical package, not of this one. What is guaranteed here is that the
 stored double is the nearest double to the published decimal, that it
 round-trips back to that decimal, and that the decimal itself is in the file
-as text. **If you need an exact decimal comparison, compare against
-`value_published_str`.**
+as text. \strong{If you need an exact decimal comparison, compare against
+\code{value_published_str}.}
 
-Note that R's default `options(digits = 7)` will not show you a published
+Note that R's default \code{options(digits = 7)} will not show you a published
 value in full: 15 of the 616 need 14 significant digits.
-[eiod_lookup_cutoff()] prints at full precision for this reason.
+\code{\link[=eiod_lookup_cutoff]{eiod_lookup_cutoff()}} prints at full precision for this reason.
 }
 
 \examples{

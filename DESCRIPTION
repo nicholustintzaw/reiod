@@ -35,4 +35,5 @@ Language: en-GB
 URL: https://nicholustintzaw.github.io/reiod/,
     https://github.com/nicholustintzaw/reiod
 BugReports: https://github.com/nicholustintzaw/reiod/issues
-Config/roxygen2/version: 8.1.0
+Config/roxygen2/markdown: TRUE
+Config/roxygen2/version: 8.1.1

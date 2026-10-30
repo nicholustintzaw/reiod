@@ -8,16 +8,16 @@ eiod_sustainable_diet(biodiversity, group)
 }
 \arguments{
 \item{biodiversity}{Numeric vector of per capita daily biodiversity loss
-(PDF*year).}
+(\code{PDF*year}).}
 
 \item{group}{Integer vector of demographic groups 1-8.}
 }
 \value{
-An integer vector: `1` sustainable, `0` not, `NA` where missing.
+An integer vector: \code{1} sustainable, \code{0} not, \code{NA} where missing.
 }
 \description{
 The environmental half of the HESD metric: biodiversity loss below the
-Table 3 **absolute** threshold. Exported on its own so it can be reported
+Table 3 \strong{absolute} threshold. Exported on its own so it can be reported
 separately from the composite.
 }
 \details{
@@ -31,5 +31,5 @@ table(eiod_sustainable_diet(eiod_demo$biodiv_pdf, grp), useNA = "ifany")
 
 }
 \seealso{
-[eiod_low_impact()], the stricter relative criterion used by HDLEI.
+\code{\link[=eiod_low_impact]{eiod_low_impact()}}, the stricter relative criterion used by HDLEI.
 }

@@ -26,57 +26,57 @@ eiod_check_data(
 \item{data}{A data frame.}
 
 \item{impacts}{A named character vector mapping indicator names to column
-names, for example `c(biodiv = "biodiv_pdf", ghg = "ghg_kg")`. Names must
-be among the seven in [eiod_list_indicators()].}
+names, for example \code{c(biodiv = "biodiv_pdf", ghg = "ghg_kg")}. Names must
+be among the seven in \code{\link[=eiod_list_indicators]{eiod_list_indicators()}}.}
 
-\item{age, sex, gdqs}{Column names, or `NULL` to skip that check.}
+\item{age, sex, gdqs}{Column names, or \code{NULL} to skip that check.}
 
-\item{age_units}{`"years"` (default) or `"months"`.}
+\item{age_units}{\code{"years"} (default) or \code{"months"}.}
 
-\item{male, female}{Optional sex codes; see [eiod_age_sex_group()].}
+\item{male, female}{Optional sex codes; see \code{\link[=eiod_age_sex_group]{eiod_age_sex_group()}}.}
 
 \item{tolerance}{Relative distance from a cut-off below which a
-classification is treated as not robust. Default `1e-6`.}
+classification is treated as not robust. Default \code{1e-6}.}
 
-\item{x}{An `eiod_check` object.}
+\item{x}{An \code{eiod_check} object.}
 
 \item{...}{Ignored.}
 
-\item{object}{An `eiod_check` object.}
+\item{object}{An \code{eiod_check} object.}
 }
 \value{
-An object of class `eiod_check`. Use `summary()` for a single
-  pass/fail, or treat it as a data frame to filter the findings.
+An object of class \code{eiod_check}. Use \code{summary()} for a single
+pass/fail, or treat it as a data frame to filter the findings.
 }
 \description{
-Runs every `eiod_check_*` function over a data frame and returns a single
+Runs every \verb{eiod_check_*} function over a data frame and returns a single
 report. This is the function to call first, before
-[eiod_absolute_threshold()] or anything else.
+\code{\link[=eiod_absolute_threshold]{eiod_absolute_threshold()}} or anything else.
 }
 \section{What it checks}{
 
 \itemize{
-  \item **Structure** - that each named column exists, and that impact
-    columns are doubles rather than factors, characters or integers.
-  \item **Validity** - no negative or non-finite impacts, exact zeros
-    flagged, missingness reported.
-  \item **Precision** - significant digits actually retained, and how many
-    observations sit close enough to a cut-off that rounding could change
-    their classification. See [eiod_check_precision()].
-  \item **Unit magnitude** - each impact compared against the published
-    global reference, with likely unit errors named. See
-    [eiod_check_magnitude()].
-  \item **Demographics** - age range and units, sex coding, coverage of the
-    eight groups, and the count of under-twos.
-  \item **GDQS** - type and range.
+\item \strong{Structure} - that each named column exists, and that impact
+columns are doubles rather than factors, characters or integers.
+\item \strong{Validity} - no negative or non-finite impacts, exact zeros
+flagged, missingness reported.
+\item \strong{Precision} - significant digits actually retained, and how many
+observations sit close enough to a cut-off that rounding could change
+their classification. See \code{\link[=eiod_check_precision]{eiod_check_precision()}}.
+\item \strong{Unit magnitude} - each impact compared against the published
+global reference, with likely unit errors named. See
+\code{\link[=eiod_check_magnitude]{eiod_check_magnitude()}}.
+\item \strong{Demographics} - age range and units, sex coding, coverage of the
+eight groups, and the count of under-twos.
+\item \strong{GDQS} - type and range.
 }
 }
 
 \section{Severity}{
 
-`error` means a metric computed on this data would be wrong, not merely
-uncertain; fix it first. `warning` means proceed, but you need to have
-looked. `note` is information worth having in the record.
+\code{error} means a metric computed on this data would be wrong, not merely
+uncertain; fix it first. \code{warning} means proceed, but you need to have
+looked. \code{note} is information worth having in the record.
 }
 
 \examples{
@@ -92,7 +92,7 @@ summary(report)
 
 }
 \seealso{
-[eiod_check_impact()], [eiod_check_precision()],
-  [eiod_check_magnitude()], [eiod_check_demographics()],
-  [eiod_check_gdqs()]
+\code{\link[=eiod_check_impact]{eiod_check_impact()}}, \code{\link[=eiod_check_precision]{eiod_check_precision()}},
+\code{\link[=eiod_check_magnitude]{eiod_check_magnitude()}}, \code{\link[=eiod_check_demographics]{eiod_check_demographics()}},
+\code{\link[=eiod_check_gdqs]{eiod_check_gdqs()}}
 }

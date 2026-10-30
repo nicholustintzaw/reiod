@@ -16,7 +16,7 @@ eiod_check_magnitude(value, indicator, group = NULL, name = "impact")
 \item{name}{A label for the variable, used in the report.}
 }
 \value{
-An object of class `eiod_check`.
+An object of class \code{eiod_check}.
 }
 \description{
 Compares the median of your data against the published global 50th
