@@ -26,8 +26,11 @@ anything. A unit error does not look like an error. It looks like a result.
 integer impact vector, because `is.numeric(1L)` is `TRUE` and nothing else
 would catch it:
 
-```{r, error = TRUE}
+```{r}
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+```{r, error = TRUE, purl = FALSE}
 eiod_absolute_threshold(as.integer(eiod_demo$land_arable_m2yr), grp,
                         "landarable")
 ```

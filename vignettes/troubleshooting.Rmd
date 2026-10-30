@@ -137,7 +137,7 @@ eiod_check_magnitude(fixed$ghg_kgco2e, "ghg", grp_tmp, name = "ghg_kgco2e")
 
 ## Fault 3 — sex coded 0/1 with no labels
 
-```{r, error = TRUE}
+```{r, error = TRUE, purl = FALSE}
 eiod_age_sex_group(broken$age, broken$sex)
 ```
 
@@ -239,7 +239,7 @@ from 3.836 to 3.336 — **13%**, with no warning anywhere.
 This is the **one** check reiod now performs on the default path, precisely
 because `is.numeric()` would not catch it:
 
-```{r, error = TRUE}
+```{r, error = TRUE, purl = FALSE}
 eiod_absolute_threshold(broken$land_arable_m2yr, grp, "landarable")
 ```
 

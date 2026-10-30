@@ -81,8 +81,11 @@ So the representation worry is empirically close to nothing, and the truncation
 worry is large. That is the opposite of the intuition most people arrive with,
 and it is why the integer check is the one test reiod performs automatically.
 
-```{r, error = TRUE}
+```{r}
 grp <- eiod_age_sex_group(eiod_demo$age, eiod_demo$sex)
+```
+
+```{r, error = TRUE, purl = FALSE}
 eiod_absolute_threshold(as.integer(eiod_demo$water_litres), grp, "water")
 ```
 

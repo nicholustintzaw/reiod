@@ -48,7 +48,7 @@ eiod_age_sex_group(age = c(1.5, 40), sex = c("M", "F"))
 
 **Numeric sex is deliberately refused** unless you say which code means male:
 
-```{r, error = TRUE}
+```{r, error = TRUE, purl = FALSE}
 eiod_age_sex_group(age = c(1.5, 40), sex = c(1, 0))
 ```
 
