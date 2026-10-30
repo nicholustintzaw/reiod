@@ -102,22 +102,11 @@ eiod_relative_band <- function(value, group, indicator, midpoint = FALSE,
   .eiod_check_indicator(indicator)
   .eiod_check_value(value)
   .eiod_check_group(group, n = length(value))
-  if (!is.logical(midpoint) || length(midpoint) != 1L || is.na(midpoint)) {
-    stop("`midpoint` must be TRUE or FALSE.", call. = FALSE)
-  }
-  if (!is.logical(details) || length(details) != 1L || is.na(details)) {
-    stop("`details` must be TRUE or FALSE.", call. = FALSE)
-  }
+  .eiod_check_flag(midpoint, "midpoint")
+  .eiod_check_flag(details, "details")
 
   cp <- .eiod_rel_cutpoints(indicator)   # 8 x 9
-  out <- rep(NA_integer_, length(value))
-
-  for (g in 1:8) {
-    idx <- which(!is.na(group) & group == g & !is.na(value))
-    if (!length(idx)) next
-    # band = 1 + (number of cut-points the value equals or exceeds)
-    out[idx] <- 1L + as.integer(colSums(outer(cp[g, ], value[idx], "<=")))
-  }
+  out <- .eiod_bands(value, group, cp)
 
   if (details) {
     if (midpoint) {
@@ -125,24 +114,55 @@ eiod_relative_band <- function(value, group, indicator, midpoint = FALSE,
            "reports the band and its boundaries, which a midpoint replaces.",
            call. = FALSE)
     }
-    lo <- hi <- rep(NA_real_, length(value))
-    known <- which(!is.na(out))
-    # band b sits between cut-point b-1 and cut-point b; band 1 has no lower
-    # bound and band 10 no upper, because nothing is published outside P10-P90.
-    b <- out[known]
-    g <- group[known]
-    has_lo <- b >= 2L
-    has_hi <- b <= 9L
-    if (any(has_lo)) {
-      lo[known[has_lo]] <- cp[cbind(g[has_lo], b[has_lo] - 1L)]
-    }
-    if (any(has_hi)) {
-      hi[known[has_hi]] <- cp[cbind(g[has_hi], b[has_hi])]
-    }
-    return(data.frame(value = as.numeric(value), group = as.integer(group),
-                      band = out, cut_lower = lo, cut_upper = hi))
+    return(.eiod_band_details(value, group, out, cp))
   }
 
   if (midpoint) out <- out * 10L - 5L
   out
+}
+
+
+#' Stop unless `x` is a single TRUE or FALSE
+#' @noRd
+.eiod_check_flag <- function(x, arg) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop("`", arg, "` must be TRUE or FALSE.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+
+#' Relative band 1-10 for each value, given the 8 x 9 matrix of cut-points
+#' @noRd
+.eiod_bands <- function(value, group, cp) {
+  out <- rep(NA_integer_, length(value))
+  for (g in 1:8) {
+    idx <- which(!is.na(group) & group == g & !is.na(value))
+    if (!length(idx)) next
+    # band = 1 + (number of cut-points the value equals or exceeds)
+    out[idx] <- 1L + as.integer(colSums(outer(cp[g, ], value[idx], "<=")))
+  }
+  out
+}
+
+
+#' The details = TRUE table: each value with its band and that band's bounds
+#' @noRd
+.eiod_band_details <- function(value, group, out, cp) {
+  lo <- hi <- rep(NA_real_, length(value))
+  known <- which(!is.na(out))
+  # band b sits between cut-point b-1 and cut-point b; band 1 has no lower
+  # bound and band 10 no upper, because nothing is published outside P10-P90.
+  b <- out[known]
+  g <- group[known]
+  has_lo <- b >= 2L
+  has_hi <- b <= 9L
+  if (any(has_lo)) {
+    lo[known[has_lo]] <- cp[cbind(g[has_lo], b[has_lo] - 1L)]
+  }
+  if (any(has_hi)) {
+    hi[known[has_hi]] <- cp[cbind(g[has_hi], b[has_hi])]
+  }
+  data.frame(value = as.numeric(value), group = as.integer(group),
+             band = out, cut_lower = lo, cut_upper = hi)
 }
