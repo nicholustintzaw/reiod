@@ -67,49 +67,68 @@
 #' @export
 eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
 
-  f <- list()
   n <- length(value)
 
-  # ---- type ---------------------------------------------------------------- #
-  if (is.factor(value)) {
-    f[[length(f) + 1]] <- .eiod_finding(
-      "type", name, "error", n,
-      paste0("column is a factor. as.numeric() on a factor returns level ",
-             "codes, not values, so this fails silently. Fix with ",
-             "as.numeric(as.character(x))."))
-    return(.eiod_report(f, n_obs = n))
-  }
-  if (is.character(value)) {
-    num <- suppressWarnings(as.numeric(value))
-    bad <- which(is.na(num) & !is.na(value) & trimws(value) != "")
-    msg <- paste0("column is character, not numeric.")
-    if (length(bad)) {
-      ex <- utils::head(unique(value[bad]), 3)
-      msg <- paste0(msg, " ", length(bad), " value(s) will not convert, e.g. ",
-                    paste0("\"", ex, "\"", collapse = ", "),
-                    ". Fix these before converting.")
-    } else {
-      msg <- paste0(msg, " All values convert cleanly, so as.numeric() is ",
-                    "safe here, but check why the column imported as text.")
-    }
-    f[[length(f) + 1]] <- .eiod_finding("type", name, "error", n, msg)
-    return(.eiod_report(f, n_obs = n))
-  }
-  if (is.integer(value)) {
-    f[[length(f) + 1]] <- .eiod_finding(
-      "type", name, "error", n,
-      paste0("column is integer. It cannot represent values below 1, so any ",
-             "small impact is already lost. Re-import as double."))
-    return(.eiod_report(f, n_obs = n))
-  }
-  if (!is.numeric(value)) {
-    f[[length(f) + 1]] <- .eiod_finding(
-      "type", name, "error", n,
-      paste0("column is ", class(value)[1], ", not numeric."))
-    return(.eiod_report(f, n_obs = n))
+  # a value of the wrong type is the one blocking problem; report it alone
+  type_msg <- .eiod_type_problem(value)
+  if (!is.null(type_msg)) {
+    return(.eiod_report(list(.eiod_finding("type", name, "error", n,
+                                           type_msg)), n_obs = n))
   }
 
-  # ---- validity ------------------------------------------------------------ #
+  f <- .eiod_validity_findings(value, name, n)
+
+  if (!is.null(indicator) && indicator %in% .eiod_valid_indicators()) {
+    f[[length(f) + 1]] <- .eiod_finding("unit", name, "note", NA_integer_,
+      paste0("expected unit for \"", indicator, "\": ", .eiod_unit(indicator),
+             " per capita per day."))
+  }
+
+  .eiod_report(f, n_obs = n)
+}
+
+
+#' Why an impact vector has the wrong type, or NULL if it is double
+#' @noRd
+.eiod_type_problem <- function(value) {
+  if (is.factor(value)) {
+    return(paste0("column is a factor. as.numeric() on a factor returns ",
+                  "level codes, not values, so this fails silently. Fix with ",
+                  "as.numeric(as.character(x))."))
+  }
+  if (is.character(value)) return(.eiod_character_problem(value))
+  if (is.integer(value)) {
+    return(paste0("column is integer. It cannot represent values below 1, so ",
+                  "any small impact is already lost. Re-import as double."))
+  }
+  if (!is.numeric(value)) {
+    return(paste0("column is ", class(value)[1], ", not numeric."))
+  }
+  NULL
+}
+
+
+#' The type message for a character impact vector: which values won't convert
+#' @noRd
+.eiod_character_problem <- function(value) {
+  num <- suppressWarnings(as.numeric(value))
+  bad <- which(is.na(num) & !is.na(value) & trimws(value) != "")
+  msg <- "column is character, not numeric."
+  if (length(bad)) {
+    ex <- utils::head(unique(value[bad]), 3)
+    return(paste0(msg, " ", length(bad), " value(s) will not convert, e.g. ",
+                  paste0("\"", ex, "\"", collapse = ", "),
+                  ". Fix these before converting."))
+  }
+  paste0(msg, " All values convert cleanly, so as.numeric() is ",
+         "safe here, but check why the column imported as text.")
+}
+
+
+#' Missing, non-finite, negative and zero findings for a numeric impact
+#' @noRd
+.eiod_validity_findings <- function(value, name, n) {
+  f <- list()
   n_na <- sum(is.na(value))
   if (n_na == n) {
     f[[length(f) + 1]] <- .eiod_finding("missing", name, "error", n_na,
@@ -143,14 +162,7 @@ eiod_check_impact <- function(value, name = "impact", indicator = NULL) {
                      "unmatched food item summed to 0 instead of NA."),
               n_zero))
   }
-
-  if (!is.null(indicator) && indicator %in% .eiod_valid_indicators()) {
-    f[[length(f) + 1]] <- .eiod_finding("unit", name, "note", NA_integer_,
-      paste0("expected unit for \"", indicator, "\": ", .eiod_unit(indicator),
-             " per capita per day."))
-  }
-
-  .eiod_report(f, n_obs = n)
+  f
 }
 
 
