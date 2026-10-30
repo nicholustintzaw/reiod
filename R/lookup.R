@@ -161,27 +161,12 @@ eiod_lookup_cutoff <- function(indicator, group = NULL,
   cut <- .eiod_data("eiod_cutoffs")
   s <- cut[cut$metric == metric & cut$indicator == indicator, ]
 
+  .eiod_check_lookup_percentile(metric, percentile)
   if (metric == "rel") {
-    if (is.null(percentile)) {
-      stop("`percentile` is required when metric = \"rel\". ",
-           "Use a multiple of 10 from 10 to 90.", call. = FALSE)
-    }
-    if (!is.numeric(percentile) || length(percentile) != 1L ||
-        percentile %% 10 != 0 || percentile < 10 || percentile > 90) {
-      stop("`percentile` must be a multiple of 10 between 10 and 90.",
-           call. = FALSE)
-    }
     s <- s[!is.na(s$percentile) & s$percentile == percentile, ]
-  } else {
-    if (!is.null(percentile)) {
-      stop("`percentile` does not apply when metric = \"abs\".", call. = FALSE)
-    }
   }
-
   if (!is.null(group)) {
-    if (!is.numeric(group) || !all(group %in% 1:8)) {
-      stop("`group` must be one or more integers from 1 to 8.", call. = FALSE)
-    }
+    .eiod_check_lookup_group(group)
     s <- s[s$demogroup %in% group, ]
   }
 
@@ -198,6 +183,48 @@ eiod_lookup_cutoff <- function(indicator, group = NULL,
     published_str   = s$value_published_str,
     corrected       = s$value_source != "published"
   )
+}
+
+
+#' Stop unless `percentile` suits the metric
+#'
+#' Required, and a multiple of 10 from 10 to 90, for "rel"; must be absent
+#' for "abs".
+#' @noRd
+.eiod_check_lookup_percentile <- function(metric, percentile) {
+  if (metric == "abs") {
+    if (!is.null(percentile)) {
+      stop("`percentile` does not apply when metric = \"abs\".", call. = FALSE)
+    }
+    return(invisible(TRUE))
+  }
+  if (is.null(percentile)) {
+    stop("`percentile` is required when metric = \"rel\". ",
+         "Use a multiple of 10 from 10 to 90.", call. = FALSE)
+  }
+  if (!.eiod_is_decile(percentile)) {
+    stop("`percentile` must be a multiple of 10 between 10 and 90.",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+
+#' Is `p` a single number that is a multiple of 10 from 10 to 90?
+#' @noRd
+.eiod_is_decile <- function(p) {
+  if (!is.numeric(p) || length(p) != 1L) return(FALSE)
+  !(p %% 10 != 0 || p < 10 || p > 90)
+}
+
+
+#' Stop unless `group` holds integers from 1 to 8
+#' @noRd
+.eiod_check_lookup_group <- function(group) {
+  if (!is.numeric(group) || !all(group %in% 1:8)) {
+    stop("`group` must be one or more integers from 1 to 8.", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 
