@@ -65,71 +65,101 @@ eiod_check_data <- function(data, impacts = NULL, age = NULL, sex = NULL,
   }
   src <- deparse(substitute(data))
   n <- nrow(data)
-  parts <- list()
 
-  # ---- column existence ---------------------------------------------------- #
-  wanted <- c(impacts, age = age, sex = sex, gdqs = gdqs)
-  wanted <- wanted[!vapply(wanted, is.null, logical(1))]
-  missing_cols <- setdiff(unname(unlist(wanted)), names(data))
-  if (length(missing_cols)) {
-    parts[[length(parts) + 1]] <- .eiod_report(list(.eiod_finding(
-      "structure", toString(missing_cols), "error", NA_integer_,
-      paste0("column(s) not found in ", src, "."))), n_obs = n)
-  }
-
-  # ---- demographics, first: the group is needed by later checks ------------ #
-  grp <- NULL
-  if (!is.null(age) && !is.null(sex) &&
-      all(c(age, sex) %in% names(data))) {
-
-    parts[[length(parts) + 1]] <- eiod_check_demographics(
-      data[[age]], data[[sex]], age_units = age_units,
-      male = male, female = female)
-
-    grp <- tryCatch(
-      eiod_age_sex_group(data[[age]], data[[sex]], age_units = age_units,
-                         male = male, female = female),
-      error = function(e) NULL)
-  }
-
-  # ---- impacts ------------------------------------------------------------- #
-  if (!is.null(impacts)) {
-    if (is.null(names(impacts)) || any(names(impacts) == "")) {
-      stop("`impacts` must be a NAMED character vector, for example ",
-           "c(biodiv = \"biodiv_pdf\").", call. = FALSE)
-    }
-    bad_ind <- setdiff(names(impacts), .eiod_valid_indicators())
-    if (length(bad_ind)) {
-      stop("unknown indicator name(s) in `impacts`: ",
-           toString(bad_ind),
-           ".\n  Valid names: ",
-           toString(.eiod_valid_indicators()), call. = FALSE)
-    }
-
-    for (ind in names(impacts)) {
-      col <- impacts[[ind]]
-      if (!col %in% names(data)) next
-      v <- data[[col]]
-
-      imp <- eiod_check_impact(v, name = col, indicator = ind)
-      parts[[length(parts) + 1]] <- imp
-
-      # precision and magnitude only make sense on usable numeric data
-      blocked <- any(imp$level == "error" & imp$check == "type")
-      if (!blocked) {
-        parts[[length(parts) + 1]] <- eiod_check_precision(
-          v, group = grp, indicator = ind, name = col, tolerance = tolerance)
-        parts[[length(parts) + 1]] <- eiod_check_magnitude(
-          v, indicator = ind, group = grp, name = col)
-      }
-    }
-  }
-
-  # ---- gdqs ---------------------------------------------------------------- #
+  # the demographic group is needed by the impact checks, so it comes first
+  dem <- .eiod_demographic_parts(data, age, sex, age_units, male, female)
+  parts <- c(.eiod_missing_column_parts(data, impacts, age, sex, gdqs, src, n),
+             dem$parts,
+             .eiod_impact_parts(data, impacts, dem$grp, tolerance))
   if (!is.null(gdqs) && gdqs %in% names(data)) {
     parts[[length(parts) + 1]] <- eiod_check_gdqs(data[[gdqs]])
   }
 
+  .eiod_combine_parts(parts, n, src)
+}
+
+
+#' A structure finding for any named column missing from the data
+#' @return A list holding zero or one report.
+#' @noRd
+.eiod_missing_column_parts <- function(data, impacts, age, sex, gdqs, src, n) {
+  wanted <- c(impacts, age = age, sex = sex, gdqs = gdqs)
+  wanted <- wanted[!vapply(wanted, is.null, logical(1))]
+  missing_cols <- setdiff(unname(unlist(wanted)), names(data))
+  if (length(missing_cols) == 0) return(list())
+  list(.eiod_report(list(.eiod_finding(
+    "structure", toString(missing_cols), "error", NA_integer_,
+    paste0("column(s) not found in ", src, "."))), n_obs = n))
+}
+
+
+#' The demographic report and the group vector, when age and sex are usable
+#' @return A list: `parts` (zero or one report) and `grp` (or `NULL`).
+#' @noRd
+.eiod_demographic_parts <- function(data, age, sex, age_units, male, female) {
+  if (is.null(age) || is.null(sex) || !all(c(age, sex) %in% names(data))) {
+    return(list(parts = list(), grp = NULL))
+  }
+  report <- eiod_check_demographics(data[[age]], data[[sex]],
+                                    age_units = age_units,
+                                    male = male, female = female)
+  grp <- tryCatch(
+    eiod_age_sex_group(data[[age]], data[[sex]], age_units = age_units,
+                       male = male, female = female),
+    error = function(e) NULL)
+  list(parts = list(report), grp = grp)
+}
+
+
+#' Stop unless `impacts` is a named vector of known indicator keys
+#' @noRd
+.eiod_check_impacts_arg <- function(impacts) {
+  if (is.null(names(impacts)) || any(names(impacts) == "")) {
+    stop("`impacts` must be a NAMED character vector, for example ",
+         "c(biodiv = \"biodiv_pdf\").", call. = FALSE)
+  }
+  bad_ind <- setdiff(names(impacts), .eiod_valid_indicators())
+  if (length(bad_ind)) {
+    stop("unknown indicator name(s) in `impacts`: ",
+         toString(bad_ind),
+         ".\n  Valid names: ",
+         toString(.eiod_valid_indicators()), call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+
+#' Impact, precision and magnitude reports for each named impact column
+#' @noRd
+.eiod_impact_parts <- function(data, impacts, grp, tolerance) {
+  parts <- list()
+  if (is.null(impacts)) return(parts)
+  .eiod_check_impacts_arg(impacts)
+
+  for (ind in names(impacts)) {
+    col <- impacts[[ind]]
+    if (!col %in% names(data)) next
+    v <- data[[col]]
+
+    imp <- eiod_check_impact(v, name = col, indicator = ind)
+    parts[[length(parts) + 1]] <- imp
+
+    # precision and magnitude only make sense on usable numeric data
+    blocked <- any(imp$level == "error" & imp$check == "type")
+    if (!blocked) {
+      parts[[length(parts) + 1]] <- eiod_check_precision(
+        v, group = grp, indicator = ind, name = col, tolerance = tolerance)
+      parts[[length(parts) + 1]] <- eiod_check_magnitude(
+        v, indicator = ind, group = grp, name = col)
+    }
+  }
+  parts
+}
+
+
+#' Combine component reports into one eiod_check, errors first
+#' @noRd
+.eiod_combine_parts <- function(parts, n, src) {
   findings <- do.call(rbind, lapply(parts, function(p) {
     attributes(p) <- list(names = names(p), row.names = seq_len(nrow(p)),
                           class = "data.frame")
