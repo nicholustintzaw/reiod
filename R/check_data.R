@@ -185,15 +185,7 @@ eiod_check_data <- function(data, impacts = NULL, age = NULL, sex = NULL,
 #' @export
 print.eiod_check <- function(x, ...) {
 
-  n_obs <- attr(x, "n_obs")
-  src   <- attr(x, "source")
-
-  cat("reiod data quality report\n")
-  if (!is.null(src) && !is.na(n_obs)) {
-    cat("  data: ", src, "   n = ", format(n_obs, big.mark = ","), "\n",
-        sep = "")
-  }
-  cat("\n")
+  .eiod_print_check_header(attr(x, "source"), attr(x, "n_obs"))
 
   if (nrow(x) == 0L) {
     cat("  no findings.\n")
@@ -206,28 +198,48 @@ print.eiod_check <- function(x, ...) {
               counts[["error"]], counts[["warning"]], counts[["note"]]))
 
   for (lv in c("error", "warning", "note")) {
-    rows <- which(as.character(x$level) == lv)
-    for (i in rows) {
-      head_txt <- sprintf("  %-8s %-14s %-12s ",
-                          toupper(lv), x$variable[i], x$check[i])
-      msg <- strwrap(x$message[i], width = 76 - nchar(head_txt) + 36,
-                     prefix = "")
-      cat(head_txt, msg[1], "\n", sep = "")
-      if (length(msg) > 1) {
-        for (m in msg[-1]) cat(strrep(" ", nchar(head_txt)), m, "\n", sep = "")
-      }
+    for (i in which(as.character(x$level) == lv)) {
+      .eiod_print_finding(lv, x$variable[i], x$check[i], x$message[i])
     }
   }
 
+  .eiod_print_check_footer(counts[["error"]])
+  invisible(x)
+}
+
+
+#' Title and source line of an eiod_check printout
+#' @noRd
+.eiod_print_check_header <- function(src, n_obs) {
+  cat("reiod data quality report\n")
+  if (!is.null(src) && !is.na(n_obs)) {
+    cat("  data: ", src, "   n = ", format(n_obs, big.mark = ","), "\n",
+        sep = "")
+  }
   cat("\n")
-  n_err <- counts[["error"]]
+}
+
+
+#' One finding, its message wrapped under a fixed-width heading
+#' @noRd
+.eiod_print_finding <- function(lv, variable, check, message) {
+  head_txt <- sprintf("  %-8s %-14s %-12s ", toupper(lv), variable, check)
+  msg <- strwrap(message, width = 76 - nchar(head_txt) + 36, prefix = "")
+  cat(head_txt, msg[1], "\n", sep = "")
+  for (m in msg[-1]) cat(strrep(" ", nchar(head_txt)), m, "\n", sep = "")
+}
+
+
+#' Closing line: how many blocking problems there are
+#' @noRd
+.eiod_print_check_footer <- function(n_err) {
+  cat("\n")
   if (n_err > 0) {
     cat("  ", n_err, " blocking problem", if (n_err > 1) "s" else "",
         ". Fix before computing metrics.\n", sep = "")
   } else {
     cat("  No blocking problems.\n")
   }
-  invisible(x)
 }
 
 
