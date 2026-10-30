@@ -1,3 +1,51 @@
+# reiod 0.1.0.9000
+
+Preparation for rOpenSci software peer review. 2026-10-29.
+
+## Changed behaviour
+
+* `eiod_check_magnitude()` names the correct unit when it suspects a unit
+  error. Its hints for eutrophication still assumed the threshold was in
+  kilograms; since Intake's October 2026 correction the expected unit is
+  grams, so values 1000 times too large now read "values in mg where g is
+  expected" and values 1000 times too small "values in kg where g is
+  expected". Two hints that could never be shown (greenhouse gases in
+  tonnes, water in mL) now can, and several that pointed the wrong way are
+  fixed. Detection itself, and the warning level, are unchanged.
+
+## Documentation
+
+* Help pages are now generated with roxygen markdown throughout. Bold,
+  code and links previously showed as raw `**`, backticks and `[fn()]` on
+  some pages.
+* `?eiod_lookup_cutoff` and `?reiod` no longer describe the superseded
+  eutrophication rescaling: eight Table 3 values carry Intake's confirmed
+  grams, and nothing is converted anywhere.
+* The methods paper is referenced in `DESCRIPTION` (Deitchler et al. 2026,
+  with its URL; the paper has no DOI) and cited in `CITATION.cff` as its own
+  recommended citation gives it.
+* Shared parameter descriptions are written once and inherited.
+* New contributing guide (`.github/CONTRIBUTING.md`) and a Code of Conduct
+  notice in the README.
+* The maintainer's ORCID iD and current email are in `DESCRIPTION` and
+  `CITATION.cff`.
+* The Get started article, the README and `?reiod` have a runnable
+  start-to-finish example.
+
+## Internal
+
+* The functions goodpractice flagged for cyclomatic complexity (up to 28)
+  or length are split into small internal helpers. No function now exceeds a
+  complexity of 15. Behaviour is unchanged: a snapshot of 223 cases (values,
+  messages, warnings, errors and printed output) is identical before and
+  after.
+* No global assignment (`<<-`) remains.
+* lintr reports nothing beyond the `library()` calls in tests and
+  vignettes; the few deliberate exceptions are recorded in `.lintr` or with
+  `# nolint`, each with its reason.
+* A `pkgcheck-summary` GitHub workflow runs pkgcheck on every push while the
+  upstream pkgcheck action is affected by ropensci-review-tools/pkgcheck#444.
+
 # reiod 0.1.0
 
 Intake corrected the Table 3 eutrophication thresholds. 2026-10-22.
