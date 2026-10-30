@@ -205,79 +205,95 @@
          "male. Convert it first, for example with eiod_as_sex_factor().",
          call. = FALSE)
   }
-
-  one_given <- xor(is.null(male), is.null(female))
-  if (one_given) {
+  if (xor(is.null(male), is.null(female))) {
     stop("supply both `male` and `female`, or neither.", call. = FALSE)
   }
 
-  # ---- factor or character: match on labels -------------------------------- #
   if (is.factor(sex) || is.character(sex)) {
-    key <- tolower(trimws(as.character(sex)))
-    key[key == ""] <- NA_character_
-
-    if (!is.null(male)) {
-      mk <- tolower(trimws(as.character(male)))
-      fk <- tolower(trimws(as.character(female)))
-    } else {
-      mk <- c("m", "male", "males", "man", "men", "boy", "boys")
-      fk <- c("f", "female", "females", "woman", "women", "girl", "girls")
-    }
-
-    out <- rep(NA_integer_, length(key))
-    out[key %in% mk] <- 1L
-    out[key %in% fk] <- 2L
-
-    unmatched <- unique(key[!is.na(key) & is.na(out)])
-    if (length(unmatched)) {
-      stop("these values of `sex` were not recognised as male or female:\n  ",
-           paste0("\"", unmatched, "\"", collapse = ", "),
-           "\n  Set `male` and `female` explicitly, for example ",
-           "male = \"M\", female = \"F\".",
-           "\n  They are not dropped silently, because that would quietly ",
-           "shrink your analysis sample.", call. = FALSE)
-    }
-    return(out)
+    return(.eiod_sex_from_labels(sex, male, female))
   }
-
-  # ---- numeric: require explicit codes ------------------------------------- #
   if (is.numeric(sex)) {
-    obs <- sort(unique(sex[!is.na(sex)]))
-    if (is.null(male)) {
-      stop("`sex` is numeric, so reiod cannot tell which code means male.\n",
-           "  Observed codes: ", toString(obs), "\n",
-           "  Survey data uses 1/2 and 0/1 about equally often, and guessing ",
-           "wrong would invert every result without any error.\n",
-           "  Either state the codes:\n",
-           "    eiod_age_sex_group(age, sex, male = 1, female = 2)\n",
-           "  or convert once, which is the recommended route:\n",
-           "    dat$sex <- eiod_as_sex_factor(dat$sex, male = 1, female = 2)",
-           call. = FALSE)
-    }
-    if (length(male) != 1L || length(female) != 1L ||
-        !is.numeric(male) || !is.numeric(female)) {
-      stop("`male` and `female` must each be a single numeric code when `sex` ",
-           "is numeric.", call. = FALSE)
-    }
-    if (male == female) {
-      stop("`male` and `female` must differ.", call. = FALSE)
-    }
-
-    out <- rep(NA_integer_, length(sex))
-    out[!is.na(sex) & sex == male]   <- 1L
-    out[!is.na(sex) & sex == female] <- 2L
-
-    unmatched <- setdiff(obs, c(male, female))
-    if (length(unmatched)) {
-      stop("these values of `sex` match neither male = ", male,
-           " nor female = ", female, ":\n  ",
-           toString(unmatched),
-           "\n  Recode them or set `male` and `female` to match your data. ",
-           "They are not dropped silently.", call. = FALSE)
-    }
-    return(out)
+    return(.eiod_sex_from_codes(sex, male, female))
   }
-
   stop("`sex` must be a factor, character or numeric vector. Got ",
        class(sex)[1], ".", call. = FALSE)
+}
+
+
+#' Sex codes from a factor or character vector, matched on labels
+#' @noRd
+.eiod_sex_from_labels <- function(sex, male, female) {
+  key <- tolower(trimws(as.character(sex)))
+  key[key == ""] <- NA_character_
+
+  if (!is.null(male)) {
+    mk <- tolower(trimws(as.character(male)))
+    fk <- tolower(trimws(as.character(female)))
+  } else {
+    mk <- c("m", "male", "males", "man", "men", "boy", "boys")
+    fk <- c("f", "female", "females", "woman", "women", "girl", "girls")
+  }
+
+  out <- rep(NA_integer_, length(key))
+  out[key %in% mk] <- 1L
+  out[key %in% fk] <- 2L
+
+  unmatched <- unique(key[!is.na(key) & is.na(out)])
+  if (length(unmatched)) {
+    stop("these values of `sex` were not recognised as male or female:\n  ",
+         paste0("\"", unmatched, "\"", collapse = ", "),
+         "\n  Set `male` and `female` explicitly, for example ",
+         "male = \"M\", female = \"F\".",
+         "\n  They are not dropped silently, because that would quietly ",
+         "shrink your analysis sample.", call. = FALSE)
+  }
+  out
+}
+
+
+#' Sex codes from a numeric vector; the codes must be given, never guessed
+#' @noRd
+.eiod_sex_from_codes <- function(sex, male, female) {
+  obs <- sort(unique(sex[!is.na(sex)]))
+  if (is.null(male)) {
+    stop("`sex` is numeric, so reiod cannot tell which code means male.\n",
+         "  Observed codes: ", toString(obs), "\n",
+         "  Survey data uses 1/2 and 0/1 about equally often, and guessing ",
+         "wrong would invert every result without any error.\n",
+         "  Either state the codes:\n",
+         "    eiod_age_sex_group(age, sex, male = 1, female = 2)\n",
+         "  or convert once, which is the recommended route:\n",
+         "    dat$sex <- eiod_as_sex_factor(dat$sex, male = 1, female = 2)",
+         call. = FALSE)
+  }
+  .eiod_check_sex_codes(male, female)
+
+  out <- rep(NA_integer_, length(sex))
+  out[!is.na(sex) & sex == male]   <- 1L
+  out[!is.na(sex) & sex == female] <- 2L
+
+  unmatched <- setdiff(obs, c(male, female))
+  if (length(unmatched)) {
+    stop("these values of `sex` match neither male = ", male,
+         " nor female = ", female, ":\n  ",
+         toString(unmatched),
+         "\n  Recode them or set `male` and `female` to match your data. ",
+         "They are not dropped silently.", call. = FALSE)
+  }
+  out
+}
+
+
+#' Stop unless `male` and `female` are two different single numeric codes
+#' @noRd
+.eiod_check_sex_codes <- function(male, female) {
+  if (length(male) != 1L || length(female) != 1L ||
+      !is.numeric(male) || !is.numeric(female)) {
+    stop("`male` and `female` must each be a single numeric code when `sex` ",
+         "is numeric.", call. = FALSE)
+  }
+  if (male == female) {
+    stop("`male` and `female` must differ.", call. = FALSE)
+  }
+  invisible(TRUE)
 }
