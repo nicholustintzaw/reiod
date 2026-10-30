@@ -78,15 +78,16 @@ in the companion Stata package in October 2026.)
 
 \section{Nothing here is rescaled}{
 
-\strong{Every value this function returns is exactly what the methods paper
-prints}, for all 616 cut-offs. The package does not adjust a published
-number anywhere, so you can check any row of \link{eiod_cutoffs} against the PDF
-and expect a character-for-character match.
+\strong{Every value this function returns is the published cut-off}, exactly as
+printed in the methods paper for 608 of the 616, so you can check those
+rows of \link{eiod_cutoffs} against the PDF and expect a character-for-character
+match. The other eight are the Table 3 eutrophication thresholds, which
+carry the values Intake confirmed in October 2026 (in grams, where the PDF
+prints kilograms) and are marked by the \code{value_source} column.
 
-Where the paper's own units need reconciling - which happens for
-eutrophication, and only for eutrophication - the adjustment is applied to
-\strong{your data} at the moment of comparison, is announced in a message, and is
-described in \code{vignette("eutrophication")}.
+Nothing is converted at the moment of comparison either: every indicator,
+eutrophication included, is on one unit across both tables. Supply your
+values in those units. See \code{vignette("eutrophication")}.
 
 The object is an ordinary named numeric underneath: \code{[}, \code{c()} and
 arithmetic all return plain numbers, so nothing downstream needs to know
