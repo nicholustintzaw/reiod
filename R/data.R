@@ -119,7 +119,11 @@
 #' # the HESD biodiversity criterion
 #' subset(eiod_cutoffs, metric == "abs" & indicator == "biodiv",
 #'        c(demogroup_label, value))
-"eiod_cutoffs"
+#' @name eiod_cutoffs
+#' @docType data
+#' @usage eiod_cutoffs
+#' @keywords datasets
+NULL
 
 
 #' The seven environmental impact indicators
@@ -137,7 +141,11 @@
 #' @examples
 #' data(eiod_indicators)
 #' eiod_indicators
-"eiod_indicators"
+#' @name eiod_indicators
+#' @docType data
+#' @usage eiod_indicators
+#' @keywords datasets
+NULL
 
 
 #' Synthetic respondent-day data for examples
@@ -188,7 +196,11 @@
 #' @examples
 #' data(eiod_demo)
 #' head(eiod_demo)
-"eiod_demo"
+#' @name eiod_demo
+#' @docType data
+#' @usage eiod_demo
+#' @keywords datasets
+NULL
 
 
 #' Indicator keys mapped to the demonstration data's column names
@@ -212,4 +224,8 @@
 #'
 #' # the same shape, for your own data:
 #' # my_map <- c(ghg = "ghg_total_kg", biodiv = "pdf_year", water = "water_l")
-"eiod_demo_map"
+#' @name eiod_demo_map
+#' @docType data
+#' @usage eiod_demo_map
+#' @keywords datasets
+NULL
