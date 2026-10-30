@@ -360,32 +360,49 @@ eiod_check_magnitude <- function(value, indicator, group = NULL,
       "skipped: variable is not usable numeric data.")), n_obs = n))
   }
 
-  cp <- .eiod_rel_cutpoints(indicator)
-  p50 <- cp[, 5L]
+  ref <- .eiod_expected_median(indicator, group)
+  observed <- stats::median(value, na.rm = TRUE)
+  ratio <- observed / ref$expected
+  hit <- .eiod_unit_hit(ratio, .eiod_unit_factors(indicator))
 
-  # A unit error and a broken sex variable are independent faults. If the
-  # demographic group could not be built, fall back to an unweighted mean of
-  # the eight group medians rather than skipping: the ratios that matter here
-  # are factors of 1000, which dwarf any demographic weighting.
+  lvl <- if (!is.null(hit) || ratio > 10 || ratio < 0.1) "warning" else "note"
+  msg <- .eiod_magnitude_message(observed, ref, ratio, hit, lvl, indicator)
+
+  .eiod_report(list(.eiod_finding("magnitude", name, lvl, NA_integer_, msg)),
+               n_obs = n)
+}
+
+
+#' The published median expected for this indicator and demographic mix
+#'
+#' A unit error and a broken sex variable are independent faults. If the
+#' demographic group could not be built, fall back to an unweighted mean of
+#' the eight group medians rather than skipping: the ratios that matter here
+#' are factors of 1000, which dwarf any demographic weighting.
+#'
+#' @return A list: `expected` and `weighted` (whether the group mix was used).
+#' @noRd
+.eiod_expected_median <- function(indicator, group) {
+  p50 <- .eiod_rel_cutpoints(indicator)[, 5L]
   tab <- if (is.null(group)) NULL else
     table(factor(group[!is.na(group)], levels = 1:8))
 
   if (is.null(tab) || sum(tab) == 0) {
-    expected <- mean(p50)
-    weighted <- FALSE
-  } else {
-    expected <- sum(p50 * as.numeric(tab)) / sum(tab)
-    weighted <- TRUE
+    return(list(expected = mean(p50), weighted = FALSE))
   }
+  list(expected = sum(p50 * as.numeric(tab)) / sum(tab), weighted = TRUE)
+}
 
-  observed <- stats::median(value, na.rm = TRUE)
-  ratio <- observed / expected
 
-  # candidate unit confusions, by indicator. Each factor is observed /
-  # expected, so above 1 means the values are too large; the expected units
-  # are those of the published tables (eutrophication in grams since the
-  # October 2026 correction). One label per factor, so every one is reachable.
-  cand <- switch(indicator,
+#' Candidate unit confusions for an indicator, as labelled ratio factors
+#'
+#' Each factor is observed / expected, so above 1 means the values are too
+#' large; the expected units are those of the published tables
+#' (eutrophication in grams since the October 2026 correction). One label per
+#' factor, so every one is reachable.
+#' @noRd
+.eiod_unit_factors <- function(indicator) {
+  switch(indicator,
     landtotal   = , landarable = , landpasture =
       c("values 10,000 times too large (m2 and ha mixed up)" = 1e4,
         "values in ha where m2 is expected" = 1e-4),
@@ -400,33 +417,38 @@ eiod_check_magnitude <- function(value, indicator, group = NULL,
                     "values 1000 times too small" = 1e-3),
     numeric(0)
   )
+}
 
-  hit <- NULL
+
+#' The label of the first unit factor within a factor of 2 of `ratio`, or NULL
+#' @noRd
+.eiod_unit_hit <- function(ratio, cand) {
   for (i in seq_along(cand)) {
     if (ratio / cand[i] > 0.5 && ratio / cand[i] < 2) {
-      hit <- names(cand)[i]
-      break
+      return(names(cand)[i])
     }
   }
+  NULL
+}
 
-  lvl <- if (!is.null(hit)) "warning"
-         else if (ratio > 10 || ratio < 0.1) "warning"
-         else "note"
 
+#' The message for eiod_check_magnitude()
+#' @noRd
+.eiod_magnitude_message <- function(observed, ref, ratio, hit, lvl,
+                                    indicator) {
   msg <- sprintf("median %.4g vs expected %.4g %s (ratio %.3g).",
-                 observed, expected,
-                 if (weighted) "for this demographic mix"
+                 observed, ref$expected,
+                 if (ref$weighted) "for this demographic mix"
                  else "(unweighted: no usable demographic group)",
                  ratio)
   if (!is.null(hit)) {
-    msg <- paste0(msg, " Consistent with a unit error: ", hit, ". ",
-                  "Expected unit: ", .eiod_unit(indicator), ".")
-  } else if (lvl == "warning") {
-    msg <- paste0(msg, " Unusual but not a recognised unit factor. ",
-                  "Check the unit (expected ", .eiod_unit(indicator),
-                  ") and the population.")
+    return(paste0(msg, " Consistent with a unit error: ", hit, ". ",
+                  "Expected unit: ", .eiod_unit(indicator), "."))
   }
-
-  .eiod_report(list(.eiod_finding("magnitude", name, lvl, NA_integer_, msg)),
-               n_obs = n)
+  if (lvl == "warning") {
+    return(paste0(msg, " Unusual but not a recognised unit factor. ",
+                  "Check the unit (expected ", .eiod_unit(indicator),
+                  ") and the population."))
+  }
+  msg
 }
