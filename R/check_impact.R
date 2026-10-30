@@ -229,7 +229,6 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
                                  percentile = NULL) {
 
   metric <- match.arg(metric)
-  f <- list()
   n <- length(value)
 
   if (!is.numeric(value) || is.integer(value)) {
@@ -239,94 +238,112 @@ eiod_check_precision <- function(value, group = NULL, indicator = NULL,
   }
 
   fin <- value[is.finite(value) & value != 0]
-  n_distinct <- length(unique(fin))
-
-  # ---- significant digits retained ----------------------------------------- #
-  if (n_distinct >= 20) {
-    nsig <- .eiod_nsig(fin)
-    mx <- max(nsig, na.rm = TRUE)
-    if (mx <= 7) {
-      f[[length(f) + 1]] <- .eiod_finding(
-        "precision", name, "warning", n_distinct,
-        sprintf(paste0("at most %d significant digits across %d distinct ",
-                       "values. Consistent with single-precision storage or a ",
-                       "truncated export. Check how the column was written."),
-                mx, n_distinct))
-    } else {
-      f[[length(f) + 1]] <- .eiod_finding(
-        "precision", name, "note", n_distinct,
-        sprintf(paste0("up to %d significant digits retained across %d ",
-                       "distinct values."),
-                mx, n_distinct))
-    }
-  } else if (n_distinct > 0) {
-    f[[length(f) + 1]] <- .eiod_finding(
-      "precision", name, "note", n_distinct,
-      sprintf(paste0("only %d distinct non-zero values; too few to judge ",
-                     "stored precision."), n_distinct))
-  }
-
-  # ---- underflow ----------------------------------------------------------- #
-  if (length(fin)) {
-    n_sub <- sum(abs(fin) < .Machine$double.xmin)
-    if (n_sub > 0) {
-      f[[length(f) + 1]] <- .eiod_finding(
-        "underflow", name, "error", n_sub,
-        sprintf(paste0("%d value(s) are subnormal (below %.3g) and have ",
-                       "lost precision."),
-                n_sub, .Machine$double.xmin))
-    }
-  }
-
-  # ---- cut-off proximity --------------------------------------------------- #
-  if (is.null(group) || is.null(indicator)) {
-    f[[length(f) + 1]] <- .eiod_finding(
-      "proximity", name, "note", NA_integer_,
-      paste0("cut-off proximity not checked: supply `group` and `indicator` ",
-             "to find out whether precision could change any classification."))
-  } else {
-    cuts <- rep(NA_real_, n)
-    if (metric == "abs") {
-      thr <- .eiod_abs_thresholds(indicator)
-      ok <- !is.na(group)
-      cuts[ok] <- thr[group[ok]]
-      what <- "the absolute threshold"
-    } else {
-      if (is.null(percentile)) {
-        stop("`percentile` is required when metric = \"rel\".", call. = FALSE)
-      }
-      cp <- .eiod_rel_cutpoints(indicator)
-      ok <- !is.na(group)
-      cuts[ok] <- cp[cbind(group[ok], percentile / 10)]
-      what <- paste0("the P", percentile, " benchmark")
-    }
-
-    # Values and cut-offs are on the same unit for every indicator, so the
-    # distance is measured directly. Until October 2026 eutrophication needed
-    # converting first, because Table 3 was printed in kg; Intake's corrected
-    # thresholds removed that.
-    rel_dist <- abs(value - cuts) / cuts
-    near <- which(!is.na(rel_dist) & rel_dist < tolerance)
-
-    if (length(near)) {
-      ex <- toString(utils::head(near, 6))
-      if (length(near) > 6) ex <- paste0(ex, ", ...")
-      f[[length(f) + 1]] <- .eiod_finding(
-        "proximity", name, "warning", length(near),
-        sprintf(paste0("%d observation(s) sit within %.0e (relative) of %s. ",
-                       "Their classification is not robust to the precision ",
-                       "in your input. Rows: %s"),
-                length(near), tolerance, what, ex))
-    } else {
-      f[[length(f) + 1]] <- .eiod_finding(
-        "proximity", name, "note", 0L,
-        sprintf(paste0("no observation sits within %.0e of %s, so stored ",
-                       "precision does not change any classification here."),
-                tolerance, what))
-    }
-  }
+  f <- c(.eiod_digits_findings(fin, name),
+         .eiod_underflow_findings(fin, name),
+         .eiod_proximity_findings(value, group, indicator, name, tolerance,
+                                  metric, percentile, n))
 
   .eiod_report(f, n_obs = n)
+}
+
+
+#' How many significant digits the non-zero finite values retain
+#' @noRd
+.eiod_digits_findings <- function(fin, name) {
+  n_distinct <- length(unique(fin))
+  if (n_distinct == 0) return(list())
+  if (n_distinct < 20) {
+    return(list(.eiod_finding(
+      "precision", name, "note", n_distinct,
+      sprintf(paste0("only %d distinct non-zero values; too few to judge ",
+                     "stored precision."), n_distinct))))
+  }
+
+  mx <- max(.eiod_nsig(fin), na.rm = TRUE)
+  if (mx <= 7) {
+    return(list(.eiod_finding(
+      "precision", name, "warning", n_distinct,
+      sprintf(paste0("at most %d significant digits across %d distinct ",
+                     "values. Consistent with single-precision storage or a ",
+                     "truncated export. Check how the column was written."),
+              mx, n_distinct))))
+  }
+  list(.eiod_finding(
+    "precision", name, "note", n_distinct,
+    sprintf(paste0("up to %d significant digits retained across %d ",
+                   "distinct values."),
+            mx, n_distinct)))
+}
+
+
+#' Subnormal values, which have already lost precision
+#' @noRd
+.eiod_underflow_findings <- function(fin, name) {
+  n_sub <- sum(abs(fin) < .Machine$double.xmin)
+  if (n_sub == 0) return(list())
+  list(.eiod_finding(
+    "underflow", name, "error", n_sub,
+    sprintf(paste0("%d value(s) are subnormal (below %.3g) and have ",
+                   "lost precision."),
+            n_sub, .Machine$double.xmin)))
+}
+
+
+#' Whether any value sits close enough to its cut-off for precision to matter
+#' @noRd
+.eiod_proximity_findings <- function(value, group, indicator, name, tolerance,
+                                     metric, percentile, n) {
+  if (is.null(group) || is.null(indicator)) {
+    return(list(.eiod_finding(
+      "proximity", name, "note", NA_integer_,
+      paste0("cut-off proximity not checked: supply `group` and `indicator` ",
+             "to find out whether precision could change any ",
+             "classification."))))
+  }
+  ref <- .eiod_comparison_cutoffs(group, indicator, metric, percentile, n)
+
+  # Values and cut-offs are on the same unit for every indicator, so the
+  # distance is measured directly. Until October 2026 eutrophication needed
+  # converting first, because Table 3 was printed in kg; Intake's corrected
+  # thresholds removed that.
+  rel_dist <- abs(value - ref$cuts) / ref$cuts
+  near <- which(!is.na(rel_dist) & rel_dist < tolerance)
+
+  if (length(near) == 0) {
+    return(list(.eiod_finding(
+      "proximity", name, "note", 0L,
+      sprintf(paste0("no observation sits within %.0e of %s, so stored ",
+                     "precision does not change any classification here."),
+              tolerance, ref$what))))
+  }
+  ex <- toString(utils::head(near, 6))
+  if (length(near) > 6) ex <- paste0(ex, ", ...")
+  list(.eiod_finding(
+    "proximity", name, "warning", length(near),
+    sprintf(paste0("%d observation(s) sit within %.0e (relative) of %s. ",
+                   "Their classification is not robust to the precision ",
+                   "in your input. Rows: %s"),
+            length(near), tolerance, ref$what, ex)))
+}
+
+
+#' The cut-off each value is compared against, and a description of it
+#' @return A list: `cuts` (one per value, `NA` where the group is missing)
+#'   and `what`.
+#' @noRd
+.eiod_comparison_cutoffs <- function(group, indicator, metric, percentile, n) {
+  cuts <- rep(NA_real_, n)
+  ok <- !is.na(group)
+  if (metric == "abs") {
+    cuts[ok] <- .eiod_abs_thresholds(indicator)[group[ok]]
+    return(list(cuts = cuts, what = "the absolute threshold"))
+  }
+  if (is.null(percentile)) {
+    stop("`percentile` is required when metric = \"rel\".", call. = FALSE)
+  }
+  cp <- .eiod_rel_cutpoints(indicator)
+  cuts[ok] <- cp[cbind(group[ok], percentile / 10)]
+  list(cuts = cuts, what = paste0("the P", percentile, " benchmark"))
 }
 
 
