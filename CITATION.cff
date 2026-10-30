@@ -27,7 +27,23 @@ references:
   - type: report
     title: "Methods for Assessing Healthy, Environmentally Sustainable Diets Globally"
     authors:
-      - name: "Intake - Center for Dietary Assessment"
+      - family-names: "Deitchler"
+        given-names: "Megan"
+      - family-names: "Poore"
+        given-names: "Joseph"
+      - family-names: "Strobel"
+        given-names: "Manuela"
+      - family-names: "Arsenault"
+        given-names: "Joanne E."
+      - family-names: "Bell"
+        given-names: "Winnie"
+      - family-names: "Moursi"
+        given-names: "Mourad"
+      - family-names: "Vossenaar"
+        given-names: "Marieke"
+    institution:
+      name: "Intake – Center for Dietary Assessment, FHI 360"
+      city: "Washington, DC"
     year: 2026
     url: "https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf"
     notes: "Source of the metric definitions and cut-offs implemented by this package."

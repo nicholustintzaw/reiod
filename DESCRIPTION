@@ -8,10 +8,12 @@ Authors@R:
            role = c("aut", "cre"),
            comment = c(ORCID = "0009-0002-8082-401X"))
 Description: Calculates the dietary environmental impact metrics defined in
-    Intake's Environmental Impacts of Foods methods paper: absolute threshold
-    metrics against per capita planetary boundary shares, relative benchmark
-    metrics against a fixed global reference distribution, and the two
-    composite metrics that combine diet quality with environmental impact.
+    Intake's methods paper, Deitchler et al. (2026)
+    <https://www.intake.org/sites/default/files/2026-01/Intake-EIOD-Methods-Paper-Jan2026-Final.pdf>:
+    absolute threshold metrics against per capita planetary boundary
+    shares, relative benchmark metrics against a fixed global reference
+    distribution, and the two composite metrics that combine diet quality
+    with environmental impact.
     Cut-offs are age- and sex-specific. The package does not contain the
     Environmental Impacts of Foods database itself; it applies the published
     metric cut-offs to impact values the user has already derived. Includes a
